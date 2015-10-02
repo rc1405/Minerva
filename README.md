@@ -1,6 +1,6 @@
 #Minerva
 
-Minerva is an IDS event manager based on python and mongodb. Minerva currently supports Suricata 2.1beta4 as the primary source of data through the eve alert and flow logs. Functionality will be expanded in the future to include Bro json log inputs at a later point.
+Minerva is an IDS event manager based on python and mongodb. Minerva currently supports Suricata eve logs as the primary source of data through the eve alert and flow logs. Functionality will be expanded to include snort/suricata alert logs, and Bro json log inputs at a later point.
 
 ##Components
 
