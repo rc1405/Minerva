@@ -1,0 +1,96 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/favicon">
+  <script src="/jquery_min_js"></script>
+  <link rel="stylesheet" href="/bootstrap_min_css">
+  <link rel="stylesheet" href="/bootstrap_theme_min_css">
+  <script src="/bootstrap_min_js"></script>
+  </head>
+	{% include '/config.js' %}
+	{# load date_filters #}
+	<style>
+	body {background-color:lightblue; padding-top:60px}
+	</style>
+	<title>Minerva Server Admin</title>
+	<body>
+	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	    <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	    </div>
+	    <div id="navbar" class="navbar-collapse collapse">
+            {% include 'menu.html' %}
+	    <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="javascript:saveChanges();" class="submenu_right">Save</a></li>
+	    </ul>
+	    </div>
+	</div>
+	</nav>
+	<div class="container" style="width:100%;" >
+        <div class="starter-template">
+        <h2>Database</h2><br />
+        <table>
+        <col width=15%>
+        <col width=3%>
+        <col width=15%>
+        <col width=67%>
+        <tr><th>Database IP:</th><td></td><td><input type="text" id=db_ip value="{{config.db.url}}"></td><td></td></tr>
+        <tr><th>Database Port:</th><td></td><td><input type="text" id=db_port value="{{config.db.port}}"></td><td></td></tr>
+        <tr><th>Use Authentication:</th><td></td><td><input type="checkbox" id=db_useAuth {% if config.db.useAuth %}checked{% endif %}></td><td></td></tr>
+        <tr><th>Username:</th><td></td><td><input type="text" id=db_user value="{{config.db.username}}"></td><td></td></tr>
+        <tr><th>Password:</th><td></td><td><input type="password" id=db_pass></td><td></td></tr>
+        </table>
+        <h2>Web Server</h2>
+        <table>
+        <col width=15%>
+        <col width=3%>
+        <col width=15%>
+        <col width=1%>
+        <col width=66%>
+        <tr><th>Hostname:</th><td></td><td><input type="text" id=web_host size=35 value="{{config.web.hostname}}"></td><td></td><td></td></tr>
+        <tr><th>IP Address:</th><td></td><td><input type="text" id=web_ip size=35 value="{{config.web.bindIp}}"></td><td></td><td></td></tr>
+        <tr><th>Port:</th><td></td><td><input type="text" id=web_port size=35 value="{{config.web.port}}"></td><td></td><td></td></tr>
+        <tr><th>Threads:</th><td></td><td><input type="text" id=web_threads size=35 value="{{config.web.threads}}"></td><td></td><td align=left>*Number of threads to process requests from the console</td></tr>
+        <tr><th>Certificate Path:</th><td></td><td><input type="text" size=35 id=cert_path value="{{config.web.certs.webserver_cert}}"></td><td></td><td align=left>*Location of Certificate for SSL</td></tr>
+        <tr><th>Private Key Path:</th><td></td><td><input type="text" size=35 id=key_path value="{{config.web.certs.webserver_key}}"></td><td></td><td align=left>*Location of Private key for Certificate Above</td></tr>
+        <tr><th>Session Timeout:</th><td></td><td><input type="text" id=session_timeout size=35 value="{{config.web.session_timeout}}"></td><td></td><td align=left>*Number of Minutes of inactivity before a user is logged out</td></tr>
+        <tr><th>Password attempts:</th><td></td><td><input type="text" id=pass_tries size=35 value="{{config.web.password_tries}}"></td><td></td><td align=left>*Number of attempts before a user account is disabled</td></tr>
+        <tr><th>Password Minimum Length:</th><td></td><td><input type="text" id=pass_min size=35 value="{{config.web.password_min_length}}"></td><td></td><td align=left>*Minimum length of passwords</td></tr>
+        <tr><th>Password Expiration:</th><td></td><td><input type="text" id=pass_age size=35 value="{{config.web.password_max_age}}"></td><td></td><td align=left>*Number of Days before a password needs to be reset</td></tr>
+        </table>
+        <h2>Events</h2>
+        <table>
+        <col width=15%>
+        <col width=3%>
+        <col width=15%>
+        <col width=1%>
+        <col width=66%>
+        <tr><th>Maximum # of Events:</th><td></td><td><input type="text" id=max_events value="{{config.events.maxResults}}"></td><td></td><td align="left">*Maximum number of events to return to the console at a time, up to 15000.</td></tr>
+        <tr><th>Event Expiration:</th><td></td><td><input type="text" id=max_age value="{{config.events.max_age}}"></td><td></td><td align=left>*Number of Days to retain events in the database</td></tr>
+        <tr><th>Netflow Index Age:</th><td></td><td><input type="text" id=flow_age value="{{config.events.flow_max_index_age}}"></td><td></td><td align=left>*Number of Days to index Netflow data to speed up Searching</td></tr>
+        </table>
+	</div>
+	</div>
+        </div>
+	</body>
+</html>

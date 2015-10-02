@@ -1,0 +1,14 @@
+            <ul class="nav navbar-nav nav-pills">
+            <li role="presentation" class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expand="true">Navigation<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+            {% if 'console' in permissions %}<li {% if form == "console" %}class="active"{%endif%}><a href="/" class="submenu_left">Console</a></li>{% endif %}
+            {% if 'responder' in permissions %}<li {% if form == "responder" %}class="active"{%endif%}><a href="/responder" class="submenu_left">Escalated Events</a></li>{% endif %}
+            {% if 'console' in permissions or 'responder' in permissions %}<li {% if form == "flow" %}class="active"{% endif %}><a href="/flow" class="submenu_left">Session Flow</a></li>{% endif %}
+            {% if 'sensor_admin' in permissions %}<li {% if form == "sensors" %}class="active"{%endif%}><a href="/sensors" class="submenu_left">Sensors</a></li>{% endif %}
+            {% if 'user_admin' in permissions %}<li {% if form == "usermanagement" %}class="active"{%endif%}><a href="/users" class="submenu_left">User Management</a></li>{% endif %}
+            {% if 'server_admin' in permissions %}<li {% if form == "server_admin" %}class="active"{%endif%}><a href="/config" class="submenu_left">Server Admin</a></li>{% endif %}
+            <li {% if form == "profile" %}class="active"{%endif%}><a href="/profile" class="submenu_left">Change Password</a></li>
+            <li><a href="/logout" class="submenu_left">Logout</a></li>
+            </ul>
+            </ul>

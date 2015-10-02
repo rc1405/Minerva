@@ -1,0 +1,84 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/favicon">
+  <script src="/jquery_min_js"></script>
+  <link rel="stylesheet" href="/bootstrap_min_css">
+  <link rel="stylesheet" href="/bootstrap_theme_min_css">
+  <script src="/bootstrap_min_js"></script>
+  </head>
+	{% include '/sensors.js' %}
+	{# load date_filters #}
+	<style>
+	body {background-color:lightblue; padding-top:60px}
+	</style>
+	<title>Minerva Sensors</title>
+	<body>
+	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	    <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	    </div>
+	    <div id="navbar" class="navbar-collapse collapse">
+            {% include 'menu.html' %}
+	    <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="javascript:subChanges('enable');" class="submenu_right">Approve/Enable</a></li>
+            <li><a href="javascript:subChanges('disable');" class="submenu_right">Disable/Deny</a></li>
+	    </ul>
+	    </div>
+	</div>
+	</nav>
+	<div class="container" style="width:100%;" >
+        <div class="starter-template">
+	<div id="HdrDiv" style="z-index:1000;background-color:lightblue;width:100%;" >
+	<table id="EventHdr" border="1" width=100% style="table-layout:fixed;" >
+        <col width="20%">
+        <col width="20%">
+        <col width="20%">
+        <col width="20%">
+        <col width="20%">
+	<tr><th style="display:none;">ID</th><th style="word-wrap:break-word;" >Time Created</th><th style="word-wrap:break-word">Last Modified</th><th style="word-wrap:break-word;" >Sensor</th><th style="word-wrap:break-word;" >Sensor IP</th><th style="word-wrap:break-word;" >Status</th></tr>
+	</table>
+	</div>
+	<div id="TblDiv" style="width:100%;" >
+	<table border="1" width=100% id="EventTable" style="table-layout:fixed;">
+	<col width="20%">
+	<col width="20%">
+	<col width="20%">
+	<col width="20%">
+	<col width="20%">
+	{% if items_found == "No Results Found" %}
+	</table><br />
+	<strong>No Results Found</strong>
+	{% else %}
+	{# autoescape off #}
+	{% for item in items_found %}
+        {% if item.STATUS == '_DENIED' %}<tr bgcolor="red" onclick="startTrack(this)">{% elif item.STATUS == 'NOT_APPROVED' %}<tr bgcolor="orange" onclick="startTrack(this)">{% elif item.STATUS == 'CERT_CHANGED' %}<tr bgcolor="yellow" onclick="startTrack(this)"> {% elif item.STATUS == 'APPROVED' %}<tr bgcolor="green" onclick="startTrack(this)"> {% else %}<tr>{% endif %}<td align="center" style="display:none;">{{ item.ID }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.time_created|iso_to_utc}}</td><td align="center" style="word-wrap:breakword;">{{ item.document.last_modified|iso_to_utc}}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.SERVER }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.IP }}</td><td align="center" style="word-wrap:break-word;" >{{ item.STATUS }}</td></tr>
+	{% endfor %}
+	{# endautoescape #}
+	</table>
+	{% endif %}
+	</div>
+	</div>
+        </div>
+	</body>
+</html>

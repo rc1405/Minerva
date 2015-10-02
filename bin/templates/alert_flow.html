@@ -1,0 +1,93 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/favicon">
+  <script src="/jquery_min_js"></script>
+  <link rel="stylesheet" href="/bootstrap_min_css">
+  <link rel="stylesheet" href="/bootstrap_theme_min_css">
+  <script src="/bootstrap_min_js"></script>
+  </head>
+	{% include '/alert_flow.js' %}
+	{# include 'jinja2/console/menu.css' #}
+	{# load date_filters #}
+	</script>
+	<style>
+	body {background-color:lightblue; padding-top:60px}
+	</style>
+	<title>Minerva Alert Flow</title>
+	<body>
+	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	    <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	    </div>
+	    <div id="navbar" class="navbar-collapse collapse">
+	    <ul class="nav navbar-nav nav-pills navbar-right">
+            <li><a href="javascript:subAlerts('/close');" class="submenu_right">Close with Comments</a></li>
+            <li><a href="javascript:subAlerts('/comment');" class="submenu_right">Add Comments</a></li>
+	    {% if form == "console" %}
+            <li><a href="javascript:subAlerts('/escalate');" class="submenu_right">Escalate</a></li>
+	    {% endif %}
+	    </ul>
+	    </div>
+	</div>
+ 	</div>
+	</nav>
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<center><b>Original Alert</b><br /></center>
+	</div><br />
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<table border="1" style="width:100%">
+        <tr><th>Timestamp</th><th>Sensor</th><th>Proto</th><th>Source IP</th><th>Source Port</th><th>Dest IP</th><th>Dest Port</th><th>Signature</th><th>Category</th><th>Severity</th><th>SID</th><th>Rev</th><th>GID</th></tr>
+	{% if orig_alert.document.alert.severity == 4 %}<tr bgcolor="red" >{% elif orig_alert.document.alert.severity == 3 %}<tr bgcolor="orange" >{% elif orig_alert.document.alert.severity == 2 %}<tr bgcolor="yellow" > {% elif orig_alert.document.alert.severity == 1 %}<tr bgcolor="green" > {% else %}<tr>{% endif %}<td align="center">{{ orig_alert.document.timestamp}}</td><td align="center">{{ orig_alert.document.sensor }}</td><td align="center">{{ orig_alert.document.proto }}</td><td align="center">{{ orig_alert.document.src_ip }}</td><td align="center">{{ orig_alert.document.src_port }}</td><td align="center">{{ orig_alert.document.dest_ip }}</td><td align="center">{{ orig_alert.document.dest_port }}</td><td align="center">{{ orig_alert.document.alert.signature }}</td><td align="center">{{ orig_alert.document.alert.category }}</td><td align="center">{{ orig_alert.document.alert.severity }}</td><td align="center">{{ orig_alert.document.alert.signature_id }}</td><td align="center">{{ orig_alert.document.alert.rev }}</td><td align="center">{{ orig_alert.document.alert.gid }}</td></tr>
+	</table>
+	</div><br />
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<center><b>ASCII Alert Packet View</b><br /></center>
+	</div><br />
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;background-color:white;">
+	{{ orig_alert.document.payload_printable|e }} 
+	<br />
+	</div><br />
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<center><b>Sessions Matching Alert Data</b><br /></center>
+	</div><br />
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<table border="1" style="width:100%" id="EventTable">
+	<tr><th style="display:none;">ID</th><th>Flow Start</th><th>Flow Stop</th><th>Sensor</th><th>Proto</th><th>Source IP</th><th>Source Port</th><th>Dest IP</th><th>Dest Port</th><th>Packets</th><th>Bytes</th><th colspan="5">Flags</th></tr>
+	{#{% tcp_flags = [] %}#}
+	{% if items_found == 'No Results Found' %}
+	<b>No Results Found</b>
+	</table><br />
+	<strong>No Results Found</strong>
+	{% else %}
+	{# autoescape off #}
+	{% for item in items_found %}
+	<tr><td align="center" style="display:none;">{{ item.ID }}</td><td align="center">{{ item.document.netflow.start|iso_to_utc }}</td><td align="center">{{ item.document.netflow.end|iso_to_utc }}</td><td align="center">{{ item.document.sensor }}</td><td align="center">{{ item.document.proto }}</td><td align="center">{{ item.document.src_ip }}</td><td align="center">{{ item.document.src_port }}</td><td align="center">{{ item.document.dest_ip }}</td><td align="center">{{ item.document.dest_port }}</td><td align="center">{{ item.document.netflow.pkts}}</td><td align="center">{{ item.document.netflow.bytes }}</td><td align="center">{{ item.document.tcp.tcp_flags }}</td><td align="center">{% if item.document.tcp.ack %}ACK{% endif %}</td><td align="center">{% if item.document.tcp.psh %}PSH{%endif%}</td><td align="center">{% if item.document.tcp.fin %}FIN{% endif %}</td><td align="center">{% if item.document.tcp.syn %}SYN{% endif %}</td></tr>
+	{% endfor %}
+	{# endautoescape #}
+	</table>
+	{% endif %}
+	</div>
+	</body>
+</html>

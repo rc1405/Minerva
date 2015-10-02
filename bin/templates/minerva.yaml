@@ -1,0 +1,71 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+Webserver:
+  db:
+    url: {{config.Webserver.db.url}}
+    port: {{config.Webserver.db.port}}
+    useAuth: {{config.Webserver.db.useAuth}}
+    username: {% if username in config.Webserver.db %}{{config.Webserver.db.username}}{%else%}example{%endif%}
+    password: {% if password in config.Webserver.db %}{{config.Webserver.db.password}}{%else%}example{%endif%}
+    SECRET_KEY: "{{config.Webserver.db.SECRET_KEY}}"
+    SESSION_KEY: "{{config.Webserver.db.SESSION_KEY}}"
+  web:
+    hostname: {{config.Webserver.web.hostname}}
+    bindIp: {{config.Webserver.web.bindIp}}
+    port: {{config.Webserver.web.port}}
+    threads: {{config.Webserver.web.threads}}
+    certs:
+      webserver_cert: {{config.Webserver.web.certs.webserver_cert}}
+      webserver_key: {{config.Webserver.web.certs.webserver_key}}
+    session_timeout: {{config.Webserver.web.session_timeout}}
+    password_tries: {{config.Webserver.web.password_tries}}
+    password_min_length: {{config.Webserver.web.password_min_length}}
+    password_max_age: {{config.Webserver.web.password_max_age}}
+  events:
+    maxResults: {{config.Webserver.events.maxResults}}
+    max_age: {{config.Webserver.events.max_age}}
+    flow_max_index_age: {{config.Webserver.events.flow_max_index_age}}
+Event_Receiver:
+  listen_ip:
+    {% for ip in config.Event_Receiver.listen_ip.keys() -%}
+    {{ip}}:
+         ports:
+             {% for port in config.Event_Receiver.listen_ip[ip]['ports'] -%}
+             - {{port}}{% endfor %}
+         receive_threads: {{config.Event_Receiver.listen_ip[ip]['receive_threads']}}{% endfor %}
+  certs:
+    server_cert: {{config.Event_Receiver.certs.server_cert}}
+    private_key: {{config.Event_Receiver.certs.private_key}}
+Agent_forwarder:
+  sensor_name: {{config.Agent_forwarder.sensor_name}}
+  client_cert: {{config.Agent_forwarder.client_cert}}
+  client_public: {{config.Agent_forwarder.client_public}}
+  client_private: {{config.Agent_forwarder.client_private}}
+  logfiles:
+    {% for lf in config.Agent_forwarder.logfiles -%}
+    {{lf}}:
+      type: {{config.Agent_forwarder.logfiles[lf]['type']}}
+      position_file: {{config.Agent_forwarder.logfiles[lf]['position_file']}}{% endfor %}
+  target_addr:
+    server_cert: {{config.Agent_forwarder.target_addr.server_cert}}
+    destination: {{config.Agent_forwarder.target_addr.destination}}
+    port: {{config.Agent_forwarder.target_addr.port}}
+    send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
+    send_wait: {{config.Agent_forwarder.target_addr.send_wait}}

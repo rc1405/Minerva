@@ -1,0 +1,81 @@
+'''
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+'''
+
+import pymongo
+import bson
+import collections
+import time
+#import os
+#from Minerva import config
+class alert_console(object):
+    def __init__(self, configs):
+        #db_conf = config.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']['db']
+        db_conf = configs['db']
+        self.sizeLimit = configs['events']['maxResults']
+        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
+        if db_conf['useAuth']:
+            client.minerva.authenticate(db_conf['username'], db_conf['password'])
+        self.alerts = client.minerva.alerts
+        self.flow = client.minerva.flow
+        self.sessions = client.minerva.sessions
+    def convert(self, data):
+        if isinstance(data, basestring):
+            return str(data)
+        elif isinstance(data, collections.Mapping):
+            return dict(map(self.convert, data.iteritems()))
+        elif isinstance(data, collections.Iterable):
+            return type(data)(map(self.convert, data))
+        else:
+            return data
+    def get_alerts(self):
+        items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit } ] )
+        results = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS": "OPEN" }},{ "$group": { "_id": "$null", "count": { "$sum": 1 }}}] )
+        numFound = 0
+        for i in results:
+            numFound = i['count']
+        return numFound, items_found
+    def get_escalated_alerts(self):
+        items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "ESCALATED" } }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit } ] )
+        results = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS": "ESCALATED" }},{ "$group": { "_id": "$null", "count": { "$sum": 1 }}}] )
+        numFound = 0
+        for i in results:
+            numFound = i['count']
+        return numFound, items_found
+    def close_alert_nc(self, events):
+        for event in events.split(','):
+            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": "NONE" }})
+        return
+    def close_alert(self, events, comments):
+        if comments == '':
+            comments = 'NONE'
+        for event in events.split(','):
+            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": comments }})
+        return
+    def escalate_alert(self, events, comments):
+        if comments == '':
+            comments = 'NONE'
+        for event in events.split(','):
+            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "ESCALATED"}, "$push": { "MINERVA_COMMENTS": comments }})
+        return
+    def add_comments(self, events, comments):
+        if comments != '':
+            for event in events.split(','):
+                self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": comments }})
+        return

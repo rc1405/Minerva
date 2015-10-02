@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="icon" type="image/png" href="/favicon">
+    <title>Minerva Login</title>
+    <link href="/signin_css" rel="stylesheet">
+  <script src="/jquery_min_js"></script>
+  <link rel="stylesheet" href="/bootstrap_min_css">
+  <link rel="stylesheet" href="/bootstrap_theme_min_css">
+  <script src="/bootstrap_min_js"></script>
+
+  </head>
+
+  <body style="background-color:lightblue">
+
+    <div class="container">
+
+      <form class="form-signin" method="post" action="/login">
+        <h2 class="form-signin-heading">Please sign in</h2>
+        <label for="inputEmail" class="sr-only">Username</label>
+        <input type="text" name=username id="inputEmail" class="form-control" placeholder="Username" required autofocus>
+        <label for="inputPassword" class="sr-only">Password</label>
+        <input type="password" name=password id="inputPassword" class="form-control" placeholder="Password" required>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+      </form>
+
+    </div>
+  </body>
+</html>

@@ -1,0 +1,64 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/favicon">
+  <script src="/jquery_min_js"></script>
+  <link rel="stylesheet" href="/bootstrap_min_css">
+  <link rel="stylesheet" href="/bootstrap_theme_min_css">
+  <script src="/bootstrap_min_js"></script>
+  </head>
+	{# include '/profile.js' #}
+	{# load date_filters #}
+	<style>
+	body {background-color:lightblue; padding-top:60px}
+	</style>
+	<title>Minerva User Profile</title>
+	<body>
+	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	    <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	    </div>
+	    <div id="navbar" class="navbar-collapse collapse">
+            {% include 'menu.html' %}
+	    </div>
+	</div>
+	</nav>
+    <div class="container">
+
+      <form class="form-signin" method="post" action="/profile">
+        <h2 class="form-signin-heading">Change Current Password</h2>
+        <label for="inputCurrentPw" class="sr-only">Enter Current Password</label>
+        <input type="password" name=currentPW id="currentPW" class="form-control" placeholder="Current Password" required autofocus>
+        <label for="inputPassword" class="sr-only">Enter New Password</label>
+        <input type="password" name=newPassword id="newPassword" class="form-control" placeholder="New Password" required>
+        <label for="inputPassword2" class="sr-only">Re-Enter New Password</label>
+        <input type="password" name=newPassword2 id="newPassword2" class="form-control" placeholder="Re-New Password" required>
+        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        <button class="btn btn-lg btn-primary btn-block" type="submit">Change Password</button>
+      </form>
+
+    </div>
+  </body>
+
+	</body>
+</html>

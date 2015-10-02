@@ -1,0 +1,107 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/favicon">
+  <script src="/jquery_min_js"></script>
+  <link rel="stylesheet" href="/bootstrap_min_css">
+  <link rel="stylesheet" href="/bootstrap_theme_min_css">
+  <script src="/bootstrap_min_js"></script>
+  </head>
+	{% include '/users.js' %}
+	{# load date_filters #}
+	<style>
+	body {background-color:lightblue; padding-top:60px}
+	</style>
+	<title>Minerva User Management</title>
+	<body>
+	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	    <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	    </div>
+	    <div id="navbar" class="navbar-collapse collapse">
+            {% include 'menu.html' %}
+	    </div>
+	</div>
+	</nav>
+	<div class="container" style="width:100%;" >
+        <div class="starter-template">
+        <div id='Add new user stuff' >
+        <center>
+        <table border="1">
+        <col width="20%">
+        <col width="20%">
+        <col width="10%">
+        <col width="10%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+        <col width="6%">
+        <col width="5%">
+        <col width="5%">
+        <tr><th align="center" rowspan="2">Username</th><th align=center rowspan="2">Password</th><td align=center colspan="5"><b>Permissions</b></td><td rowspan="2" align=center><b>Enabled</b></td><td align="center" rowspan="3"><b><a href="javascript:createUser();" >Submit</a></b></td><td align="center" rowspan="3"><b><a href="javascript:location='/users';" >Reset</a></b></td></tr>
+        <tr><th>Console</th><th>Responder</th><th>Sensor Admin</th><th>User Admin</th><th>Server Admin</th></tr>
+        <tr><td><input type="text" id="username" class="form-control" placeholder="Username" required></td><td><input type="password" id=password class="form-control" placeholder="Password" required></td><td align="center"><input type="checkbox" id="console" value="console" checked></td><td align="center"><input type="checkbox" id="responder" value="responder"></td><td align="center"><input type="checkbox" id="sensor_admin" value="sensor_admin"></td><td align="center"><input type="checkbox" id="user_admin" value="user_admin"></td><td align="center"><input type="checkbox" id="server_admin" value="server_admin"></td><td align="center"><input type="checkbox" disabled checked id="enabled"></td></tr>
+        </table>
+        </center>
+        </div>
+        <br /><br />
+	<div id="HdrDiv" style="z-index:1000;background-color:lightblue;width:100%;" >
+	<table id="EventHdr" border="1" width=100% style="table-layout:fixed;" >
+        <col width="12%">
+        <col width="14%">
+        <col width="14%">
+        <col width="10%">
+        <col width="10%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+	<tr><th style="display:none;">ID</th><th style="word-wrap:break-word;" >Username</th><th style="word-wrap:break-word;">Time Created</th><th style="word-wrap:break-word">Last Login</th><th style="word-wrap:break-word;" >Console</th><th style="word-wrap:break-word;" >Responder</th><th style="word-wrap:break-word;" >Sensor Admin</th><th style="word-wrap:break-word;">User Admin</th><th style="word-wrap:break-word;">Server Admin</th><th style="word-wrap:break-word;">Status</th><th>Edit</th></tr>
+	</table>
+        <input type="hidden" id="updateType" value="new_user">
+	</div>
+	<div id="TblDiv" style="width:100%;" >
+	<table border="1" width=100% id="EventTable" style="table-layout:fixed;">
+        <col width="12%">
+        <col width="14%">
+        <col width="14%">
+        <col width="10%">
+        <col width="10%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+        <col width="8%">
+	{# autoescape off #}
+	{% for item in items_found %}
+        {% if item.ENABLED == 'DISABLED' %}<tr bgcolor="red" >{% else %}<tr>{% endif %}<td align="center" style="display:none;">{{ item.ID }}</td><td align="center" style="word-wrap:break-word;" >{{ item.USERNAME}}</td><td align="center" style="word-wrap:breakword;">{{ item.date_created|iso_to_utc}}</td><td align="center" style="word-wrap:break-word;" >{{ item.last_login|e|iso_to_utc }}</td><td align="center" style="word-wrap:break-word;" ><input type="checkbox" id="console{{loop.index}}" disabled {% if item.console == 'true' %}checked{% endif %}></td><td align="center" style="word-wrap:break-word;"><input id="responder{{loop.index}}" type="checkbox" disabled {% if item.responder == 'true' %}checked{%endif%}></td><td align="center" style="word-wrap:break-word;"><input id="sensor_admin{{loop.index}}" type="checkbox" disabled {% if item.sensor_admin == 'true' %}checked{%endif%}></td><td align="center" style="word-wrap:break-word;"><input type="checkbox" id="user_admin{{loop.index}}" disabled {% if item.user_admin == 'true' %}checked{%endif%}></td><td align="center" style="word-wrap:break-word;"><input id="server_admin{{loop.index}}" type="checkbox" disabled {% if item.server_admin == 'true' %}checked{%endif%}></td><td align="center" style="word-wrap:break-word;" ><input id="enabled{{loop.index}}" type="checkbox" disabled {% if item.ENABLED == 'true' %}checked {%endif%}></td><td><a href="javascript:editUser({{loop.index}});">Edit</a></tr>
+
+	{% endfor %}
+	{# endautoescape #}
+	</table>
+	</div>
+	</div>
+        </div>
+	</body>
+</html>
