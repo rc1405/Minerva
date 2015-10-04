@@ -159,20 +159,20 @@ def setup_db()
             "server_admin" : "true",
             "date_created" : datetime.datetime.fromtimestamp(time.time()),
     })
-    out_config['Webserver'] = {}
-    out_config['Webserver']['db'] = {}
-    out_config['Webserver']['db']['url'] = ip
-    out_config['Webserver']['db']['port'] = port
-    out_config['Webserver']['db']['useAuth'] = useAuth
-    out_config['Webserver']['db']['username'] = username
-    out_config['Webserver']['db']['password'] = password
-    out_config['Webserver']['db']['SECRET_KEY'] = password_salt 
-    out_config['Webserver']['db']['SESSION_KEY'] = session_salt
-    out_config['Webserver']['web'] = {}
-    out_config['Webserver']['web']['session_timeout'] = sessionMinutes
-    out_config['Webserver']['events'] = {}
-    out_config['Webserver']['events']['max_age'] = expiredDays
-    out_config['Webserver']['events']['flow_max_index_age'] = expiredflowDays
+    config['Webserver'] = {}
+    config['Webserver']['db'] = {}
+    config['Webserver']['db']['url'] = ip
+    config['Webserver']['db']['port'] = port
+    config['Webserver']['db']['useAuth'] = useAuth
+    config['Webserver']['db']['username'] = username
+    config['Webserver']['db']['password'] = password
+    config['Webserver']['db']['SECRET_KEY'] = password_salt 
+    config['Webserver']['db']['SESSION_KEY'] = session_salt
+    config['Webserver']['web'] = {}
+    config['Webserver']['web']['session_timeout'] = sessionMinutes
+    config['Webserver']['events'] = {}
+    config['Webserver']['events']['max_age'] = expiredDays
+    config['Webserver']['events']['flow_max_index_age'] = expiredflowDays
  
 def setup_core():
     shutil.copy('Minerva','/usr/lib/python2.7/site-packages/')
@@ -206,17 +206,17 @@ def setup_server():
     elif int(maxResults) > 15000:
         maxResults = 15000
     setup webserver stuff, sysinit, systemctl type stuff
-    out_config['Webserver']['web']['hostname'] = hostname
-    out_config['Webserver']['web']['bindIp'] = bindIp
-    out_config['Webserver']['web']['port'] = webport
-    out_config['Webserver']['web']['threads'] = threads
-    out_config['Webserver']['web']['certs'] = {}
-    out_config['Webserver']['web']['webserver_cert'] = web_cert
-    out_config['Webserver']['web']['webserver_key'] = web_key
-    out_config['Webserver']['web']['password_tries'] = password_tries
-    out_config['Webserver']['web']['password_min_length'] = password_min_length
-    out_config['Webserver']['web']['password_max_age'] = password_max_age
-    out_config['Webserver']['events']['maxResults'] = maxResults
+    config['Webserver']['web']['hostname'] = hostname
+    config['Webserver']['web']['bindIp'] = bindIp
+    config['Webserver']['web']['port'] = webport
+    config['Webserver']['web']['threads'] = threads
+    config['Webserver']['web']['certs'] = {}
+    config['Webserver']['web']['webserver_cert'] = web_cert
+    config['Webserver']['web']['webserver_key'] = web_key
+    config['Webserver']['web']['password_tries'] = password_tries
+    config['Webserver']['web']['password_min_length'] = password_min_length
+    config['Webserver']['web']['password_max_age'] = password_max_age
+    config['Webserver']['events']['maxResults'] = maxResults
     os.makedirs(os.path.join(location,'bin/templates'))
     os.makedirs(os.path.join(location,'bin/static'))
     shutil.copy('templates',os.path.join(location,'bin/templates'))
@@ -243,11 +243,11 @@ def setup_receiver():
         rec_key = '/var/lib/minerva/receiver/private.pem'
     else:
         rec_key = raw_input("Enter full path of private key to use w/ the certificate above: ")
-    out_config['Event_Receiver'] = {}
-    out_config['Event_Receiver']['listen_ip'] = listen_ips
-    out_config['Event_Receiver']['certs'] = {}
-    out_config['Event_Receiver']['certs']['server_cert'] = rec_cert
-    out_config['Event_Receiver']['certs']['private_key'] = rec_key
+    config['Event_Receiver'] = {}
+    config['Event_Receiver']['listen_ip'] = listen_ips
+    config['Event_Receiver']['certs'] = {}
+    config['Event_Receiver']['certs']['server_cert'] = rec_cert
+    config['Event_Receiver']['certs']['private_key'] = rec_key
     shutil.copy('receiver.py',os.path.join(location,'bin'))
 def setup_agent():
     sensor_name = raw_input("Enter name of sensor: ")
@@ -279,28 +279,29 @@ def setup_agent():
     send_wait = raw_input("Enter max # of seconds to wait to send events (Will send earlier if max events is reached): [10] ")
     if len(send_wait) == 0:
         send_wait = 10
-    out_config['Agent_forwarder'] = {}
-    out_config['Agent_forwarder']['sensor_name'] = sensor_name
-    out_config['Agent_forwarder']['client_cert'] = client_cert
-    out_config['Agent_forwarder']['client_private'] = client_key
-    out_config['Agent_forwarder']['logfiles'] = logfiles
-    out_config['Agent_forwarder']['target_addr'] = {}
-    out_config['Agent_forwarder']['target_addr']['server_cert'] = server_cert
-    out_config['Agent_forwarder']['target_addr']['destination'] = destination
-    out_config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
-    out_config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
-    out_config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
+    config['Agent_forwarder'] = {}
+    config['Agent_forwarder']['sensor_name'] = sensor_name
+    config['Agent_forwarder']['client_cert'] = client_cert
+    config['Agent_forwarder']['client_private'] = client_key
+    config['Agent_forwarder']['logfiles'] = logfiles
+    config['Agent_forwarder']['target_addr'] = {}
+    config['Agent_forwarder']['target_addr']['server_cert'] = server_cert
+    config['Agent_forwarder']['target_addr']['destination'] = destination
+    config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
+    config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
+    config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
     shutil.copy('agent.py',os.path.join(location,'bin'))
 
 def write_config():
     from jinja2 import Environment, FileSystemLoader
     env = Environment(loader=FileSystemLoader('templates'))
-            tmp = env.get_template('users.html')
-            return tmp.render(context_dict
-
+    tmp = env.get_template('minerva.yaml')
+    conf_file = open(os.path.join(location,'etc/minerva.yaml'))
+    conf_file.writelines(tmp.render(config))
+    conf_file.close()
 
 def main():
-    out_config = {}
+    config = {}
     while(True):
         print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t")
         intall_type = raw_input()
@@ -350,4 +351,5 @@ def main():
         check_agent()
         setup_core()
         setup_agent()
+    write_config()
 main()

@@ -17,6 +17,7 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 #}
+{% if 'Webserver' in config %}
 Webserver:
   db:
     url: {{config.Webserver.db.url}}
@@ -42,6 +43,8 @@ Webserver:
     maxResults: {{config.Webserver.events.maxResults}}
     max_age: {{config.Webserver.events.max_age}}
     flow_max_index_age: {{config.Webserver.events.flow_max_index_age}}
+{% endif %}
+{% if 'Event_receiver' in config %}
 Event_Receiver:
   listen_ip:
     {% for ip in config.Event_Receiver.listen_ip.keys() -%}
@@ -53,6 +56,8 @@ Event_Receiver:
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
     private_key: {{config.Event_Receiver.certs.private_key}}
+{% endif %}
+{% if 'Agent_forwarder' in config %}
 Agent_forwarder:
   sensor_name: {{config.Agent_forwarder.sensor_name}}
   client_cert: {{config.Agent_forwarder.client_cert}}
@@ -69,3 +74,4 @@ Agent_forwarder:
     port: {{config.Agent_forwarder.target_addr.port}}
     send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
     send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
+{% endif %}
