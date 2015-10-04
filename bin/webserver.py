@@ -39,33 +39,6 @@ class Minerva(object):
         self.configs = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']
         self.sizeLimit = self.configs['events']['maxResults']
     @cherrypy.expose
-    def favicon(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/favicon.ico'), content_type="image/x-icon")
-    @cherrypy.expose
-    def bootstrap_min_css(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/bootstrap/css/bootstrap.min.css'), content_type="text/css")
-    @cherrypy.expose
-    def bootstrap_theme_min_css(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/bootstrap/css/bootstrap-theme.min.css'), content_type="text/css")
-    @cherrypy.expose
-    def bootstrap_min_js(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/bootstrap/js/bootstrap.min.js'), content_type="application/javascript")
-    @cherrypy.expose
-    def bootstrap_signin_css(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/bootstrap/css/signin.css'), content_type="text/css")
-    @cherrypy.expose
-    def jquery_min_js(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/jquery/jquery.min.js'), content_type="application/javascript")
-    @cherrypy.expose
-    def arrow(self):
-        return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/arrow.png'), content_type="image/png")
-    #@cherrypy.expose
-    #def bootstrap_datetime_css(self):
-        #return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/bootstrap/css/bootstrap-datetimepicker.min.css'), content_type="text/css")
-    #@cherrypy.expose
-    #def bootstrap_datetime_js(self):
-        #return cherrypy.lib.static.serve_file(os.path.join(os.getcwd(),'static/bootstrap/js/bootstrap-datetimepicker.min.js'), content_type="application/javascript")
-    @cherrypy.expose
     def login(self, **kwargs):
         authUser = Users(self.configs)
         if cherrypy.request.method == 'POST':
@@ -513,4 +486,26 @@ if __name__ == '__main__':
                             'tools.sessions.httponly': True,
                             'tools.sessions.on': True,
                           })
-    cherrypy.quickstart(Minerva())
+    config = {
+        '/css': { 
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/bootstrap/css'),
+            },
+        '/js': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/bootstrap/js'),
+        },
+        '/jquery.min.js': {
+            'tools.staticfile.on': True,
+            'tools.staticfile.filename': os.path.join(os.getcwd(), 'static/jquery/jquery.min.js'),
+        },
+        '/images': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/images'),
+        },
+        '/fonts': {
+            'tools.staticdir.on': True,
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/bootstrap/fonts'),
+        },
+    }
+    cherrypy.quickstart(Minerva(), config = config)

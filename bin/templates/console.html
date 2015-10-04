@@ -20,15 +20,13 @@
 <!DOCTYPE html>
 <html>
   <head>
-  <link rel="icon" type="image/png" href="/favicon">
-  <script src="/jquery_min_js"></script>
-  <link rel="stylesheet" href="/bootstrap_min_css">
-  <link rel="stylesheet" href="/bootstrap_theme_min_css">
-  <script src="/bootstrap_min_js"></script>
+  <link rel="icon" type="image/png" href="/images/favicon.ico">
+  <script src="/jquery.min.js"></script>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+  <script src="/js/bootstrap.min.js"></script>
   </head>
 	{% include 'console.js' %}
-	{# include 'menu.css' #}
-	{# load date_filters #}
 	<style>
 	body {background-color:lightblue; padding-top:60px}
 	</style>
@@ -102,7 +100,7 @@
 	<col width="4%">
 	{# autoescape off #}
 	{% for item in items_found %}
-	{% if item.document.alert.severity == 4 %}<tr bgcolor="red" onclick="startTrack(this)">{% elif item.document.alert.severity == 3 %}<tr bgcolor="orange" onclick="startTrack(this)">{% elif item.document.alert.severity == 2 %}<tr bgcolor="yellow" onclick="startTrack(this)"> {% elif item.document.alert.severity == 1 %}<tr bgcolor="green" onclick="startTrack(this)"> {% else %}<tr>{% endif %}<td align="center" style="display:none;">{{ item.ID }}</td><td align="center"><a href="javascript:getOneAlertFlow({{loop.index}});"><img src="/arrow" height="16" width="16" ></a></td><td align="center" style="word-wrap:break-word;" >{# item.document.time.isoformat #}{{ item.epoch|iso_to_utc}}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.sensor }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.proto }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.src_ip }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.src_port }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.dest_ip }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.dest_port }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.signature }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.category }}</td><td align="center">{{ item.document.alert.severity }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.signature_id }}</td><td align="center">{{ item.document.alert.rev }}</td><td align="center">{{ item.document.alert.gid }}</td></tr>
+	{% if item.document.alert.severity == 4 %}<tr bgcolor="red" onclick="startTrack(this)">{% elif item.document.alert.severity == 3 %}<tr bgcolor="orange" onclick="startTrack(this)">{% elif item.document.alert.severity == 2 %}<tr bgcolor="yellow" onclick="startTrack(this)"> {% elif item.document.alert.severity == 1 %}<tr bgcolor="green" onclick="startTrack(this)"> {% else %}<tr>{% endif %}<td align="center" style="display:none;">{{ item.ID }}</td><td align="center"><a href="javascript:getOneAlertFlow({{loop.index}});"><img src="/images/arrow.png" height="16" width="16" ></a></td><td align="center" style="word-wrap:break-word;" >{# item.document.time.isoformat #}{{ item.epoch|iso_to_utc}}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.sensor }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.proto }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.src_ip }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.src_port }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.dest_ip }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.dest_port }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.signature }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.category }}</td><td align="center">{{ item.document.alert.severity }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.signature_id }}</td><td align="center">{{ item.document.alert.rev }}</td><td align="center">{{ item.document.alert.gid }}</td></tr>
 	{% endfor %}
         </table><br />
         {% if numFound == 0 %}
