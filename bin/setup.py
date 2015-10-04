@@ -119,7 +119,7 @@ def setup_db():
     db.create_collection('flow')
     db.create_collection('sessions')
     db.create_collection('users')
-    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("timestamp", pymongo.ASCENDING)])
+    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
     expiredDays = raw_input("Enter number of days to keep alerts: ")
     expiredSeconds = int(expiredDays) * 86400
     db.alerts.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", expiredSeconds)])
