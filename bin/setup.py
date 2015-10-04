@@ -75,23 +75,23 @@ def check_receiver():
         import pytz
     except:
         print('pytz not installed')
-def format_db()
-    if 'minerva' in client.database_names():
-        client.drop_database('minerva')
-    database = client.minerva
-    database.create_collection('alerts')
-    database.create_collection('flow')
-    database.create_collection('users')
-    database.create_collection('sensors')
-    database.create_collection('sessions')
-    alerts = database.alerts
-    alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
-    alerts.create_index([("epoch", pymongo.ASCENDING),( "expireAfterSeconds", alert_threshold )])
-    flow = database.flow
-    flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),( "dest_port", pymongo.ASCENDING),("proto": pymongo.ASCENDING))
-    flow.create_index([("timestamp", pymongo.ASCENDING), ( "expireAfterSeconds", 86400)])
-    users = database.users
-    users.insert({'adminuser'})
+#def format_db():
+    #if 'minerva' in client.database_names():
+        #client.drop_database('minerva')
+    #database = client.minerva
+    #database.create_collection('alerts')
+    #database.create_collection('flow')
+    #database.create_collection('users')
+    #database.create_collection('sensors')
+    #database.create_collection('sessions')
+    #alerts = database.alerts
+    #alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
+    #alerts.create_index([("epoch", pymongo.ASCENDING),( "expireAfterSeconds", alert_threshold )])
+    #flow = database.flow
+    #flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),( "dest_port", pymongo.ASCENDING),("proto": pymongo.ASCENDING))
+    #flow.create_index([("timestamp", pymongo.ASCENDING), ( "expireAfterSeconds", 86400)])
+    #users = database.users
+    #users.insert({'adminuser'})
     
 
 def setup_db()
@@ -131,17 +131,17 @@ def setup_db()
     db.create_collection('flow')
     db.create_collection('sessions')
     db.create_collection('users')
-    db.alerts.create_index({"MINERVA_STATUS": 1, "alert.severity": -1, "timestamp": 1 })
+    db.alerts.create_index({"MINERVA_STATUS": pymongo.ASCENDING, "alert.severity": pymongo.DESCENDING, "timestamp": pymongo.ASCENDING })
     expiredDays = raw_input("Enter number of days to keep alerts: ")
     expiredSeconds = int(expiredDays) * 86400
-    db.alerts.create_index({"timestamp": 1, "$expireAfterSeconds": expiredSeconds })
-    db.flow.create_index({"src_ip": 1, "src_port": 1, "dest_ip": 1, "dest_port": 1, "proto": 1 })
+    db.alerts.create_index({"timestamp": pymongo.ASCENDING, "$expireAfterSeconds": expiredSeconds })
+    db.flow.create_index({"src_ip": pymongo.ASCENDING, "src_port": pymongo.ASCENDING, "dest_ip": pymongo.ASCENDING, "dest_port": pymongo.ASCENDING, "proto": pymongo.ASCENDING })
     expiredflowDays = raw_input("Enter number of days to keep flow data: ")
     flowexpiredSeconds = int(expiredflowDays) * 86400
-    db.flow.create_index({"timestamp": 1, "$expireAfterSeconds": flowexpiredSeconds })
+    db.flow.create_index({"timestamp": pymongo.ASCENDING, "$expireAfterSeconds": flowexpiredSeconds })
     sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
     sessionTimeout = int(sessionMinutes) * 60
-    db.session.create_index({ "last_accessed": 1, "$expireAfterSeconds": sessionTimeout })
+    db.session.create_index({ "last_accessed": pymongo.ASCENDING, "$expireAfterSeconds": sessionTimeout })
     admin_pw = raw_input("Enter password for admin console user: ")
     password_salt = bcrypt.gensalt()
     session_salt = bcrypt.gensalt()
