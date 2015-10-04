@@ -18,29 +18,22 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
+import yaml
+import os
 import json
 import time
 import sys
 
-def _convertJSON(entry, logType, sensor):
-    try:
-        new_entry = json.loads(entry)
-    except:
-        #print(entry)
-        raise "Invalid JSON"
-    new_entry['sensor'] = sensor
-    new_entry['logType'] = logType
-    new_entry['MINERVA_STATUS'] = 'OPEN'
-    return new_entry
-class ConvertAlert():
+class ConvertJSON():
     def __init__(self, sensor, logType):
         self.sensor = sensor
         self.logType = logType
     def convert(self, entry):
-        return _convertJSON(entry, self.logType, self.sensor)
-class ConvertFlow():
-    def __init__(self, sensor, logType):
-        self.sensor = sensor
-        self.logType = logType
-    def convert(self, entry):
-        return _convertJSON(entry, self.logType, self.sensor)
+        try:
+            new_entry = json.loads(entry)
+        except:
+            raise "Invalid JSON"
+        new_entry['sensor'] = self.sensor
+        new_entry['logType'] = self.logType
+        new_entry['MINERVA_STATUS'] = 'OPEN'
+        return new_entry

@@ -24,29 +24,31 @@ import json
 import time
 import sys
 
-class MinervaConfigs():
-    def __init__(self, **kwargs):
-        if not 'conf' in kwargs:
-            conf = '/opt/minerva/etc/minerva.yaml'
-        if not os.path.exists(conf):
-            raise "Config File not found"
-        with open(conf,'r') as f:
-            config = yaml.load(f)
-        self.conf = config
 class TailLog():
     def __init__(self, logFile, posFile, logType):
         self.logFile = logFile
         self.logType = logType
         self.posFile = posFile
+        self.pos = 0
+        self.pos_inode = 0
+        self.pos_size = 0
+    def write_pos(self):
+        write_line = "%s,%s,%s" % (str(self.pos_inode),str(self.pos_size),str(self.pos))
+        with open(self.posFile, 'w') as pfile:
+            pfile.write(write_line)
     def tail(self):
         try:
-            def write_pos(inode, size, pos):
-                pfile = open(self.posFile,'w')
-                pfile.write(str(inode) + ',' + str(size) + ',' + str(pos))
-                pfile.flush()
-                pfile.close()
+            #def write_pos():
+                #pfile = open(self.posFile,'w')
+                #pfile.write(str(inode) + ',' + str(size) + ',' + str(pos))
+                #pfile.flush()
+                #pfile.close()
+                #write_line = str(inode) + ',' + str(size) + ',' + str(pos)
+                #write_line = str(self.pos_inode) + ',' + str(self.pos_size) + ',' + str(self.pos)
+                #with open(self.posFile, 'w') as pfile:
+                    #pfile.write(write_line)
             def reset_file():
-                print('omg reset file')
+                #print('omg reset file')
                 lfile.close()
                 lfile = open(self.logFile,'r')
                 stat = os.fstat(lfile.fileno())
@@ -55,7 +57,10 @@ class TailLog():
                 pos_inode = cur_inode
                 pos_size = cur_size
                 pos = 0
-                write_pos(pos_inode, pos_size, pos)
+                self.pos_inode = cur_inode
+                self.pos_size = cur_size
+                self.pos = pos
+                self.write_pos()
                 return pos_inode, pos_size, pos
             if os.path.exists(self.posFile):
                 try:
@@ -63,43 +68,48 @@ class TailLog():
                     pos = int(pos)
                     pos_inode = int(pos_inode)
                     pos_size = int(pos_size)
+                    self.pos = pos
+                    self.pos_inode = pos_inode
+                    self.pos_size = pos_size
                 except:
-                    print('error reading inode')
+                    #print('error reading inode')
                     pos = 0
                     pos_inode = 0
                     pos_size = 0
             else:
-                print('pos file doesnt exist')
+                #print('pos file doesnt exist')
                 pos = 0
                 pos_inode = 0
                 pos_size = 0
             if os.path.exists(self.logFile):
-                print('opening file')
+                #print('opening file')
                 lfile = open(self.logFile,'r')
                 stat = os.fstat(lfile.fileno())
                 cur_inode = stat.st_ino
                 cur_size = stat.st_size
-                print('done getting inode')
+                #print('done getting inode')
                 if cur_inode != pos_inode or cur_size < pos_size:
-                    print('diff inode')
-                    print(pos_size)
-                    print(cur_size)
+                    #print('diff inode')
+                    #print(pos_size)
+                    #print(cur_size)
                     pos = 0
                     pos_inode = cur_inode
                     pos_size = cur_size
-                    write_pos(cur_inode, cur_size, pos)
+                    self.pos_inode = cur_inode
+                    self.pos_size = cur_size
+                    self.write_pos()
                 sleep = 0.00001
                 count = 0
                 while True:
                     line = lfile.readline()
                     if count < pos:
                         if not line:
-                            print('not enough lines')
+                            #print('not enough lines')
                             stat = os.stat(self.logFile)
                             act_inode = stat.st_ino
                             act_size = stat.st_size
                             if pos_inode != act_inode or act_size < pos_size:
-                                print('done getting inode2')
+                                #print('done getting inode2')
                                 pos_inode, pos_size, pos = reset_file()
                                 cur_inode = pos_inode
                                 cur_size = pos_size
@@ -117,31 +127,19 @@ class TailLog():
                             cur_size = pos_size
                             count = 0
                             continue
-		        print('sleeping')
+		        #print('sleeping')
                         time.sleep(sleep)
                         if sleep < 10:
                             sleep += .5
                         continue
                     count += 1
                     pos += 1
-                    write_pos(pos_inode, pos_size, pos)
+                    self.pos = pos
+                    self.write_pos()
                     sleep = 0.00001
                     yield line
             else:
                 raise "File not found"
-        except KeyboardInterrupt:
-            write_pos(pos_inode, pos_size, pos)
-            sys.exit()
-class ConvertJSON():
-    def __init__(self, sensor, logType):
-        self.sensor = sensor
-        self.logType = logType
-    def convert(self, entry):
-        try:
-            new_entry = json.loads(entry)
         except:
-            raise "Invalid JSON"
-        new_entry['sensor'] = self.sensor
-        new_entry['logType'] = self.logType
-        new_entry['MINERVA_STATUS'] = 'OPEN'
-        return new_entry
+            self.write_pos()
+            sys.exit()
