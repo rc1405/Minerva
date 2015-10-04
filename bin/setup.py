@@ -2,6 +2,10 @@ import pymongo
 import os
 import sys
 import copy
+import datetime
+import time
+import shutil
+import getpass
 
 def check_server():
     try:
@@ -75,26 +79,9 @@ def check_receiver():
         import pytz
     except:
         print('pytz not installed')
-#def format_db():
-    #if 'minerva' in client.database_names():
-        #client.drop_database('minerva')
-    #database = client.minerva
-    #database.create_collection('alerts')
-    #database.create_collection('flow')
-    #database.create_collection('users')
-    #database.create_collection('sensors')
-    #database.create_collection('sessions')
-    #alerts = database.alerts
-    #alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
-    #alerts.create_index([("epoch", pymongo.ASCENDING),( "expireAfterSeconds", alert_threshold )])
-    #flow = database.flow
-    #flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),( "dest_port", pymongo.ASCENDING),("proto": pymongo.ASCENDING))
-    #flow.create_index([("timestamp", pymongo.ASCENDING), ( "expireAfterSeconds", 86400)])
-    #users = database.users
-    #users.insert({'adminuser'})
-    
 
-def setup_db()
+def setup_db():
+    print("Setting up the Database\n")
     import pymongo
     import bcrypt
     ip = raw_input('Please enter database ip: [127.0.0.1] ')
@@ -106,21 +93,22 @@ def setup_db()
     useAuth = raw_input('Use db authentication? Y/N [N] ')
     if useAuth == 'y' or useAuth == 'Y':
         username = raw_input("Enter a username: ")
-        password = raw_input("Enter a password: ")
+        print('Enter a password: ')
+        password = getpass.getpass()
     else:
         username = 'NA'
         password = 'NA'
     client = pymongo.MongoClient(ip,int(port))
     db = client.minerva
     if 'minerva' in client.database_names():
-        resp = raw_input('Database already exists, do you want to keep it?i [N]')
+        resp = raw_input('Database already exists, do you want to keep it? [N]')
         if resp == 'Y' or resp == 'y':
             keep_db = True
         else:
             keep_db = False
-            db.drop_database('minerva')
+            client.drop_database('minerva')
     try:
-        tmp =  len(db.list_collections())
+        tmp =  len(db.collection_names())
     except:
         try:
             db.authenticate(username, password)
@@ -131,21 +119,30 @@ def setup_db()
     db.create_collection('flow')
     db.create_collection('sessions')
     db.create_collection('users')
-    db.alerts.create_index({"MINERVA_STATUS": pymongo.ASCENDING, "alert.severity": pymongo.DESCENDING, "timestamp": pymongo.ASCENDING })
+    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("timestamp", pymongo.ASCENDING)])
     expiredDays = raw_input("Enter number of days to keep alerts: ")
     expiredSeconds = int(expiredDays) * 86400
-    db.alerts.create_index({"timestamp": pymongo.ASCENDING, "$expireAfterSeconds": expiredSeconds })
-    db.flow.create_index({"src_ip": pymongo.ASCENDING, "src_port": pymongo.ASCENDING, "dest_ip": pymongo.ASCENDING, "dest_port": pymongo.ASCENDING, "proto": pymongo.ASCENDING })
+    db.alerts.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", expiredSeconds)])
+    db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING)])
     expiredflowDays = raw_input("Enter number of days to keep flow data: ")
     flowexpiredSeconds = int(expiredflowDays) * 86400
-    db.flow.create_index({"timestamp": pymongo.ASCENDING, "$expireAfterSeconds": flowexpiredSeconds })
+    db.flow.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", flowexpiredSeconds)])
     sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
     sessionTimeout = int(sessionMinutes) * 60
-    db.session.create_index({ "last_accessed": pymongo.ASCENDING, "$expireAfterSeconds": sessionTimeout })
-    admin_pw = raw_input("Enter password for admin console user: ")
+    db.session.create_index([("last_accessed", pymongo.ASCENDING),("expireAfterSeconds", sessionTimeout)])
+    #admin_pw = raw_input("Enter password for admin console user: ")
+    while True:
+        print('Enter admin password: ')
+        admin_pw = getpass.getpass()
+        print('Re-enter admin password: ')
+        admin_pw2 = getpass.getpass()
+        if admin_pw == admin_pw2:
+            break
+        else:
+            print("Passwords do not match")
     password_salt = bcrypt.gensalt()
     session_salt = bcrypt.gensalt()
-    admin_hashedPW = bcrypt.hashpw(password, password_salt)
+    admin_hashedPW = bcrypt.hashpw(str(admin_pw), str(password_salt))
     db.users.insert(
     {
             "USERNAME" : "admin",
@@ -175,8 +172,11 @@ def setup_db()
     config['Webserver']['events']['flow_max_index_age'] = expiredflowDays
  
 def setup_core():
-    shutil.copy('Minerva','/usr/lib/python2.7/site-packages/')
+    if os.path.exists('/usr/lib/python2.7/site-packages/Minerva'):
+        shutil.rmtree('/usr/lib/python2.7/site-packages/Minerva')
+    shutil.copytree('Minerva','/usr/lib/python2.7/site-packages/Minerva')
 def setup_server():
+    print("Setting up the web server\n")
     hostname = raw_input("Enter hostname for webserver: ")
     bindIp = raw_input("Enter IP Address to bind to: ")
     webport = raw_input("Enter Port for webserver to run on: [443] ")
@@ -205,31 +205,32 @@ def setup_server():
         maxResults = 5000
     elif int(maxResults) > 15000:
         maxResults = 15000
-    setup webserver stuff, sysinit, systemctl type stuff
     config['Webserver']['web']['hostname'] = hostname
     config['Webserver']['web']['bindIp'] = bindIp
     config['Webserver']['web']['port'] = webport
     config['Webserver']['web']['threads'] = threads
     config['Webserver']['web']['certs'] = {}
-    config['Webserver']['web']['webserver_cert'] = web_cert
-    config['Webserver']['web']['webserver_key'] = web_key
+    config['Webserver']['web']['certs']['webserver_cert'] = web_cert
+    config['Webserver']['web']['certs']['webserver_key'] = web_key
     config['Webserver']['web']['password_tries'] = password_tries
     config['Webserver']['web']['password_min_length'] = password_min_length
     config['Webserver']['web']['password_max_age'] = password_max_age
     config['Webserver']['events']['maxResults'] = maxResults
-    os.makedirs(os.path.join(location,'bin/templates'))
-    os.makedirs(os.path.join(location,'bin/static'))
-    shutil.copy('templates',os.path.join(location,'bin/templates'))
-    shutil.copy('static',os.path.join(location,'bin/static'))
-    shutil.copy('webserver.py',os.path.join(location,'bin/webserver.py'))
+    #os.makedirs(os.path.join(install_path,'bin/templates'))
+    #os.makedirs(os.path.join(install_path,'bin/static'))
+    shutil.copytree('templates',os.path.join(install_path,'bin/templates'))
+    shutil.copytree('static',os.path.join(install_path,'bin/static'))
+    shutil.copy('webserver.py',os.path.join(install_path,'bin/webserver.py'))
 def setup_receiver():
+    print("Setting up the event receiver\n")
     listen_ips = {}
     while True:
         listen_ip = raw_input("Enter IP Address to listen on: ")
-        listen_ips[listen_ip] = []
+        listen_ips[listen_ip] = {}
+        listen_ips[listen_ip]['ports'] = []
         while True:
             listen_port = raw_input("Enter port to listen on: ")
-            listen_ips[listen_ip].append(int(listen_port))
+            listen_ips[listen_ip]['ports'].append(int(listen_port))
             resp = raw_input("Do you want to add more ports? [y/n] ")
             if resp == 'n' or resp == 'N':
                 break
@@ -248,8 +249,9 @@ def setup_receiver():
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key
-    shutil.copy('receiver.py',os.path.join(location,'bin'))
+    shutil.copy('receiver.py',os.path.join(install_path,'bin'))
 def setup_agent():
+    print("Setting up the agent\n")
     sensor_name = raw_input("Enter name of sensor: ")
     client_cert = raw_input("Enter full pathname of sensor certificate (One will be created if it doesn't exist): [/var/lib/minerva/agent/agent.pem] ")
     if len(client_cert) == 0:
@@ -269,7 +271,7 @@ def setup_agent():
         if resp == 'n' or resp == 'N':
             break
     server_cert = raw_input("Enter full pathname of where to save server cert: [/var/lib/minerva/agent/server.pem] ")
-    if len(server_cert) = 0:
+    if len(server_cert) == 0:
         server_cert = '/var/lib/minerva/agent/server.pem'
     destination = raw_input("Enter IP address of receiver to send to: ")
     dest_port = int(raw_input("Enter destination port to send to: "))
@@ -290,28 +292,32 @@ def setup_agent():
     config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
     config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
     config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
-    shutil.copy('agent.py',os.path.join(location,'bin'))
+    shutil.copy('agent.py',os.path.join(install_path,'bin'))
 
 def write_config():
     from jinja2 import Environment, FileSystemLoader
     env = Environment(loader=FileSystemLoader('templates'))
     tmp = env.get_template('minerva.yaml')
-    conf_file = open(os.path.join(location,'etc/minerva.yaml'))
-    conf_file.writelines(tmp.render(config))
+    conf_file = open(os.path.join(install_path,'etc/minerva.yaml'),'w')
+    conf_write = tmp.render(config)
+    conf_file.writelines(tmp.render({ "config": config }))
     conf_file.close()
 
 def main():
+    global config, install_path
     config = {}
     while(True):
         print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t")
         intall_type = raw_input()
-        if int(intall_type) > 1 and int(intall_type) < 6:
+        if int(intall_type) >= 1 and int(intall_type) < 6:
             break
         else:
             print('Invalid Option')
     location = raw_input("Enter installation Directory: ")
     if os.path.exists(location):
         install_path = os.path.join(location,'minerva')
+        os.makedirs(os.path.join(install_path,'bin'))
+        os.makedirs(os.path.join(install_path,'etc'))
     else:
         try:
             os.makedirs(location)
@@ -321,7 +327,7 @@ def main():
         except:
             print("Unable to make directory %s, check permissions and try again" % location)
             sys.exit()
-    if intall_type == 1:
+    if int(intall_type) == 1:
         check_server()
         check_agent()
         check_receiver()
@@ -330,24 +336,24 @@ def main():
         setup_core()
         setup_receiver()
         setup_agent()
-    elif intall_type == 2:
+    elif int(intall_type) == 2:
         check_server()
         check_receiver()
         setup_db()
         setup_server()
         setup_core()
         setup_receiver()
-    elif intall_type == 3:
+    elif int(intall_type) == 3:
         check_server()
         setup_db()
         setup_server()
         setup_core()
-    elif intall_type == 4:
+    elif int(intall_type) == 4:
         check_receiver()
         setup_db()
         setup_core()
         setup_receiver()
-    elif intall_type == 5:
+    elif int(intall_type) == 5:
         check_agent()
         setup_core()
         setup_agent()
