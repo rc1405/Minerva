@@ -129,7 +129,7 @@ def setup_db():
     db.flow.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", flowexpiredSeconds)])
     sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
     sessionTimeout = int(sessionMinutes) * 60
-    db.session.create_index([("last_accessed", pymongo.ASCENDING),("expireAfterSeconds", sessionTimeout)])
+    db.sessions.create_index([("last_accessed", pymongo.ASCENDING),("expireAfterSeconds", sessionTimeout)])
     #admin_pw = raw_input("Enter password for admin console user: ")
     while True:
         print('Enter admin password: ')
