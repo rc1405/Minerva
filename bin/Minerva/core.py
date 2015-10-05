@@ -20,6 +20,7 @@
 
 import yaml
 import os
+import pymongo
 
 class MinervaConfigs():
     def __init__(self, **kwargs):
@@ -34,6 +35,11 @@ class MinervaConfigs():
         self.conf = config
     def parse_web_configs(self, new_config):
         config = self.conf
+        db_conf = config['Webserver']['db']
+        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
+        if db_conf['useAuth']:
+            client.minerva.authenticate(db_conf['username'], db_conf['password'])
+        db = client.minerva
         config['Webserver']['db']['url'] = new_config['db_ip']
         config['Webserver']['db']['port'] = int(new_config['db_port'])
         if not str(config['Webserver']['db']['useAuth']) == 'false':
@@ -53,11 +59,25 @@ class MinervaConfigs():
         config['Webserver']['web']['certs']['server_cert'] = str(new_config['cert_path'])
         config['Webserver']['web']['certs']['server_key'] = str(new_config['key_path'])
         config['Webserver']['web']['session_timeout'] = int(new_config['session_timeout'])
+        sessionSeconds = int(new_config['session_timeout']) * 60
+        try:
+            db.command("collMod", "sessions", index={'keyPattern': {'last_accessed':1},'expireAfterSeconds': sessionSeconds})
+        except:
+            db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionSeconds)
         if int(new_config['max_events']) > 15000:
             config['Webserver']['events']['max_events'] = 15000
         else:
             config['Webserver']['events']['max_events'] = int(new_config['max_events'])
         config['Webserver']['events']['max_age'] = int(new_config['max_age'])
-        config['Webserver']['events']['flow_max_index_age'] = int(new_config['flow_age'])
-
+        alertTimeout = int(new_config['max_age']) * 86400
+        try:
+            db.command("collMod", "alerts", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': alertTimeout})
+        except:
+            db.alerts.ensure_index("timestamp",expireAfterSeconds=alertTimeout)
+        config['Webserver']['events']['flow_max_age'] = int(new_config['flow_age'])
+        flowTimeout = int(new_config['flow_age']) * 86400
+        try:
+            db.command("collMod", "flow", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': flowTimeout})
+        except:
+            db.flow.ensure_index("timestamp",expireAfterSeconds=flowTimeout)
         return config
