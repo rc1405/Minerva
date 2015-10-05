@@ -392,12 +392,15 @@ class Minerva(object):
                 out_yaml = open(os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'), 'w')
                 out_yaml.write(out_tmp.render({"config": new_config}))
                 out_yaml.close()
-            context_dict = {}
-            context_dict['config'] = self.configs
-            context_dict['form'] = 'server_admin'
-            context_dict['permissions'] = perm_return
-            tmp = env.get_template('config.html')
-            return tmp.render(context_dict)
+                return_msg =  '<script type="text/javascript">window.alert("Changes Saved.  A restart is required to take full effect");location="/config";</script>'
+                return return_msg
+            else:
+                context_dict = {}
+                context_dict['config'] = self.configs
+                context_dict['form'] = 'server_admin'
+                context_dict['permissions'] = perm_return
+                tmp = env.get_template('config.html')
+                return tmp.render(context_dict)
         elif 'newLogin' in perm_return:
             if cherrypy.request.method == 'POST':
                 cherrypy.session['post_request'] = cherrypy.request.params
