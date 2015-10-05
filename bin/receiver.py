@@ -32,9 +32,10 @@ import pymongo
 import json
 from pytz import timezone
 from dateutil.parser import parse
+import subprocess
 
 def insert_data(config, log_queue):
-    db_conf = configs['db']
+    db_conf = config['Webserver']['db']
     client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
     if db_conf['useAuth']:
         client.minerva.authenticate(db_conf['username'], db_conf['password'])
@@ -44,8 +45,8 @@ def insert_data(config, log_queue):
     flow_events = []
     wait_time = time.time()
     count = 0
-    count_max = int(configs['Event_Receiver']['insertion_batch'])
-    wait_max = int(configs['Event_Receiver']['insertion_wait'])
+    count_max = int(config['Event_Receiver']['insertion_batch'])
+    wait_max = int(config['Event_Receiver']['insertion_wait'])
     while True:
         if not log_queue.empty():
             event = json.loads(log_queue.get())
@@ -157,15 +158,16 @@ def receiver(cur_config, pname, log_queue):
                 if p not in active_children():
                     p.join()
                     active_recv.remove(p)
-####################LEFT OFF HERER ######################################
-            if len(p) < int(cur_config['threads of sorts']):
-            print('accepting connections')
-            c, a = s_ssl.accept()
-            print('Got connection', c, a)
-            #if int(cur_config['Minerva_Server']['listening_threads']) > 1:
-            recv_data(a[0], collection, c, log_queue)
-            #else:
+            if len(active_children()) < int(cur_config['listen_ip'][ip]['receive_threads']):
+                print('accepting connections')
+                c, a = s_ssl.accept()
+                print('Got connection', c, a)
+                pr = Process(target=recv_data, args=((a[0], collection, c, log_queue)))
+                pr.start()
+                active_recv.append(pr)
                 #recv_data(a[0], collection, c, log_queue)
+            else:
+                time.sleep(.001)
         except Exception as e:
             print('{}: {}'.format(e.__class__.__name__,e))
     
@@ -174,7 +176,8 @@ def genKey(cur_config):
         os.mkdir(os.path.dirname(cur_config['certs']['server_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['private_key'])):
         os.mkdir(os.path.dirname(cur_config['certs']['private_key']))
-    cmd = [ 'openssl', 'req', '-x509', '-subj', '"/C=US/ST=Unk/L=Unk/O=minerva-ids/CN=' + platform.node() + '"','-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
+    #cmd = [ 'openssl', 'req', '-x509', '-subj', '"/C=US/ST=Unk/L=Unk/O=minerva-ids/CN=' + platform.node() + '"','-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
+    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
     subprocess.call(cmd)
 
 def main():
@@ -186,12 +189,12 @@ def main():
     log_queue = Queue()
     log_procs = []
     for lp in range(0,int(cur_config['insertion_threads'])):
-        log_proc = Process(name='logger' + lp, target=insert_data, args=(config, log_queue))
+        log_proc = Process(name='logger' + str(lp), target=insert_data, args=(config, log_queue))
         log_proc.start()
         log_procs.append(log_proc)
     try:
         for i in cur_config['listen_ip']:
-            for p in cur_config['listen_ip'][i]:
+            for p in cur_config['listen_ip'][i]['ports']:
                 name = "%s-%s" % (i,p)
     	        pr = Process(name=name, target=receiver, args=((cur_config, name, log_queue)))
                 pr.start()

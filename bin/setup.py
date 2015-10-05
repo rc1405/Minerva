@@ -79,6 +79,28 @@ def check_receiver():
         import pytz
     except:
         print('pytz not installed')
+def setup_db_lite():
+    ip = raw_input('Please enter database ip: [127.0.0.1] ')
+    if len(ip) == 0:
+        ip = '127.0.0.1'
+    port = raw_input('Please enter database port: [27017] ')
+    if len(port) == 0:
+        port = 27017
+    useAuth = raw_input('Use db authentication? Y/N [N] ')
+    if useAuth == 'y' or useAuth == 'Y':
+        username = raw_input("Enter a username: ")
+        print('Enter a password: ')
+        password = getpass.getpass()
+    else:
+        username = 'NA'
+        password = 'NA'
+    config['Webserver'] = {}
+    config['Webserver']['db'] = {}
+    config['Webserver']['db']['url'] = ip
+    config['Webserver']['db']['port'] = port
+    config['Webserver']['db']['useAuth'] = useAuth
+    config['Webserver']['db']['username'] = username
+    config['Webserver']['db']['password'] = password
 
 def setup_db():
     print("Setting up the Database\n")
@@ -365,7 +387,11 @@ def main():
         setup_core()
     elif int(intall_type) == 4:
         check_receiver()
-        setup_db()
+        resp = raw_input('Connect to existing database? [y/n] ')
+        if resp == 'y' or resp == 'Y':
+            setup_db_lite()
+        elif resp == 'n' or resp == 'N':
+            setup_db()
         setup_core()
         setup_receiver()
     elif int(intall_type) == 5:
