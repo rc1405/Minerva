@@ -161,7 +161,7 @@ def genKey(cur_config):
         os.mkdir(os.path.dirname(cur_config['certs']['server_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['private_key'])):
         os.mkdir(os.path.dirname(cur_config['certs']['private_key']))
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch']
+    cmd = [ 'openssl', 'req', '-x509', '-subj', '"/C=US/ST=Unk/L=Unk/O=minerva-ids/CN=' + platform.node() + '"','-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
     subprocess.call(cmd)
     #key = M2Crypto.RSA.gen_key(1024, 65537)
     #key.save_pub_key(cur_config['Minerva_Server']['server_public'])

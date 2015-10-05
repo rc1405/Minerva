@@ -31,6 +31,7 @@ import M2Crypto
 import time
 import platform
 import subprocess
+import shutil
 env = Environment(loader=FileSystemLoader('templates'))
 env.filters['iso_to_utc'] = iso_to_utc
 
@@ -387,7 +388,8 @@ class Minerva(object):
                 server_config = core.MinervaConfigs()
                 new_config = server_config.parse_web_configs(request)
                 out_tmp = env.get_template('minerva.yaml')
-                out_yaml = open('/tmp/blah.yaml','w')
+                shutil.copy(os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'),os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml.bkup'))
+                out_yaml = open(os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
                 out_yaml.write(out_tmp.render({"config": new_config}))
                 out_yaml.close()
             context_dict = {}
