@@ -445,27 +445,6 @@ def genKey(cur_config):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_key']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch']
     subprocess.call(cmd)
-    #key = M2Crypto.RSA.gen_key(2048, 65537)
-    #key.save_pub_key(cur_config['client_public'])
-    #key.save_key(cur_config['certs']['webserver_key'], cipher=None)
-    #pkey = M2Crypto.EVP.PKey()
-    #pkey.assign_rsa(key)
-    #cur_time = M2Crypto.ASN1.ASN1_UTCTIME()
-    #cur_time.set_time(int(time.time()) - 60*60*24)
-    #expire_time = M2Crypto.ASN1.ASN1_UTCTIME()
-    #expire_time.set_time(int(time.time()) + 60*60*24*365*10)
-    #cert = M2Crypto.X509.X509()
-    #cert.set_pubkey(pkey)
-    #cs_name = M2Crypto.X509.X509_Name()
-    #cs_name.C = 'US'
-    ##cs_name.CN = cur_config['bindIp']
-    #cs_name.CN = platform.node()
-    #cert.set_subject(cs_name)
-    #cert.set_issuer_name(cs_name)
-    #cert.set_not_before(cur_time)
-    #cert.set_not_after(expire_time)
-    #cert.sign(pkey, md="sha512")
-    #cert.save_pem(cur_config['certs']['webserver_cert'])
 def secureheaders():
     headers = cherrypy.response.headers
     headers['X-Frame-Options'] = 'DENY'
@@ -497,11 +476,11 @@ if __name__ == '__main__':
     config = {
         '/css': { 
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/bootstrap/css'),
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/css'),
             },
         '/js': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/bootstrap/js'),
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/js'),
         },
         '/jquery.min.js': {
             'tools.staticfile.on': True,
@@ -513,7 +492,7 @@ if __name__ == '__main__':
         },
         '/fonts': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/bootstrap/fonts'),
+            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/fonts'),
         },
     }
     cherrypy.quickstart(Minerva(), config = config)

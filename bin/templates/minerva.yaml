@@ -55,6 +55,9 @@ Event_Receiver:
              {%- endfor %}
          receive_threads: {{config.Event_Receiver.listen_ip[ip]['receive_threads']}}
          {%- endfor %}
+  insertion_threads: {{config.Event_Receiver.insertion_threads}}
+  insertion_batch: {{config.Event_Receiver.insertion_batch}}
+  insertion_wait: {{config.Event_Receiver.insertion_wait}}
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
     private_key: {{config.Event_Receiver.certs.private_key}}

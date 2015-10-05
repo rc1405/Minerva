@@ -1,4 +1,4 @@
-{#
+/*
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
-	<script>
+*/
 	function saveChanges() {
 	    var form1 = document.createElement("form");
 	    form1.setAttribute("method", "post");
@@ -50,7 +49,7 @@
 	    var csrftokenField = document.createElement("input");
 	    csrftokenField.setAttribute("type", "hidden");
 	    csrftokenField.setAttribute("name", "csrfmiddlewaretoken");
-	    csrftokenField.setAttribute("value", "{{ csrf_token }}");
+	    csrftokenField.setAttribute("value", document.getElementById("csrf_token").value);
 	    form1.appendChild(csrftokenField);
             var webhostField = document.createElement("input");
             webhostField.setAttribute("type", "hidden");
@@ -120,4 +119,3 @@
             document.body.appendChild(form1);
 	    form1.submit();
 	}
-	</script>

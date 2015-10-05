@@ -1,4 +1,3 @@
-<script>
         function getFlows() {
             var form = document.createElement("form");
             form.setAttribute("method", "post");
@@ -6,12 +5,12 @@
             var formField = document.createElement("input");
             formField.setAttribute("type", "hidden");
             formField.setAttribute("name", "formType");
-            formField.setAttribute("value", "{{ form }}" );
+            formField.setAttribute("value", document.getElementById('form_type').value );
             form.appendChild(formField);
             var tokenField = document.createElement("input");
             tokenField.setAttribute("type", "hidden");
             tokenField.setAttribute("name", "csrfmiddlewaretoken");
-            tokenField.setAttribute("value", "{{ csrf_token }}");
+            tokenField.setAttribute("value", document.getElementById('csrf_token').value);
             form.appendChild(tokenField);
             var startField = document.createElement("input");
             startField.setAttribute("type", "hidden");
@@ -56,4 +55,3 @@
             document.body.appendChild(form);
             form.submit();
         }
-</script>

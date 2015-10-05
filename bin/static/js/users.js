@@ -1,4 +1,4 @@
-{#
+/*
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
-	<script>
+*/
 	function createUser () {
             var updateType = document.getElementById('updateType').value;
 	    var form1 = document.createElement("form");
@@ -85,7 +84,7 @@
 	    var hiddenField7 = document.createElement("input");
 	    hiddenField7.setAttribute("type", "hidden");
 	    hiddenField7.setAttribute("name", "csrfmiddlewaretoken");
-	    hiddenField7.setAttribute("value", "{{ csrf_token }}");
+	    hiddenField7.setAttribute("value", document.getElementById('csrf_token').value );
 	    form1.appendChild(hiddenField7);
             var hiddenField8 = document.createElement("input");
             hiddenField8.setAttribute("type", "hidden");
@@ -129,4 +128,3 @@
             update_type = document.getElementById('updateType');
             update_type.value = 'editUser';
         }
-	</script>

@@ -241,6 +241,15 @@ def setup_receiver():
         resp1 = raw_input("Do you want to add another IP? [y/n] ")
         if resp == 'n' or resp == 'N':
             break
+    ins_threads = raw_input("Enter number of processes you want to insert alerts: [4] ")
+    if len(ins_threads) == 0:
+        ins_threads = 4
+    ins_batch = raw_input("Enter max number of events to insert at a time: [500] ")
+    if len(ins_batch) == 0:
+        ins_batch = 500
+    ins_wait = raw_input("Enter max seconds to wait before inserting events: [20] ")
+    if len(ins_wait) == 0:
+        ins_wait = 20
     rec_cert = raw_input("Enter full path of certificate to use (will create in this lcoation if it doenst exist): [/var/lib/minerva/receiver/server.pem] ")
     if len(rec_cert) == 0:
         rec_cert = '/var/lib/minerva/receiver/server.pem'
@@ -249,6 +258,9 @@ def setup_receiver():
         rec_key = raw_input("Enter full path of private key to use w/ the certificate above: ")
     config['Event_Receiver'] = {}
     config['Event_Receiver']['listen_ip'] = listen_ips
+    config['Event_Receiver']['insertion_threads'] = int(ins_threads)
+    config['Event_Receiver']['insertion_batch'] = int(ins_batch)
+    config['Event_Receiver']['insertion_wait'] = int(ins_wait)
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key

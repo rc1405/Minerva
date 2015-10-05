@@ -33,14 +33,19 @@ import json
 from pytz import timezone
 from dateutil.parser import parse
 
-def insert_data(cur_config, log_queue):
-    client = pymongo.MongoClient()
+def insert_data(config, log_queue):
+    db_conf = configs['db']
+    client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
+    if db_conf['useAuth']:
+        client.minerva.authenticate(db_conf['username'], db_conf['password'])
     alert = client.minerva.alerts
     flow = client.minerva.flow
     alert_events = []
     flow_events = []
     wait_time = time.time()
     count = 0
+    count_max = int(configs['Event_Receiver']['insertion_batch'])
+    wait_max = int(configs['Event_Receiver']['insertion_wait'])
     while True:
         if not log_queue.empty():
             event = json.loads(log_queue.get())
@@ -48,6 +53,7 @@ def insert_data(cur_config, log_queue):
             ts = parse(timestamp)
             tz = timezone('UTC')
             event['timestamp'] = ts.astimezone(tz)
+            #make sure epoch is accurate
             event['epoch'] = int(time.mktime(ts.timetuple()))
             event['orig_timestamp'] = timestamp
             #print(event)
@@ -57,7 +63,7 @@ def insert_data(cur_config, log_queue):
                 flow_events.append(event)
             count += 1
         tdiff = time.time() - wait_time
-        if count == 50 or tdiff >= 10:
+        if count >= count_max or tdiff >= wait_max:
             if len(alert_events) > 0:
                 alert.insert(alert_events)
                 alert_events = []
@@ -133,22 +139,29 @@ def recv_data(host, collection, s, log_queue):
             json_data = json_data + data
     s.send('accept')
     s.close()
-def receiver(cur_config, port, log_queue):
+def receiver(cur_config, pname, log_queue):
+    ip, port = pname.split('-')
     client = pymongo.MongoClient()
     collection = client.minerva.sensors
     print('starting receiver')
-    KEYFILE = cur_config['Minerva_Server']['server_private']
-    CERTFILE = cur_config['Minerva_Server']['server_cert']
+    KEYFILE = cur_config['certs']['private_key']
+    CERTFILE = cur_config['certs']['server_cert']
     s = socket(AF_INET, SOCK_STREAM)
-    s.bind((cur_config['Minerva_Server']['bindaddr'], int(port)))
+    s.bind((ip, int(port)))
     s.listen(1)
     s_ssl = ssl.wrap_socket(s, keyfile=KEYFILE, certfile=CERTFILE, server_side=True, ssl_version=ssl.PROTOCOL_SSLv3)
+    active_recv = []
     while True:
         try:
+            for p in active_recv:
+                if p not in active_children():
+                    p.join()
+                    active_recv.remove(p)
+####################LEFT OFF HERER ######################################
+            if len(p) < int(cur_config['threads of sorts']):
             print('accepting connections')
             c, a = s_ssl.accept()
             print('Got connection', c, a)
-            print(a[0])
             #if int(cur_config['Minerva_Server']['listening_threads']) > 1:
             recv_data(a[0], collection, c, log_queue)
             #else:
@@ -163,39 +176,24 @@ def genKey(cur_config):
         os.mkdir(os.path.dirname(cur_config['certs']['private_key']))
     cmd = [ 'openssl', 'req', '-x509', '-subj', '"/C=US/ST=Unk/L=Unk/O=minerva-ids/CN=' + platform.node() + '"','-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
     subprocess.call(cmd)
-    #key = M2Crypto.RSA.gen_key(1024, 65537)
-    #key.save_pub_key(cur_config['Minerva_Server']['server_public'])
-    #key.save_key(cur_config['Minerva_Server']['server_private'], cipher=None)
-    #pkey = M2Crypto.EVP.PKey()
-    #pkey.assign_rsa(key)
-    #cur_time = M2Crypto.ASN1.ASN1_UTCTIME()
-    #cur_time.set_time(int(time.time()) - 60*60*24)
-    #expire_time = M2Crypto.ASN1.ASN1_UTCTIME()
-    #expire_time.set_time(int(time.time()) + 60*60*24*365*10)
-    #cert = M2Crypto.X509.X509()
-    #cert.set_pubkey(pkey)
-    #cs_name = M2Crypto.X509.X509_Name()
-    #cs_name.C = 'US'
-    #cs_name.CN = platform.node()
-    #cert.set_subject(cs_name)
-    #cert.set_issuer_name(cs_name)
-    #cert.set_not_before(cur_time)
-    #cert.set_not_after(expire_time)
-    #cert.sign(pkey, md="sha256")
-    #cert.save_pem(cur_config['Minerva_Server']['server_cert'])
 
 def main():
-    cur_config = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Event_Receiver']
-    if not os.path.exists(cur_config['Minerva_Server']['server_cert']) or not os.path.exists(cur_config['Minerva_Server']['server_private']):
+    config = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf
+    cur_config = config['Event_Receiver']
+    if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
         genKey(cur_config)
     active_processes = []
     log_queue = Queue()
-    log_proc = Process(name='logger', target=insert_data, args=(cur_config, log_queue))
-    log_proc.start()
+    log_procs = []
+    for lp in range(0,int(cur_config['insertion_threads'])):
+        log_proc = Process(name='logger' + lp, target=insert_data, args=(config, log_queue))
+        log_proc.start()
+        log_procs.append(log_proc)
     try:
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]:
-    	        pr = Process(name=p, target=receiver, args=((cur_config, p, log_queue)))
+                name = "%s-%s" % (i,p)
+    	        pr = Process(name=name, target=receiver, args=((cur_config, name, log_queue)))
                 pr.start()
                 active_processes.append(pr)
         while True:
@@ -205,6 +203,12 @@ def main():
                     pr = Process(name=p.name, target=receiver, args=((cur_config, p.name, log_queue)))
                     pr.start()
                     active_processes.append(pr)
+            for lp in log_procs:
+                if not lp in active_children():
+                    log_procs.remove(lp)
+                    log_proc = Process(name=lp.name, target=insert_data, args=(config, log_queue))
+                    log_proc.start()
+                    log_procs.append(log_proc)
             time.sleep(10)
     except:
         for p in active_processes:

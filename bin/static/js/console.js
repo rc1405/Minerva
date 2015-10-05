@@ -1,4 +1,4 @@
-{#
+/*
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,8 +16,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
-	<script>
+*/
 	var selected = [];
 	var index;
 	function startTrack(x) {
@@ -71,12 +70,12 @@
 		    var hiddenField1 = document.createElement("input");
 		    hiddenField1.setAttribute("type", "hidden");
 		    hiddenField1.setAttribute("name", "formType");
-		    hiddenField1.setAttribute("value", "{{ form }}" );
+		    hiddenField1.setAttribute("value", document.getElementById('form_type').value );
 		    form.appendChild(hiddenField1);
                     var hiddenField2 = document.createElement("input");
                     hiddenField2.setAttribute("type", "hidden");
                     hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-                    hiddenField2.setAttribute("value", "{{ csrf_token }}");
+                    hiddenField2.setAttribute("value", document.getElementById('csrf_token').value);
                     form.appendChild(hiddenField2)
 		    var hiddenField3 = document.createElement("input");
 		    hiddenField3.setAttribute("type", "hidden");
@@ -105,12 +104,12 @@
 		var hiddenField1 = document.createElement("input");
 		hiddenField1.setAttribute("type", "hidden");
 		hiddenField1.setAttribute("name", "formType");
-		hiddenField1.setAttribute("value", "{{ form }}" );
+		hiddenField1.setAttribute("value", document.getElementById('form_type').value );
 		form.appendChild(hiddenField1);
 	        var hiddenField2 = document.createElement("input");
 	        hiddenField2.setAttribute("type", "hidden");
 	        hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-	        hiddenField2.setAttribute("value", "{{ csrf_token }}");
+	        hiddenField2.setAttribute("value", document.getElementById('csrf_token').value);
 	        form.appendChild(hiddenField2)
 	        document.body.appendChild(form);
 	        form.submit();
@@ -159,12 +158,12 @@
                     var hiddenField1 = document.createElement("input");
                     hiddenField1.setAttribute("type", "hidden");
                     hiddenField1.setAttribute("name", "formType");
-                    hiddenField1.setAttribute("value", "{{ form }}" );
+                    hiddenField1.setAttribute("value", document.getElementById('form_type').value );
                     form.appendChild(hiddenField1);
                     var hiddenField2 = document.createElement("input");
                     hiddenField2.setAttribute("type", "hidden");
                     hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-                    hiddenField2.setAttribute("value", "{{ csrf_token }}");
+                    hiddenField2.setAttribute("value", document.getElementById('csrf_token').value);
                     form.appendChild(hiddenField2);
                     window.open('',selected[index]);
                     //document.body.appendChild(form);
@@ -188,14 +187,13 @@
             var hiddenField1 = document.createElement("input");
             hiddenField1.setAttribute("type", "hidden");
             hiddenField1.setAttribute("name", "formType");
-            hiddenField1.setAttribute("value", "{{ form }}" );
+            hiddenField1.setAttribute("value", document.getElementById('form_type').value );
             form.appendChild(hiddenField1);
             var hiddenField2 = document.createElement("input");
             hiddenField2.setAttribute("type", "hidden");
             hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-            hiddenField2.setAttribute("value", "{{ csrf_token }}");
+            hiddenField2.setAttribute("value", document.getElementById('csrf_token').value);
             form.appendChild(hiddenField2);
             window.open('',table.cells[0].innerHTML);
             form.submit();
         }
-	</script>

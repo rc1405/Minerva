@@ -1,4 +1,4 @@
-{#
+/*
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,14 +16,13 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
-	<script>
+*/
 	function refreshParent() {
 	    window.opener.location.reload();
 	}
         function subAlerts (postTo) {
 	    var selected = [];
-	    selected.push("{{ alert_id }}");
+	    selected.push(document.getElementById("alert_id").value);
 	    var comments = prompt("Enter Comments");
 	    if ( comments != null) {
                 var form = document.createElement("form");
@@ -42,23 +41,15 @@
                 var hiddenField2 = document.createElement("input");
                 hiddenField2.setAttribute("type", "hidden");
                 hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-                hiddenField2.setAttribute("value", "{{ csrf_token }}");
+                hiddenField2.setAttribute("value", document.getElementById("csrf_token").value);
                 form.appendChild(hiddenField2)
 		var hiddenField3 = document.createElement("input");
 		hiddenField3.setAttribute("type", "hidden");
 		hiddenField3.setAttribute("name", "comments");
 		hiddenField3.setAttribute("value", comments);
 		form.appendChild(hiddenField3)
-		//var hiddenField4 = document.createElement("input");
-		//hiddenField4.setAttribute("type", "hidden");
-		//hiddenField4.setAttribute("name", "AlertFlow");
-		//hiddenField4.setAttribute("value", "stuff");
-		//form.appendChild(hiddenField4);
                 document.body.appendChild(form);
 		refreshParent();
                 form.submit();
-		//refreshParent();
-		//close();
 	    }
         }
-	</script>
