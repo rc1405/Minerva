@@ -490,6 +490,9 @@ if __name__ == '__main__':
                             'tools.sessions.secure': True,
                             'tools.sessions.httponly': True,
                             'tools.sessions.on': True,
+                            'tools.sessions.timeout': int(server_config['session_timeout']),
+                            'server.thread_pool': int(server_config['threads']),
+                            'server.thread_pool_max': int(server_config['threads']),
                           })
     config = {
         '/css': { 

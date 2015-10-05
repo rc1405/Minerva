@@ -153,11 +153,11 @@ def setup_db():
             "ENABLED" : "true",
             "PASSWORD" : admin_hashedPW,
             "console" : "true",
-            "date_modified" : datetime.datetime.fromtimestamp(time.time()),
+            "date_modified" : datetime.datetime.utcnow(),
             "sensor_admin" : "true",
             "responder" : "true",
             "server_admin" : "true",
-            "date_created" : datetime.datetime.fromtimestamp(time.time()),
+            "date_created" : datetime.datetime.utcnow(),
     })
     config['Webserver'] = {}
     config['Webserver']['db'] = {}

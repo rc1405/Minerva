@@ -44,9 +44,9 @@ class Users(object):
             if 'PASSWORD' in user_results[0]:
                 if user_results[0]['PASSWORD'] == hashed:
                     session_hash = bcrypt.hashpw('%s-%s' % ( str(time.time()), str(username)), self.session_salt)
-                    self.sessions.insert({ "session_id": session_hash, "last_accessed": datetime.datetime.fromtimestamp(time.time()), "USERNAME": username})
+                    self.sessions.insert({ "session_id": session_hash, "last_accessed": datetime.datetime.utcnow(), "USERNAME": username})
                     session['SESSION_KEY'] = session_hash
-                    self.users.update ({ "USERNAME": username }, { "$set": { "pass_failed": 0, "last_login": datetime.datetime.fromtimestamp(time.time())}})
+                    self.users.update ({ "USERNAME": username }, { "$set": { "pass_failed": 0, "last_login": datetime.datetime.utcnow()}})
                     return True
                 else:
                     if 'pass_failed' in user_results[0]:
@@ -69,6 +69,7 @@ class Users(object):
                 for p in perms:
                     if perm_results[0][p] == 'true':
                         results.append(p)
+                self.sessions.update({"session_id": session_id},{"$set": {"last_accessed": datetime.datetime.utcnow()}})
                 return results
             else:
                 return ["DoesNotExist"]
@@ -95,21 +96,21 @@ class Users(object):
         if len(password) < int(self.password_min_length):
             return "Password is too short"
         hashed = bcrypt.hashpw(str(password), self.salt)
-        self.users.insert({"date_created": datetime.datetime.fromtimestamp(time.time()), "date_modified": datetime.datetime.fromtimestamp(time.time()), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "pass_failed": 0 })
+        self.users.insert({"date_created": datetime.datetime.utcnow(), "date_modified": datetime.datetime.utcnow(), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "pass_failed": 0 })
         return "Success"
     def modify_user(self, username, password, console, responder, sensor_admin, user_admin, server_admin, enabled):
         if len(password) < int(self.password_min_length):
             return "Password is too short"
         hashed = bcrypt.hashpw(str(password), self.salt)
-        self.users.update({"USERNAME": username }, { "$set": {"pass_failed": 0 , "date_created": datetime.datetime.fromtimestamp(time.time()), "date_modified": datetime.datetime.fromtimestamp(time.time()), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled}})
+        self.users.update({"USERNAME": username }, { "$set": {"pass_failed": 0 , "date_created": datetime.datetime.utcnow(), "date_modified": datetime.datetime.utcnow(), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled}})
         return "Success"
 
     def disableUser(self, username, password):
-        self.users.update({"USERNAME": username}, { "$set": { "date_modified": datetime.datetime.fromtimestamp(time.time()), "ENABLED": False}})
+        self.users.update({"USERNAME": username}, { "$set": { "date_modified": datetime.datetime.utcnow(), "ENABLED": False}})
         return
 
     def changePerms(self, username, console, responder, sensor_admin, user_admin, server_admin, enabled):
-        self.users.update({"USERNAME": username}, {"$set": { "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "date_modified": datetime.datetime.fromtimestamp(time.time()) }})
+        self.users.update({"USERNAME": username}, {"$set": { "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "date_modified": datetime.datetime.utcnow() }})
         return 'Success'
 
     def getAllUsers(self):
