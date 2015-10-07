@@ -113,7 +113,7 @@ class Users(object):
         if len(user_results) > 0:
             return "Username Already Exists"
         pw_check = self.new_pw_checker(password)
-        if len(pw_checker) > 0:
+        if len(pw_check) > 0:
             return "Password Check Failed"
         #if len(password) < int(self.password_min_length):
             #return "Password is too short"
@@ -122,7 +122,7 @@ class Users(object):
         return "Success"
     def modify_user(self, username, password, console, responder, sensor_admin, user_admin, server_admin, enabled):
         pw_check = self.new_pw_checker(password)
-        if len(pw_checker) > 0:
+        if len(pw_check) > 0:
             return "Password Check Failed"
         #if len(password) < int(self.password_min_length):
             #return "Password is too short"
