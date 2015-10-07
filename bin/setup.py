@@ -230,6 +230,18 @@ def setup_server():
         maxResults = 5000
     elif int(maxResults) > 15000:
         maxResults = 15000
+    lower_count = raw_input("Enter minimum # of lower case letters in a password: [2] ")
+    if len(lower_count) == 0:
+        lower_count = 2
+    upper_count = raw_input("Enter minimum # of upper case letters in a password: [2] ")
+    if len(upper_count) == 0:
+        upper_count = 2
+    digit_count = raw_input("Enter minimum # of numbers in a password: [2] ")
+    if len(digit_count) == 0:
+        digit_count = 2
+    special_count = raw_input("Enter minimum # of special characters in a password: [2] ")
+    if len(special_count) == 0:
+        special_count = 2
     config['Webserver']['web']['hostname'] = hostname
     config['Webserver']['web']['bindIp'] = bindIp
     config['Webserver']['web']['port'] = webport
@@ -237,9 +249,14 @@ def setup_server():
     config['Webserver']['web']['certs'] = {}
     config['Webserver']['web']['certs']['webserver_cert'] = web_cert
     config['Webserver']['web']['certs']['webserver_key'] = web_key
-    config['Webserver']['web']['password_tries'] = password_tries
-    config['Webserver']['web']['password_min_length'] = password_min_length
-    config['Webserver']['web']['password_max_age'] = password_max_age
+    config['Webserver']['web']['password_requirements'] = {}
+    config['Webserver']['web']['password_requirements']['password_tries'] = password_tries
+    config['Webserver']['web']['password_requirements']['password_min_length'] = password_min_length
+    config['Webserver']['web']['password_requirements']['password_max_age'] = password_max_age
+    config['Webserver']['web']['password_requirements']['lower_count'] = lower_count
+    config['Webserver']['web']['password_requirements']['upper_count'] = upper_count
+    config['Webserver']['web']['password_requirements']['digit_count'] = digit_count
+    config['Webserver']['web']['password_requirements']['special_count'] = special_count
     config['Webserver']['events']['maxResults'] = maxResults
     #os.makedirs(os.path.join(install_path,'bin/templates'))
     #os.makedirs(os.path.join(install_path,'bin/static'))

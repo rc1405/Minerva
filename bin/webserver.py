@@ -94,7 +94,10 @@ class Minerva(object):
                    retstatus = users.modify_user(request['username'], request['password'], request['console'], request['responder'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
                elif request['updateType'] == 'updatePerms':
                    retstatus = users.changePerms(request['username'], request['console'], request['responder'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
-            if retstatus != "None":
+            if retstatus == "Password Check Failed":
+                ret_string = '<script type="text/javascript">window.alert("New Password does not meet strength Requirements: %s lowercase, %s uppercase, %s numbers, %s special characters");location="/users";</script>' % ( self.configs['web']['password_requirements']['lower_count'], self.configs['web']['password_requirements']['upper_count'], self.configs['web']['password_requirements']['digit_count'], self.configs['web']['password_requirements']['special_count'] )
+                return ret_string
+            elif retstatus != "None":
                 return_msg =  '<script type="text/javascript">window.alert("%s");location="/users";</script>' % retstatus
                 return return_msg
             context_dict = {}
@@ -148,8 +151,11 @@ class Minerva(object):
                 return '<script type="text/javascript">window.alert("Current Password is incorrect");location="/profile";</script>'
             elif ret_status == 'newLogin':
                 return '<script type="text/javascript">window.alert("Session Expired, Please log in with Previous Password");location="/login";</script>'
-            elif ret_status == "Password is too short":
-                return '<script type="text/javascript">window.alert("New Password is too short");location="/profile";</script>'
+            #elif ret_status == "Password is too short":
+                #return '<script type="text/javascript">window.alert("New Password is too short");location="/profile";</script>'
+            elif ret_status == "Password Check Failed":
+                ret_string = '<script type="text/javascript">window.alert("New Password does not meet strength Requirements: %s lowercase, %s uppercase, %s numbers, %s special characters");location="/profile";</script>' % ( self.configs['web']['password_requirements']['lower_count'], self.configs['web']['password_requirements']['upper_count'], self.configs['web']['password_requirements']['digit_count'], self.configs['web']['password_requirements']['special_count'] )
+                return ret_string
         else:
             perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
             if 'newLogin' in perm_return:

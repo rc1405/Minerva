@@ -74,9 +74,13 @@
         <tr><th>Certificate Path:</th><td></td><td><input type="text" size=35 id=cert_path value="{{config.web.certs.webserver_cert}}"></td><td></td><td align=left>*Location of Certificate for SSL</td></tr>
         <tr><th>Private Key Path:</th><td></td><td><input type="text" size=35 id=key_path value="{{config.web.certs.webserver_key}}"></td><td></td><td align=left>*Location of Private key for Certificate Above</td></tr>
         <tr><th>Session Timeout:</th><td></td><td><input type="text" id=session_timeout size=35 value="{{config.web.session_timeout}}"></td><td></td><td align=left>*Number of Minutes of inactivity before a user is logged out</td></tr>
-        <tr><th>Password attempts:</th><td></td><td><input type="text" id=pass_tries size=35 value="{{config.web.password_tries}}"></td><td></td><td align=left>*Number of attempts before a user account is disabled</td></tr>
-        <tr><th>Password Minimum Length:</th><td></td><td><input type="text" id=pass_min size=35 value="{{config.web.password_min_length}}"></td><td></td><td align=left>*Minimum length of passwords</td></tr>
-        <tr><th>Password Expiration:</th><td></td><td><input type="text" id=pass_age size=35 value="{{config.web.password_max_age}}"></td><td></td><td align=left>*Number of Days before a password needs to be reset</td></tr>
+        <tr><th>Password attempts:</th><td></td><td><input type="text" id=pass_tries size=35 value="{{config.web.password_requirements.password_tries}}"></td><td></td><td align=left>*Number of attempts before a user account is disabled</td></tr>
+        <tr><th>Password Minimum Length:</th><td></td><td><input type="text" id=pass_min size=35 value="{{config.web.password_requirements.password_min_length}}"></td><td></td><td align=left>*Minimum length of passwords</td></tr>
+        <tr><th>Password Expiration:</th><td></td><td><input type="text" id=pass_age size=35 value="{{config.web.password_requirements.password_max_age}}"></td><td></td><td align=left>*Number of Days before a password needs to be reset</td></tr>
+        <tr><th>Password Lower Case Min:</th><td></td><td><input type="text" id=lower_count size=35 value="{{config.web.password_requirements.lower_count}}"></td><td></td><td align=left>*Number of lower case characters required in a password</td></tr>
+        <tr><th>Password Upper Case Min:</th><td></td><td><input type="text" id=upper_count size=35 value="{{config.web.password_requirements.upper_count}}"></td><td></td><td align=left>*Number of upper case characters required in a password</td></tr>
+        <tr><th>Password Digit Min:</th><td></td><td><input type="text" id=digit_count size=35 value="{{config.web.password_requirements.digit_count}}"></td><td></td><td align=left>*Number of numbers required in a password</td></tr>
+        <tr><th>Password Special Char Min:</th><td></td><td><input type="text" id=special_count size=35 value="{{config.web.password_requirements.special_count}}"></td><td></td><td align=left>*Number of Special characters required in a password</td></tr>
         </table>
         <h2>Events</h2>
         <table>

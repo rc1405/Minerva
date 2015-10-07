@@ -22,6 +22,7 @@ import bcrypt
 import pymongo
 import datetime
 import time
+import re
 
 class Users(object):
     def __init__(self, configs):
@@ -34,9 +35,27 @@ class Users(object):
         self.sessions = client.minerva.sessions
         self.session_salt = db_conf['SESSION_KEY']
         web_conf = configs['web']
-        self.password_tries = web_conf['password_tries']
-        self.password_min_length = web_conf['password_min_length']
-
+        self.password_req = web_conf['password_requirements']
+        self.password_tries = self.password_req['password_tries']
+        self.password_min_length = self.password_req['password_min_length']
+    def new_pw_checker(self, password):
+        pw_length = len(password)
+        digit_count = len(re.findall(r"\d", password))
+        upper_count = len(re.findall(r"[A-Z]", password))
+        lower_count = len(re.findall(r"[a-z]", password))
+        special_count = len(re.findall(r"[^A-z0-9]", password))
+        pw_check = {}
+        if pw_length < int(self.password_min_length):
+             pw_check['pw_length'] = pw_length
+        if digit_count < int(self.password_req['digit_count']):
+             pw_check['digit_count'] = digit_count
+        if upper_count < int(self.password_req['upper_count']):
+             pw_check['upper_count'] = upper_count
+        if lower_count < int(self.password_req['lower_count']):
+             pw_check['lower_count'] = lower_count
+        if special_count < int(self.password_req['special_count']):
+             pw_check['special_count'] = special_count
+        return pw_check
     def login(self, username, password, session):
         hashed = bcrypt.hashpw(str(password), self.salt)
         user_results = list(self.users.find({ "USERNAME": username, "ENABLED": "true" }))
@@ -93,14 +112,20 @@ class Users(object):
         user_results = list(self.users.find({ "USERNAME": username}))
         if len(user_results) > 0:
             return "Username Already Exists"
-        if len(password) < int(self.password_min_length):
-            return "Password is too short"
+        pw_check = self.new_pw_checker(password)
+        if len(pw_checker) > 0:
+            return "Password Check Failed"
+        #if len(password) < int(self.password_min_length):
+            #return "Password is too short"
         hashed = bcrypt.hashpw(str(password), self.salt)
         self.users.insert({"date_created": datetime.datetime.utcnow(), "date_modified": datetime.datetime.utcnow(), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "pass_failed": 0 })
         return "Success"
     def modify_user(self, username, password, console, responder, sensor_admin, user_admin, server_admin, enabled):
-        if len(password) < int(self.password_min_length):
-            return "Password is too short"
+        pw_check = self.new_pw_checker(password)
+        if len(pw_checker) > 0:
+            return "Password Check Failed"
+        #if len(password) < int(self.password_min_length):
+            #return "Password is too short"
         hashed = bcrypt.hashpw(str(password), self.salt)
         self.users.update({"USERNAME": username }, { "$set": {"pass_failed": 0 , "date_created": datetime.datetime.utcnow(), "date_modified": datetime.datetime.utcnow(), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled}})
         return "Success"
@@ -120,8 +145,11 @@ class Users(object):
         return users
 
     def changePW(self, session_id, current_pw, new_pw):
-        if len(new_pw) < int(self.password_min_length):
-            return "Password is too short"
+        pw_check = self.new_pw_checker(new_pw)
+        if len(pw_check) > 0:
+            return "Password Check Failed"
+        #if len(new_pw) < int(self.password_min_length):
+            #return "Password is too short"
         newhash = bcrypt.hashpw(str(new_pw), self.salt)
         oldhash = bcrypt.hashpw(str(current_pw), self.salt)
         user_results = list(self.sessions.find({"session_id": session_id}))

@@ -118,27 +118,6 @@ def genKey(cur_config):
         os.mkdir(os.path.dirname(cur_config['client_private']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['client_private'], '-out', cur_config['client_cert'], '-days', '3650', '-nodes', '-batch']
     subprocess.call(cmd)
-    #key = M2Crypto.RSA.gen_key(1024, 65537)
-    #key.save_pub_key(cur_config['client_public'])
-    #key.save_key(cur_config['client_private'], cipher=None)
-    #pkey = M2Crypto.EVP.PKey()
-    #pkey.assign_rsa(key)
-    #cur_time = M2Crypto.ASN1.ASN1_UTCTIME()
-    #cur_time.set_time(int(time.time()) - 60*60*24)
-    #expire_time = M2Crypto.ASN1.ASN1_UTCTIME()
-    #expire_time.set_time(int(time.time()) + 60*60*24*365*10)
-    #cert = M2Crypto.X509.X509()
-    #cert.set_pubkey(pkey)
-    #cs_name = M2Crypto.X509.X509_Name()
-    #cs_name.C = 'US'
-    #cs_name.CN = cur_config['sensor_name']
-    #cert.set_subject(cs_name)
-    #cert.set_issuer_name(cs_name)
-    #cert.set_not_before(cur_time)
-    #cert.set_not_after(expire_time)
-    #cert.sign(pkey, md="sha256")
-    #cert.save_pem(cur_config['client_cert'])
-    #send(cur_config, [])
 
 def main():
     cur_config = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Agent_forwarder']

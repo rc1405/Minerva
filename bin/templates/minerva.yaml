@@ -36,9 +36,14 @@ Webserver:
       webserver_cert: {{config.Webserver.web.certs.webserver_cert}}
       webserver_key: {{config.Webserver.web.certs.webserver_key}}
     session_timeout: {{config.Webserver.web.session_timeout}}
-    password_tries: {{config.Webserver.web.password_tries}}
-    password_min_length: {{config.Webserver.web.password_min_length}}
-    password_max_age: {{config.Webserver.web.password_max_age}}
+    password_requirements:
+      password_tries: {{config.Webserver.web.password_requirements.password_tries}}
+      password_min_length: {{config.Webserver.web.password_requirements.password_min_length}}
+      password_max_age: {{config.Webserver.web.password_requirements.password_max_age}}
+      lower_count: {{ config.Webserver.web.password_requirements.lower_count }}
+      upper_count: {{ config.Webserver.web.password_requirements.upper_count }}
+      digit_count: {{ config.Webserver.web.password_requirements.digit_count }}
+      special_count: {{ config.Webserver.web.password_requirements.special_count }}
   events:
     maxResults: {{config.Webserver.events.maxResults}}
     max_age: {{config.Webserver.events.max_age}}
