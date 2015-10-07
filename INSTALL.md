@@ -28,6 +28,7 @@ storage:
 - openssl
 - yaml
 - pip
+- m2crypto
 
 ##Python Required Packages
 pip install -r requirements.txt
