@@ -158,10 +158,11 @@ def setup_db():
     #db.sessions.create_index([("last_accessed", pymongo.ASCENDING),("expireAfterSeconds", sessionTimeout)])
     db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
     #admin_pw = raw_input("Enter password for admin console user: ")
+    user_name = raw_input("Enter username of admin user to create: ")
     while True:
-        print('Enter admin password: ')
+        print('Enter password: ')
         admin_pw = getpass.getpass()
-        print('Re-enter admin password: ')
+        print('Re-enter password: ')
         admin_pw2 = getpass.getpass()
         if admin_pw == admin_pw2:
             break
@@ -172,7 +173,7 @@ def setup_db():
     admin_hashedPW = bcrypt.hashpw(str(admin_pw), str(password_salt))
     db.users.insert(
     {
-            "USERNAME" : "admin",
+            "USERNAME" : user_name,
             "user_admin" : "true",
             "ENABLED" : "true",
             "PASSWORD" : admin_hashedPW,
