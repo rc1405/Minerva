@@ -128,7 +128,7 @@ def setup_db():
         resp = raw_input('Database already exists, do you want to keep it? [N]')
         if resp == 'Y' or resp == 'y':
             keep_db = True
-        elif:
+        else:
             keep_db = False
             client.drop_database('minerva')
     try:
