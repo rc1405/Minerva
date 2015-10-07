@@ -197,7 +197,7 @@ def setup_db():
     config['Webserver']['web']['session_timeout'] = sessionMinutes
     config['Webserver']['events'] = {}
     config['Webserver']['events']['max_age'] = expiredDays
-    config['Webserver']['events']['flow_max_index_age'] = expiredflowDays
+    config['Webserver']['events']['flow_max_age'] = expiredflowDays
  
 def setup_core():
     if os.path.exists('/usr/lib/python2.7/site-packages/Minerva'):
