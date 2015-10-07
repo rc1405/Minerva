@@ -117,7 +117,9 @@ def setup_db():
         username = raw_input("Enter a username: ")
         print('Enter a password: ')
         password = getpass.getpass()
+        useAuth = True
     else:
+        useAuth = False
         username = 'NA'
         password = 'NA'
     client = pymongo.MongoClient(ip,int(port))
@@ -126,7 +128,7 @@ def setup_db():
         resp = raw_input('Database already exists, do you want to keep it? [N]')
         if resp == 'Y' or resp == 'y':
             keep_db = True
-        else:
+        elif:
             keep_db = False
             client.drop_database('minerva')
     try:
