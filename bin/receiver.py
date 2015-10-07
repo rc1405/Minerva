@@ -50,17 +50,29 @@ def insert_data(config, log_queue):
     while True:
         if not log_queue.empty():
             event = json.loads(log_queue.get())
-            timestamp = event['timestamp']
-            ts = parse(timestamp)
-            tz = timezone('UTC')
-            event['timestamp'] = ts.astimezone(tz)
-            #make sure epoch is accurate
-            event['epoch'] = int(time.mktime(ts.timetuple()))
-            event['orig_timestamp'] = timestamp
+            #timestamp = event['timestamp']
+            #ts = parse(timestamp)
+            #tz = timezone('UTC')
+            #event['timestamp'] = ts.astimezone(tz)
+            ##make sure epoch is accurate
+            #event['epoch'] = int(time.mktime(ts.timetuple()))
+            #event['orig_timestamp'] = timestamp
             #print(event)
             if event['logType'] == 'alert':
+                timestamp = event['timestamp']
+                try:
+                    ts = parse(timestamp)
+                    tz = timezone('UTC')
+                    event['timestamp'] = ts.astimezone(tz)
+                    #make sure epoch is accurate
+                    event['epoch'] = int(time.mktime(ts.timetuple()))
+                except:
+                    pass
+                event['orig_timestamp'] = timestamp
                 alert_events.append(event)
             elif event['logType'] == 'flow':
+                event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
+                event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
                 flow_events.append(event)
             count += 1
         tdiff = time.time() - wait_time
