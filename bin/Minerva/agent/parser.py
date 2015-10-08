@@ -18,11 +18,10 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 from .parsers import *
-class parser():
-    def get_parser(self, alert_type, sensor):
-        if alert_type == 'suricata_alert':
-            parser = suricata.ConvertAlert(sensor)
-        elif alert_type == 'suricata_flow':
-            parser = suricata.ConvertFlow(sensor)
-        return parser
+def get_parser(self, alert_type, sensor):
+    if alert_type == 'suricata_alert':
+        parser = suricata.ConvertAlert(sensor)
+    elif alert_type == 'suricata_flow':
+        parser = suricata.ConvertFlow(sensor)
+    return parser
        
