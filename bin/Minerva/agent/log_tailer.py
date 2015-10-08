@@ -25,9 +25,8 @@ import time
 import sys
 
 class TailLog():
-    def __init__(self, logFile, posFile, logType):
+    def __init__(self, logFile, posFile):
         self.logFile = logFile
-        self.logType = logType
         self.posFile = posFile
         self.pos = 0
         self.pos_inode = 0
@@ -38,17 +37,7 @@ class TailLog():
             pfile.write(write_line)
     def tail(self):
         try:
-            #def write_pos():
-                #pfile = open(self.posFile,'w')
-                #pfile.write(str(inode) + ',' + str(size) + ',' + str(pos))
-                #pfile.flush()
-                #pfile.close()
-                #write_line = str(inode) + ',' + str(size) + ',' + str(pos)
-                #write_line = str(self.pos_inode) + ',' + str(self.pos_size) + ',' + str(self.pos)
-                #with open(self.posFile, 'w') as pfile:
-                    #pfile.write(write_line)
             def reset_file():
-                #print('omg reset file')
                 lfile.close()
                 lfile = open(self.logFile,'r')
                 stat = os.fstat(lfile.fileno())
@@ -72,26 +61,19 @@ class TailLog():
                     self.pos_inode = pos_inode
                     self.pos_size = pos_size
                 except:
-                    #print('error reading inode')
                     pos = 0
                     pos_inode = 0
                     pos_size = 0
             else:
-                #print('pos file doesnt exist')
                 pos = 0
                 pos_inode = 0
                 pos_size = 0
             if os.path.exists(self.logFile):
-                #print('opening file')
                 lfile = open(self.logFile,'r')
                 stat = os.fstat(lfile.fileno())
                 cur_inode = stat.st_ino
                 cur_size = stat.st_size
-                #print('done getting inode')
                 if cur_inode != pos_inode or cur_size < pos_size:
-                    #print('diff inode')
-                    #print(pos_size)
-                    #print(cur_size)
                     pos = 0
                     pos_inode = cur_inode
                     pos_size = cur_size
@@ -104,12 +86,10 @@ class TailLog():
                     line = lfile.readline()
                     if count < pos:
                         if not line:
-                            #print('not enough lines')
                             stat = os.stat(self.logFile)
                             act_inode = stat.st_ino
                             act_size = stat.st_size
                             if pos_inode != act_inode or act_size < pos_size:
-                                #print('done getting inode2')
                                 pos_inode, pos_size, pos = reset_file()
                                 cur_inode = pos_inode
                                 cur_size = pos_size
@@ -127,7 +107,6 @@ class TailLog():
                             cur_size = pos_size
                             count = 0
                             continue
-		        #print('sleeping')
                         time.sleep(sleep)
                         if sleep < 10:
                             sleep += .5

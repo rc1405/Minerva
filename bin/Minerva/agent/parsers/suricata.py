@@ -33,14 +33,12 @@ def _convertJSON(entry, logType, sensor):
     new_entry['MINERVA_STATUS'] = 'OPEN'
     return new_entry
 class ConvertAlert():
-    def __init__(self, sensor, logType):
+    def __init__(self, sensor):
         self.sensor = sensor
-        self.logType = logType
     def convert(self, entry):
-        return _convertJSON(entry, self.logType, self.sensor)
+        return _convertJSON(entry, 'alert', self.sensor)
 class ConvertFlow():
-    def __init__(self, sensor, logType):
+    def __init__(self, sensor):
         self.sensor = sensor
-        self.logType = logType
     def convert(self, entry):
-        return _convertJSON(entry, self.logType, self.sensor)
+        return _convertJSON(entry, 'flow', self.sensor)

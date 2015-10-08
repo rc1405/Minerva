@@ -20,8 +20,6 @@
 
 from socket import socket, AF_INET, SOCK_STREAM
 import os
-#from OpenSSL import crypto
-import M2Crypto
 from Minerva import core, agent
 from multiprocessing import Process, Lock, active_children
 import time
@@ -36,12 +34,8 @@ def tailFile(cur_config, fname, send_lock):
     sensor_name = cur_config['sensor_name']
     ftype = cur_config['logfiles'][fname]['type']
     pfile = cur_config['logfiles'][fname]['position_file']
-    ftailer = agent.log_tailer.TailLog(fname, pfile, ftype)
-    #converter = agent.convertJSON.ConvertJSON(sensor_name, ftype)
-    if ftype == 'suricata_agent': 
-        converter = agent.parsers.suricata.ConvertAlert(sensor_name, 'alert')
-    elif ftype == 'suricata_flow':
-        converter = agent.parsers.suricata.ConvertFlow(sensor_name, 'flow')
+    ftailer = agent.log_tailer.TailLog(fname, pfile)
+    converter = agent.parsers.get_parser(ftype, sensor_name)
     count = 1
     batchsize = int(cur_config['Minerva_Server']['send_batch'])
     sendwait = int(cur_config['Minerva_Server']['send_wait'])
@@ -60,9 +54,7 @@ def tailFile(cur_config, fname, send_lock):
                     if rval == 'accept':
                         retval == 'accept'
                         break
-                    #print('sleeping')
                     time.sleep(300)
-                #print('releasing lock')
                 send_lock.release()
                 batch = []
                 count = 1
@@ -75,38 +67,29 @@ def send(cur_config, batch):
     certfile = cur_config['Minerva_Server']['server_cert']
     s = socket(AF_INET, SOCK_STREAM)
     if not os.path.exists(certfile):
-        #print('getting server cert')
         server_cert = ssl.get_server_certificate((cur_config['Minerva_Server']['destination'], int(cur_config['Minerva_Server']['port'])))
-        #pprint.pprint(server_cert)
         scert = open(cur_config['Minerva_Server']['server_cert'],'w')
         scert.writelines(server_cert)
         scert.flush()
         scert.close()
-    #s_ssl = ssl.wrap_socket(s, ca_certs=cur_config['Minerva_Server']['server_cert'], cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_TLSv1)
     cert = open(cur_config['client_cert'],'r').read()
     s_ssl = ssl.wrap_socket(s, ca_certs=cur_config['Minerva_Server']['server_cert'], cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
-    #print('attempting to connect')
     s_ssl.connect((cur_config['Minerva_Server']['destination'], int(cur_config['Minerva_Server']['port'])))
-    #print('sending header')
     if len(batch) == 0:
         s_ssl.send('GET_CERT')
     else:
         s_ssl.send('SERVER_AUTH')
     s_ssl.send(cert)
     stat = s_ssl.read()
-    #print(stat)
     if stat == 'reject':
         s_ssl.close()
         return stat
-    #print('connected sending request')
     if len(batch) > 0:
         for b in batch:
             s_ssl.send(json.dumps(b))
             s_ssl.send('END_EVENT')
         s_ssl.send(b'END')
-        #print('request sent')
         server_resp = s_ssl.recv(8192)
-        #print('response_received')
         s_ssl.close()
         return server_resp
     s_ssl.close()
