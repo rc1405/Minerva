@@ -41,4 +41,8 @@ class ConvertFlow():
     def __init__(self, sensor):
         self.sensor = sensor
     def convert(self, entry):
-        return _convertJSON(entry, 'flow', self.sensor)
+        new_entry =  _convertJSON(entry, 'flow', self.sensor)
+        if new_entry['event_type'] == 'flow':
+            flow = new_entry.pop('flow')
+            new_entry['netflow'] = flow
+        return new_entry
