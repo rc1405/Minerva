@@ -7,3 +7,4 @@ cherrypy
 PyOpenSSL
 bcrypt
 pytz
+markupsafe
