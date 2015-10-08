@@ -20,8 +20,9 @@
 
 from socket import socket, AF_INET, SOCK_STREAM
 import os
-from Minerva import core, agent
-from Minerva.agent import log_tailer
+from Minerva import core
+from Minerva.agent.log_tailer import TailLog
+from Minerva.agent.parser import get_parser
 from multiprocessing import Process, Lock, active_children
 import time
 import sys
@@ -35,8 +36,8 @@ def tailFile(cur_config, fname, send_lock):
     sensor_name = cur_config['sensor_name']
     ftype = cur_config['logfiles'][fname]['type']
     pfile = cur_config['logfiles'][fname]['position_file']
-    ftailer = log_tailer.TailLog(fname, pfile)
-    converter = agent.parsers.get_parser(ftype, sensor_name)
+    ftailer = TailLog(fname, pfile)
+    converter = get_parser(ftype, sensor_name)
     count = 1
     batchsize = int(cur_config['Minerva_Server']['send_batch'])
     sendwait = int(cur_config['Minerva_Server']['send_wait'])
