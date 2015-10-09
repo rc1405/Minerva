@@ -34,36 +34,41 @@ class alert_flow(object):
         self.flow = client.minerva.flow
         self.sizeLimit = configs['events']['maxResults']
 
-    def get_flow(self, ID):
-        results = self.alerts.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(ID) }}, { "$project": { "document": "$$ROOT"}}])
-	results_found = []
-        for orig_alert in results:
-            src_ip = orig_alert['document']['src_ip']
-            src_port = orig_alert['document']['src_port']
-            dest_ip =orig_alert['document']['dest_ip']
-            dest_port = orig_alert['document']['dest_port']
-            proto = orig_alert['document']['proto']
-            epoch = orig_alert['document']['epoch']
-            start_epoch = int(epoch) - 300
-            stop_epoch = int(epoch) + 300
-            #results_found = self.flow.aggregate([ { "$match": { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto }}, { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
-            results_found = self.flow.aggregate([ { "$match": 
-                    { "$and": [
-                    { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
-                    { "$or": [
-                    { "$and": [
-                    { "netflow.start_epoch": { "$gt": start_epoch }},
-                    { "netflow.start_epoch": { "$lt": stop_epoch }},
-                    ] },
-                    { "$and": [
-                    {"netflow.stop_epoch": { "$gt": start_epoch }},
-                    {"netflow.stop_epoch": { "$lt": stop_epoch }},
-                    ] },
-                    { "$and": [
-                    {"netflow.start_epoch": { "$lt": start_epoch }},
-                    {"netflow.stop_epoch": { "$gt": stop_epoch }},
-                    ]}
-                    ]}
-                    ]}}, 
-                    { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
-        return results_found, orig_alert
+    def get_flow(self, IDs):
+        results_found = {}
+        for ID in IDs:
+            results_found[ID] = {}
+            results = self.alerts.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(ID) }}, { "$project": { "document": "$$ROOT"}}])
+            results_found[ID]['orig_alert'] = results
+	    results_found[ID]['results'] = []
+            for orig_alert in results:
+                src_ip = orig_alert['document']['src_ip']
+                src_port = orig_alert['document']['src_port']
+                dest_ip =orig_alert['document']['dest_ip']
+                dest_port = orig_alert['document']['dest_port']
+                proto = orig_alert['document']['proto']
+                epoch = orig_alert['document']['epoch']
+                start_epoch = int(epoch) - 300
+                stop_epoch = int(epoch) + 300
+                #results_found = self.flow.aggregate([ { "$match": { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto }}, { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+                results_found[ID]['results'] = self.flow.aggregate([ { "$match": 
+                        { "$and": [
+                        { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
+                        { "$or": [
+                        { "$and": [
+                        { "netflow.start_epoch": { "$gt": start_epoch }},
+                        { "netflow.start_epoch": { "$lt": stop_epoch }},
+                        ] },
+                        { "$and": [
+                        {"netflow.stop_epoch": { "$gt": start_epoch }},
+                        {"netflow.stop_epoch": { "$lt": stop_epoch }},
+                        ] },
+                        { "$and": [
+                        {"netflow.start_epoch": { "$lt": start_epoch }},
+                        {"netflow.stop_epoch": { "$gt": stop_epoch }},
+                        ]}
+                        ]}
+                        ]}}, 
+                        { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+              
+        return results_found

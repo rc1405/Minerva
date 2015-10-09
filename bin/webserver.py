@@ -355,8 +355,8 @@ class Minerva(object):
                     request = cherrypy.request.params
                 context_dict = {}
                 flow = alert_flow(self.configs)
-                items_found, orig_alert = flow.get_flow(request['ID'])
-                context_dict['items_found'] = items_found
+                #items_found, orig_alert = flow.get_flow(request['ID'])
+                context_dict['items_found'] = flow.get_flow(request['ID'])
                 context_dict['orig_alert'] = orig_alert
                 context_dict['form'] = request['formType']
                 context_dict['alert_id'] = request['ID']
