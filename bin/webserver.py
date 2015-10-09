@@ -444,7 +444,7 @@ def genKey(cur_config):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['webserver_key'])):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_key']))
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch']
+    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['hostname']]
     subprocess.call(cmd)
 def secureheaders():
     headers = cherrypy.response.headers
