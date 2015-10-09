@@ -43,5 +43,27 @@ class alert_flow(object):
             dest_ip =orig_alert['document']['dest_ip']
             dest_port = orig_alert['document']['dest_port']
             proto = orig_alert['document']['proto']
-            results_found = self.flow.aggregate([ { "$match": { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto }}, { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+            epoch = orig_alert['document']['epoch']
+            start_epoch = int(epoch) - 300
+            stop_epoch = int(epoch) + 300
+            #results_found = self.flow.aggregate([ { "$match": { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto }}, { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+            results_found = self.flow.aggregate([ { "$match": 
+                    { "$and": [
+                    { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
+                    { "$or": [
+                    { "$and": [
+                    { "netflow.start_epoch": { "$gt": start_epoch }},
+                    { "netflow.start_epoch": { "$lt": stop_epoch }},
+                    ] },
+                    { "$and": [
+                    {"netflow.stop_epoch": { "$gt": start_epoch }},
+                    {"netflow.stop_epoch": { "$lt": stop_epoch }},
+                    ] },
+                    { "$and": [
+                    {"netflow.start_epoch": { "$lt": start_epoch }},
+                    {"netflow.stop_epoch": { "$gt": stop_epoch }},
+                    ]}
+                    ]}
+                    ]}}, 
+                    { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
         return results_found, orig_alert

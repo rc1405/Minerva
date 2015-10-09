@@ -148,7 +148,8 @@ def setup_db():
     expiredSeconds = int(expiredDays) * 86400
     #db.alerts.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", expiredSeconds)])
     db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
-    db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING)])
+    #db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING)])
+    db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch": pymongo.ASCENDING),("netflow.stop_epoch": pymongo.ASCENDING)])
     expiredflowDays = raw_input("Enter number of days to keep flow data: ")
     flowexpiredSeconds = int(expiredflowDays) * 86400
     #db.flow.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", flowexpiredSeconds)])
