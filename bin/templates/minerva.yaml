@@ -71,8 +71,8 @@ Event_Receiver:
 Agent_forwarder:
   sensor_name: {{config.Agent_forwarder.sensor_name}}
   client_cert: {{config.Agent_forwarder.client_cert}}
-  client_public: {{config.Agent_forwarder.client_public}}
-  {#client_private: {{config.Agent_forwarder.client_private}}#}
+  {#client_public: {{config.Agent_forwarder.client_public}}#}
+  client_private: {{config.Agent_forwarder.client_private}}
   logfiles:
     {%- for lf in config.Agent_forwarder.logfiles %}
     {{lf}}:
