@@ -38,8 +38,8 @@ def tailFile(cur_config, fname, send_lock):
     ftailer = TailLog(fname, pfile)
     converter = get_parser(ftype, sensor_name)
     count = 1
-    batchsize = int(cur_config['Minerva_Server']['send_batch'])
-    sendwait = int(cur_config['Minerva_Server']['send_wait'])
+    batchsize = int(cur_config['target_addr']['send_batch'])
+    sendwait = int(cur_config['target_addr']['send_wait'])
     batch = []
     start_wait = time.time()
     try:
@@ -65,17 +65,17 @@ def tailFile(cur_config, fname, send_lock):
         sys.exit()
 def send(cur_config, batch):
     keyfile = cur_config['client_private']
-    certfile = cur_config['Minerva_Server']['server_cert']
+    certfile = cur_config['target_addr']['server_cert']
     s = socket(AF_INET, SOCK_STREAM)
     if not os.path.exists(certfile):
-        server_cert = ssl.get_server_certificate((cur_config['Minerva_Server']['destination'], int(cur_config['Minerva_Server']['port'])))
-        scert = open(cur_config['Minerva_Server']['server_cert'],'w')
+        server_cert = ssl.get_server_certificate((cur_config['target_addr']['destination'], int(cur_config['target_addr']['port'])))
+        scert = open(cur_config['target_addr']['server_cert'],'w')
         scert.writelines(server_cert)
         scert.flush()
         scert.close()
     cert = open(cur_config['client_cert'],'r').read()
     s_ssl = ssl.wrap_socket(s, ca_certs=cur_config['Minerva_Server']['server_cert'], cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
-    s_ssl.connect((cur_config['Minerva_Server']['destination'], int(cur_config['Minerva_Server']['port'])))
+    s_ssl.connect((cur_config['target_addr']['destination'], int(cur_config['target_addr']['port'])))
     if len(batch) == 0:
         s_ssl.send('GET_CERT')
     else:
