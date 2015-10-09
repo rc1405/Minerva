@@ -18,16 +18,11 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-from Minerva.server.alerts import alert_console
-from Minerva.server.flows import alert_flow
-from Minerva.server.sensors import sensors
-from Minerva.server.users import Users
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
-from Minerva.server.date_filters import iso_to_utc
 from Minerva import core
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc
 import os
-import M2Crypto
 import time
 import platform
 import subprocess
