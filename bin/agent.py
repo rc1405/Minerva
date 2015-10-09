@@ -74,7 +74,7 @@ def send(cur_config, batch):
         scert.flush()
         scert.close()
     cert = open(cur_config['client_cert'],'r').read()
-    s_ssl = ssl.wrap_socket(s, ca_certs=cur_config['Minerva_Server']['server_cert'], cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
+    s_ssl = ssl.wrap_socket(s, ca_certs=cur_config['target_addr']['server_cert'], cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
     s_ssl.connect((cur_config['target_addr']['destination'], int(cur_config['target_addr']['port'])))
     if len(batch) == 0:
         s_ssl.send('GET_CERT')
@@ -100,7 +100,7 @@ def genKey(cur_config):
         os.mkdir(os.path.dirname(cur_config['client_cert']))
     if not os.path.exists(os.path.dirname(cur_config['client_private'])):
         os.mkdir(os.path.dirname(cur_config['client_private']))
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['client_private'], '-out', cur_config['client_cert'], '-days', '3650', '-nodes', '-batch']
+    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['client_private'], '-out', cur_config['client_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['sensor_name'] ]
     subprocess.call(cmd)
 
 def main():

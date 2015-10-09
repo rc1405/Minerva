@@ -100,8 +100,7 @@ def recv_data(host, collection, s, log_queue):
         s.send('reject')
         s.close()
         return
-    print(header)
-    cert = s.read()
+    cert = s.recv(8192)
     m2cert = M2Crypto.X509.load_cert_string(cert)
     if m2cert.verify(m2cert.get_pubkey()):
         CN = m2cert.get_issuer().get_entries_by_nid(13)[0].get_data().as_text()
@@ -179,6 +178,7 @@ def receiver(cur_config, pname, log_queue):
                 active_recv.append(pr)
                 #recv_data(a[0], collection, c, log_queue)
             else:
+                print('sleeping')
                 time.sleep(.001)
         except Exception as e:
             print('{}: {}'.format(e.__class__.__name__,e))
@@ -188,8 +188,7 @@ def genKey(cur_config):
         os.mkdir(os.path.dirname(cur_config['certs']['server_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['private_key'])):
         os.mkdir(os.path.dirname(cur_config['certs']['private_key']))
-    #cmd = [ 'openssl', 'req', '-x509', '-subj', '"/C=US/ST=Unk/L=Unk/O=minerva-ids/CN=' + platform.node() + '"','-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch' ]
+    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % platform.node() ]
     subprocess.call(cmd)
 
 def main():
