@@ -21,8 +21,7 @@
 from socket import socket, AF_INET, SOCK_STREAM
 import os
 from Minerva import core
-from Minerva.agent.log_tailer import TailLog
-from Minerva.agent.parser import get_parser
+from Minerva.agent import TailLog, get_parser
 from multiprocessing import Process, Lock, active_children
 import time
 import sys
