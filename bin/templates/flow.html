@@ -22,14 +22,15 @@
 <html>
   <head>
   <link rel="icon" type="image/png" href="/images/favicon.ico">
-  <script src="/jquery.min.js"></script>
+  <script type="text/javascript" src="/jquery.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap.js"></script>
+  <script type="text/javascript" src="/js/DateTimePicker.min.js"></script>
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
-  <script src="/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="/css/DateTimePicker.min.css">
   <script src="/js/flow.js"></script>
   <input type="hidden" id="form_type" value="{{form}}"></input>
   <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
-  {% include 'datetimepicker.html' %}
   </head>
 	</script>
 	<style>
@@ -52,7 +53,7 @@
 	<center><b>Search Flow Data</b><br /></center>
         <table border="1" style="width:100%" id="SearchInput">
         <tr><td align="center"><b>Start</b></td><td align="center"><b>Stop</b></td><td align="center"><b>Source IP</b></td><td align="center"><b>Source Port</b></td><td align="center"><b>Destination IP</b></td><td align="center"><b>Destination Port</b></td><td align="center"><b>Proto</b></td><td align="center"><b>Sensor</b></td><td align="center" rowspan="2"><a href="javascript:getFlows();">Submit</a></td></tr>
-        <!--<tr><td align="center"><input type=text id="datetime_start" ></td><td align="center"><input type=text id="datetime_stop" ></td><td align="center"><input type=text id="src_ip"></td><td align="center"><input type=text id="src_port"></td><td align="center"><input type=text id="dest_ip"></td><td align="center"><input type=text id="dest_port"></td><td align="center"><input type=text id="proto"></td><td align="center"><input type=text id="sensor"></td></tr>-->
+        <tr><td align="center"><input type=text id="start" data-field="datetime" readonly ><div id="datetime_start"></div></td><td align="center"><input type=text id="stop" data-field="datetime" readonly ><div id="datetime_stop"></div></td><td align="center"><input type=text id="src_ip"></td><td align="center"><input type=text id="src_port"></td><td align="center"><input type=text id="dest_ip"></td><td align="center"><input type=text id="dest_port"></td><td align="center"><input type=text id="proto"></td><td align="center"><input type=text id="sensor"></td></tr>
         </table>
 	</div><br />
 	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
@@ -69,5 +70,19 @@
 	</table>
 	{% endif %}
 	</div>
+<!--
+ {% for item in items_found %}
+ {{ item }}
+ {% endfor %}
+-->
+    <script>
+ $(document).ready(function()
+ {
+   
+     $("#datetime_start").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+     $("#datatime_stop").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+   
+ });
+</script>
 	</body>
 </html>

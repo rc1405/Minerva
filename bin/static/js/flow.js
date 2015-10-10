@@ -1,8 +1,4 @@
         function getFlows() {
-            alert(document.getElementById('start').value);
-        }
-        //function getFlows() {
-        function xxgettFlows() {
             var form = document.createElement("form");
             form.setAttribute("method", "post");
             form.setAttribute("action", "/flow");

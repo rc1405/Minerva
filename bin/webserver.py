@@ -295,7 +295,15 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.params
                 flow = alert_flow(self.configs)
-                context_dict['items_found'] = flow.search_flow(request)
+                items_found = flow.search_flow(request)
+                if items_found == 'Protocol not found':
+                    return '<script>alert("Protocol not found");location:/flow;</script>'
+                else:
+                    cherrypy.session['items_found'] = items_found
+                    raise cherrypy.HTTPRedirect('/flow')
+            if 'items_found' in cherrypy.session.keys():
+                context_dict['items_found'] = cherrypy.session['items_found']
+                del cherrypy.session['items_found']
             context_dict['form'] = 'flow'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimie'] = self.sizeLimit
