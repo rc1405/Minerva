@@ -6,6 +6,7 @@
             {% if 'console' in permissions %}<li {% if form == "console" %}class="active"{%endif%}><a href="/" class="submenu_left">Console</a></li>{% endif %}
             {% if 'responder' in permissions %}<li {% if form == "responder" %}class="active"{%endif%}><a href="/responder" class="submenu_left">Escalated Events</a></li>{% endif %}
             {% if 'console' in permissions or 'responder' in permissions %}<li {% if form == "flow" %}class="active"{% endif %}><a href="/flow" class="submenu_left">Session Flow</a></li>{% endif %}
+            {% if 'console' in permissions or 'responder' in permissions %}<li {% if form == "alerts" %}class="active"{% endif %}><a href="/alerts" class="submenu_left">Search Alerts</a></li>{% endif %}
             {% if 'sensor_admin' in permissions %}<li {% if form == "sensors" %}class="active"{%endif%}><a href="/sensors" class="submenu_left">Sensors</a></li>{% endif %}
             {% if 'user_admin' in permissions %}<li {% if form == "usermanagement" %}class="active"{%endif%}><a href="/users" class="submenu_left">User Management</a></li>{% endif %}
             {% if 'server_admin' in permissions %}<li {% if form == "server_admin" %}class="active"{%endif%}><a href="/config" class="submenu_left">Server Admin</a></li>{% endif %}

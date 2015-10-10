@@ -1,0 +1,88 @@
+{#
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+#}
+
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/images/favicon.ico">
+  <script type="text/javascript" src="/jquery.min.js"></script>
+  <script type="text/javascript" src="/js/bootstrap.js"></script>
+  <script type="text/javascript" src="/js/DateTimePicker.min.js"></script>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="/css/DateTimePicker.min.css">
+  <script src="/js/flow.js"></script>
+  <input type="hidden" id="form_type" value="{{form}}"></input>
+  <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+  </head>
+	</script>
+	<style>
+	body {background-color:lightblue; padding-top:60px}
+	</style>
+	<title>Minerva Flow Search</title>
+	<body>
+	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	    <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	    </div>
+	    <div id="navbar" class="navbar-collapse collapse">
+            {% include 'menu.html' %}
+	    </div>
+	</div>
+ 	</div>
+	</nav>
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<center><b>Search Flow Data</b><br /></center>
+        <table border="1" style="width:100%" id="SearchInput">
+        <tr><td align="center"><b>Start</b></td><td align="center"><b>Stop</b></td><td align="center"><b>Source IP</b></td><td align="center"><b>Source Port</b></td><td align="center"><b>Destination IP</b></td><td align="center"><b>Destination Port</b></td><td align="center"><b>Proto</b></td><td align="center"><b>Sensor</b></td><td align="center" rowspan="2"><a href="javascript:getFlows();">Submit</a></td></tr>
+        <tr><td align="center"><input type=text id="start" data-field="datetime" readonly ><div id="datetime_start"></div></td><td align="center"><input type=text id="stop" data-field="datetime" readonly ><div id="datetime_stop"></div></td><td align="center"><input type=text id="src_ip"></td><td align="center"><input type=text id="src_port"></td><td align="center"><input type=text id="dest_ip"></td><td align="center"><input type=text id="dest_port"></td><td align="center"><input type=text id="proto"></td><td align="center"><input type=text id="sensor"></td></tr>
+        </table>
+	</div><br />
+	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
+	<table border="1" style="width:100%" id="EventTable">
+	<tr><th style="display:none;">ID</th><th>Flow Start</th><th>Flow Stop</th><th>Sensor</th><th>Proto</th><th>Source IP</th><th>Source Port</th><th>Dest IP</th><th>Dest Port</th><th>Packets</th><th>Bytes</th><th colspan="5">Flags</th></tr>
+	{% if items_found == 'No Results Found' %}
+	<b>No Results Found</b>
+	</table><br />
+	<strong>No Results Found</strong>
+	{% else %}
+	{% for item in items_found %}
+	<tr><td align="center" style="display:none;">{{ item.ID }}</td><td align="center">{{ item.document.netflow.start|iso_to_utc }}</td><td align="center">{{ item.document.netflow.end|iso_to_utc }}</td><td align="center">{{ item.document.sensor }}</td><td align="center">{{ item.document.proto }}</td><td align="center">{{ item.document.src_ip }}</td><td align="center">{{ item.document.src_port }}</td><td align="center">{{ item.document.dest_ip }}</td><td align="center">{{ item.document.dest_port }}</td><td align="center">{{ item.document.netflow.pkts}}</td><td align="center">{{ item.document.netflow.bytes }}</td><td align="center">{{ item.document.tcp.tcp_flags }}</td><td align="center">{% if item.document.tcp.ack %}ACK{% endif %}</td><td align="center">{% if item.document.tcp.psh %}PSH{%endif%}</td><td align="center">{% if item.document.tcp.fin %}FIN{% endif %}</td><td align="center">{% if item.document.tcp.syn %}SYN{% endif %}</td></tr>
+	{% endfor %}
+	</table>
+	{% endif %}
+	</div>
+<!--
+ {% for item in items_found %}
+ {{ item }}
+ {% endfor %}
+-->
+    <script>
+ $(document).ready(function()
+ {
+   
+     $("#datetime_start").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+     $("#datatime_stop").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+   
+ });
+</script>
+	</body>
+</html>

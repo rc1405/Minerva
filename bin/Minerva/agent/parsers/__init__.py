@@ -1,1 +1,1 @@
-__all__ = [ 'suricata' ]
+__all__ = [ 'suricata', 'snort' ]

@@ -45,7 +45,8 @@ class alert_console(object):
         else:
             return data
     def get_alerts(self):
-        items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit } ] )
+        #items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit } ] )
+        items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } },{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}} ] )
         results = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS": "OPEN" }},{ "$group": { "_id": "$null", "count": { "$sum": 1 }}}] )
         numFound = 0
         for i in results:
@@ -79,3 +80,79 @@ class alert_console(object):
             for event in events.split(','):
                 self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": comments }})
         return
+    def search_alerts(self, request):
+        event_search = {}
+        if len(request['src_ip']) > 0:
+            event_search['src_ip'] = str(request['src_ip'])
+        if len(request['src_port']) > 0:
+            event_search['src_port'] = int(request['src_port'])
+        if len(request['dest_ip']) > 0:
+            event_search['dest_ip'] = str(request['dest_ip'])
+        if len(request['dest_port']) > 0:
+            event_search['dest_port'] = int(request['dest_port'])
+        if len(request['sensor']) > 0:
+            event_search['sensor'] = str(request['sensor'])
+        if len(request['proto']) > 0:
+            try:
+                proto = int(request['proto'])
+                if proto == 1:
+                    event_search['proto'] = 'ICMP'
+                elif proto == 4:
+                    event_search['proto'] = 'IP'
+                elif proto == 6:
+                    event_search['proto'] = 'TCP'
+                elif proto == 8:
+                    event_search['proto'] = 'EGP'
+                elif proto == 9:
+                    event_search['proto'] = 'IGP'
+                elif proto == '17':
+                    event_search['proto'] = 'UDP'
+                elif proto == '27':
+                    event_search['proto'] = 'RDP'
+                elif proto == '41':
+                    event_search['proto'] = 'IPv6'
+                elif proto == '51':
+                    event_search['proto'] = 'AH'
+            except:
+                try:
+                    event_search['proto'] = str(request['proto'].upper())
+                except:
+                    return 'Protocol not found'
+        if len(request['start']) > 0:
+             start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
+        else:
+             start_epoch = 0
+        if len(request['stop']) > 0:
+             stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+        else:
+             stop_epoch = 0
+        if start_epoch == 0 and stop_epoch == 0:
+             start_epoch = time.time() - 600
+             stop_epoch = time.time()
+        elif start_epoch == 0 and stop_epoch > 0:
+             start_epoch = stop_epoch - 600
+        elif start_epoch > 0 and stop_epoch == 0:
+             if (start_epoch + 600) > time.time():
+                 stop_epoch = time.time()
+             else:
+                 stop_epoch = start_epoch + 600
+        results_found = self.flow.aggregate([ { "$match":
+                        { "$and": [
+                        event_search,
+                        { "$or": [
+                        { "$and": [
+                        { "netflow.start_epoch": { "$gt": start_epoch }},
+                        { "netflow.start_epoch": { "$lt": stop_epoch }},
+                        ] },
+                        { "$and": [
+                        {"netflow.stop_epoch": { "$gt": start_epoch }},
+                        {"netflow.stop_epoch": { "$lt": stop_epoch }},
+                        ] },
+                        { "$and": [
+                        {"netflow.start_epoch": { "$lt": start_epoch }},
+                        {"netflow.stop_epoch": { "$gt": stop_epoch }},
+                        ]}
+                        ]}
+                        ]}},
+                        { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+        return results_found

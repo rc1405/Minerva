@@ -23,5 +23,7 @@ def get_parser( alert_type, sensor):
         parser = suricata.ConvertAlert(sensor)
     elif alert_type == 'suricata_flow':
         parser = suricata.ConvertFlow(sensor)
+    elif alert_type == 'snort_alert':
+        parser = snort.ConvertFast(sensor)
     return parser
        

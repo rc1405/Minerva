@@ -143,22 +143,19 @@ def setup_db():
     db.create_collection('flow')
     db.create_collection('sessions')
     db.create_collection('users')
-    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
+    #db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
+    ### search index for alerts
+    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.TEXT),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
     expiredDays = raw_input("Enter number of days to keep alerts: ")
     expiredSeconds = int(expiredDays) * 86400
-    #db.alerts.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", expiredSeconds)])
     db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
-    #db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING)])
     db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch": pymongo.ASCENDING),("netflow.stop_epoch": pymongo.ASCENDING),("sensor": pymongo.ASCENDING)])
     expiredflowDays = raw_input("Enter number of days to keep flow data: ")
     flowexpiredSeconds = int(expiredflowDays) * 86400
-    #db.flow.create_index([("timestamp", pymongo.ASCENDING),("expireAfterSeconds", flowexpiredSeconds)])
     db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
     sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
     sessionTimeout = int(sessionMinutes) * 60
-    #db.sessions.create_index([("last_accessed", pymongo.ASCENDING),("expireAfterSeconds", sessionTimeout)])
     db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
-    #admin_pw = raw_input("Enter password for admin console user: ")
     user_name = raw_input("Enter username of admin user to create: ")
     while True:
         print('Enter password: ')
