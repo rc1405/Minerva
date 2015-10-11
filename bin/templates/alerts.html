@@ -73,9 +73,10 @@
         <td align="center"><input type=text id="dest_port" {% if orig_search %}{% if 'dest_port' in orig_search.keys() %}value="{{orig_search['dest_port']}}"{%endif%}{%endif%}></td>
         <td align="center"><input type=text id="proto" {% if orig_search %}{% if 'proto' in orig_search.keys() %}value="{{orig_search['proto']}}"{%endif%}{%endif%}></td>
         <td align="center"><input type=text id="sensor" {% if orig_search %}{% if 'sensor' in orig_search.keys() %}value="{{orig_search['sensor']}}"{%endif%}{%endif%}></td></tr>
-        <tr><td align="center" colspan="2"><b>Signature Name</b></td><td align="center" colspan="2"><b>Category</b></td><td align="center"><b>Severity</b></td><td align="center"><b>Signature ID</b></td><td align="center"><b>Revision</b></td><td align="center"><b>GID</b></td></tr>
-        <tr><td align="center" colspan="2"><input style="width:96%" type=text id="sig_name" {% if orig_search %}{% if 'sig_name' in orig_search.keys() %}value="{{orig_search['sig_name']}}"{%endif%}{%endif%}></td>
-        <td align="center" colspan="2"><input style="width:96%" type=text id="category" {% if orig_search %}{% if 'category' in orig_search.keys() %}value="{{orig_search['category']}}"{%endif%}{%endif%}></td>
+        <tr><td align="center"><b>Status</b></td><td align="center" colspan="2"><b>Signature Name</b></td><td align="center" ><b>Category</b></td><td align="center"><b>Severity</b></td><td align="center"><b>Signature ID</b></td><td align="center"><b>Revision</b></td><td align="center"><b>GID</b></td></tr>
+        <tr><td align="center"><select id="status"><option value=''></option><option value="OPEN">Open</option><option value="ClOSED">Closed</option><option value="ESCALATED">Escalated</option></select></td>
+        <td align="center" colspan="2"><input style="width:96%" type=text id="sig_name" {% if orig_search %}{% if 'sig_name' in orig_search.keys() %}value="{{orig_search['sig_name']}}"{%endif%}{%endif%}></td>
+        <td align="center" ><input style="width:96%" type=text id="category" {% if orig_search %}{% if 'category' in orig_search.keys() %}value="{{orig_search['category']}}"{%endif%}{%endif%}></td>
         <td align="center"><input type=text id="severity" {% if orig_search %}{% if 'severity' in orig_search.keys() %}value="{{orig_search['severity']}}"{%endif%}{%endif%}></td>
         <td align="center"><input type=text id="sid" {% if orig_search %}{% if 'sid' in orig_search.keys() %}value="{{orig_search['sid']}}"{%endif%}{%endif%}></td>
         <td align="center"><input type=text id="rev" {% if orig_search %}{% if 'rev' in orig_search.keys() %}value="{{orig_search['rev']}}"{%endif%}{%endif%}></td>

@@ -118,41 +118,45 @@ class alert_console(object):
                     event_search['proto'] = str(request['proto'].upper())
                 except:
                     return 'Protocol not found'
+        if len(request['sig_name']) > 0:
+            event_search['alert.signature'] = request['sig_name']
+        if len(request['category']) > 0:
+            event_search['alert.category'] = request['category']
+        if len(request['severity']) > 0:
+            event_search['alert.severity'] = request['severity']
+        if len(request['sid']) > 0:
+            event_search['alert.signature_id'] = request['sid']
+        if len(request['rev']) > 0:
+            event_search['alert.rev'] = request['rev']
+        if len(request['gid']) > 0:
+            event_search['alert.gid'] = request['gid']
         if len(request['start']) > 0:
-             start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
+            start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
         else:
-             start_epoch = 0
+            start_epoch = 0
         if len(request['stop']) > 0:
-             stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+            stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
         else:
-             stop_epoch = 0
+            stop_epoch = 0
         if start_epoch == 0 and stop_epoch == 0:
-             start_epoch = time.time() - 600
-             stop_epoch = time.time()
+            start_epoch = time.time() - 600
+            stop_epoch = time.time()
         elif start_epoch == 0 and stop_epoch > 0:
-             start_epoch = stop_epoch - 600
+            start_epoch = stop_epoch - 600
         elif start_epoch > 0 and stop_epoch == 0:
-             if (start_epoch + 600) > time.time():
-                 stop_epoch = time.time()
-             else:
-                 stop_epoch = start_epoch + 600
-        results_found = self.flow.aggregate([ { "$match":
+            if (start_epoch + 600) > time.time():
+                stop_epoch = time.time()
+            else:
+                stop_epoch = start_epoch + 600
+        results_found = self.alerts.aggregate([ { "$match":
                         { "$and": [
                         event_search,
-                        { "$or": [
                         { "$and": [
-                        { "netflow.start_epoch": { "$gt": start_epoch }},
-                        { "netflow.start_epoch": { "$lt": stop_epoch }},
+                        { "epoch": { "$gt": start_epoch }},
+                        { "epoch": { "$lt": stop_epoch }},
                         ] },
-                        { "$and": [
-                        {"netflow.stop_epoch": { "$gt": start_epoch }},
-                        {"netflow.stop_epoch": { "$lt": stop_epoch }},
-                        ] },
-                        { "$and": [
-                        {"netflow.start_epoch": { "$lt": start_epoch }},
-                        {"netflow.stop_epoch": { "$gt": stop_epoch }},
                         ]}
-                        ]}
-                        ]}},
-                        { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+                        },
+                        { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},
+                        { "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
         return results_found
