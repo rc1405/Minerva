@@ -18,12 +18,14 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-import time
+import datetime
+from dateutil import reference
 import re
 
 class ConvertFast():
     def __init__(self, sensor):
         self.sensor = sensor
+        self.timezone = reference.LocalTimezone()
     def convert(self, entry):
         matches = re.match(r'(?P<timestamp>\d+/\d+/\d+-\d+:\d+:\d+.\d+)'r'(\s+\[\*\*\]\s+)(\[)'r'(?P<gid>\d+)'r'(:)'r'(?P<sid>\d+)'r'(:)'r'(?P<rev>\d+)'r'(])'r'(?P<sig_name>.*)'r'(\[\*\*\])'r'( \[Classification: )'r'(?P<category>.*)'r'(\] \[Priority: )'r'(?P<priority>\d+)'r'(\] \{)'r'(?P<proto>\w+)'r'(\} )'r'(?P<src_ip>\d+.\d+.\d+.\d+)'r'(:)'r'(?P<src_port>\d+)'r'( -> )'r'(?P<dest_ip>\d+.\d+.\d+.\d+)'r'(:)'r'(?P<dest_port>\d+)', entry)
         return_dict = {}
@@ -32,7 +34,9 @@ class ConvertFast():
         return_dict['dest_ip'] = matches.group('dest_ip')
         return_dict['dest_port'] = matches.group('dest_port')
         return_dict['proto'] = matches.group('proto')
-        return_dict['timestamp'] = matches.group('timestamp')
+        log_ts = datetime.datetime.strptime(matches.group('timestamp'), "%M/%d/%Y-%H:%m:%S.%f")
+        new_ts = log_ts.replace(tzinfo=self.timezone)
+        return_dict['timestamp'] = new_ts.isoformat()
         return_dict['alert'] = {}
         return_dict['alert']['category'] = matches.group('category')
         return_dict['alert']['severity'] = matches.group('priority')
