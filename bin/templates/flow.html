@@ -45,6 +45,9 @@
 	    </div>
 	    <div id="navbar" class="navbar-collapse collapse">
             {% include 'menu.html' %}
+            <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="javascript:location='/flow';" class="submenu_right">Reset</a></li>
+            </ul>
 	    </div>
 	</div>
  	</div>
@@ -53,8 +56,24 @@
 	<center><b>Search Flow Data</b><br /></center>
         <table border="1" style="width:100%" id="SearchInput">
         <tr><td align="center"><b>Start</b></td><td align="center"><b>Stop</b></td><td align="center"><b>Source IP</b></td><td align="center"><b>Source Port</b></td><td align="center"><b>Destination IP</b></td><td align="center"><b>Destination Port</b></td><td align="center"><b>Proto</b></td><td align="center"><b>Sensor</b></td><td align="center" rowspan="2"><a href="javascript:getFlows();">Submit</a></td></tr>
-        <tr><td align="center"><input type=text id="start" data-field="datetime" readonly ><div id="datetime_start"></div></td><td align="center"><input type=text id="stop" data-field="datetime" readonly ><div id="datetime_stop"></div></td><td align="center"><input type=text id="src_ip"></td><td align="center"><input type=text id="src_port"></td><td align="center"><input type=text id="dest_ip"></td><td align="center"><input type=text id="dest_port"></td><td align="center"><input type=text id="proto"></td><td align="center"><input type=text id="sensor"></td></tr>
+        <tr><td align="center"><input type=text id="start" data-field="datetime" {% if orig_search %}value="{{orig_search.start_epoch|epoch_to_datetime}}"{%endif%} readonly ><div id="datetime_start"></div></td>
+        <td align="center"><input type=text id="stop" data-field="datetime" {% if orig_search %}value="{{orig_search['stop_epoch']|epoch_to_datetime}}"{% endif %} readonly ><div id="datetime_stop"></div></td>
+        <td align="center"><input type=text id="src_ip" {% if orig_search %}{% if 'src_ip' in orig_search.keys() %}value="{{orig_search['src_ip']}}"{%endif%}{%endif%}></td>
+        <td align="center"><input type=text id="src_port" {% if orig_search %}{% if 'src_port' in orig_search.keys() %}value="{{orig_search['src_port']}}"{%endif%}{%endif%}></td>
+        <td align="center"><input type=text id="dest_ip" {% if orig_search %}{% if 'dest_ip' in orig_search.keys() %}value="{{orig_search['dest_ip']}}"{%endif%}{%endif%}></td>
+        <td align="center"><input type=text id="dest_port" {% if orig_search %}{% if 'dest_port' in orig_search.keys() %}value="{{orig_search['dest_port']}}"{%endif%}{%endif%}></td>
+        <td align="center"><input type=text id="proto" {% if orig_search %}{% if 'proto' in orig_search.keys() %}value="{{orig_search['proto']}}"{%endif%}{%endif%}></td>
+        <td align="center"><input type=text id="sensor" {% if orig_search %}{% if 'sensor' in orig_search.keys() %}value="{{orig_search['sensor']}}"{%endif%}{%endif%}></td></tr>
         </table>
+        <script>
+           $(document).ready(function()
+           {
+          
+               $("#datetime_start").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+               $("#datatime_stop").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+          
+           });
+        </script>
 	</div><br />
 	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
 	<table border="1" style="width:100%" id="EventTable">
@@ -65,24 +84,15 @@
 	<strong>No Results Found</strong>
 	{% else %}
 	{% for item in items_found %}
-	<tr><td align="center" style="display:none;">{{ item.ID }}</td><td align="center">{{ item.document.netflow.start|iso_to_utc }}</td><td align="center">{{ item.document.netflow.end|iso_to_utc }}</td><td align="center">{{ item.document.sensor }}</td><td align="center">{{ item.document.proto }}</td><td align="center">{{ item.document.src_ip }}</td><td align="center">{{ item.document.src_port }}</td><td align="center">{{ item.document.dest_ip }}</td><td align="center">{{ item.document.dest_port }}</td><td align="center">{{ item.document.netflow.pkts}}</td><td align="center">{{ item.document.netflow.bytes }}</td><td align="center">{{ item.document.tcp.tcp_flags }}</td><td align="center">{% if item.document.tcp.ack %}ACK{% endif %}</td><td align="center">{% if item.document.tcp.psh %}PSH{%endif%}</td><td align="center">{% if item.document.tcp.fin %}FIN{% endif %}</td><td align="center">{% if item.document.tcp.syn %}SYN{% endif %}</td></tr>
+	<tr><td align="center" style="display:none;">{{ item.ID }}</td><td align="center">{{ item.document.netflow.start|iso_to_utc }}</td><td align="center">{{ item.document.netflow.end|iso_to_utc }}</td><td align="center">{{ item.document.sensor }}</td><td align="center">{{ item.document.proto }}</td><td align="center">{{ item.document.src_ip }}</td><td align="center">{{ item.document.src_port }}</td><td align="center">{{ item.document.dest_ip }}</td><td align="center">{{ item.document.dest_port }}</td><td align="center">{{ item.document.netflow.pkts}}</td><td align="center">{{ item.document.netflow.bytes }}</td>
+        {% if item.document.tcp %}
+        <td align="center">{{ item.document.tcp.tcp_flags }}</td><td align="center">{% if item.document.tcp.ack %}ACK{% endif %}</td><td align="center">{% if item.document.tcp.psh %}PSH{%endif%}</td><td align="center">{% if item.document.tcp.fin %}FIN{% endif %}</td><td align="center">{% if item.document.tcp.syn %}SYN{% endif %}</td></tr>
+        {% else %}
+        <td align="center"></td><td align="center"></td><td align="center"></td><td align="center"></td><td align="center"></td></tr>
+        {% endif %}
 	{% endfor %}
 	</table>
 	{% endif %}
 	</div>
-<!--
- {% for item in items_found %}
- {{ item }}
- {% endfor %}
--->
-    <script>
- $(document).ready(function()
- {
-   
-     $("#datetime_start").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
-     $("#datatime_stop").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
-   
- });
-</script>
 	</body>
 </html>

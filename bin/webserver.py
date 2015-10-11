@@ -21,7 +21,7 @@
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime
 import os
 import time
 import platform
@@ -29,6 +29,7 @@ import subprocess
 import shutil
 env = Environment(loader=FileSystemLoader('templates'))
 env.filters['iso_to_utc'] = iso_to_utc
+env.filters['epoch_to_datetime'] = epoch_to_datetime
 
 class Minerva(object):
     def __init__(self):
@@ -295,15 +296,18 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.params
                 flow = alert_flow(self.configs)
-                items_found = flow.search_flow(request)
+                items_found, orig_search = flow.search_flow(request)
                 if items_found == 'Protocol not found':
                     return '<script>alert("Protocol not found");location:/flow;</script>'
                 else:
                     cherrypy.session['items_found'] = items_found
+                    cherrypy.session['orig_search'] = orig_search
                     raise cherrypy.HTTPRedirect('/flow')
             if 'items_found' in cherrypy.session.keys():
                 context_dict['items_found'] = cherrypy.session['items_found']
+                context_dict['orig_search'] = cherrypy.session['orig_search']
                 del cherrypy.session['items_found']
+                del cherrypy.session['orig_search']
             context_dict['form'] = 'flow'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
@@ -333,15 +337,20 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.params
                 flow = alert_flow(self.configs)
-                items_found = flow.search_flow(request)
+                items_found, orig_search = flow.search_flow(request)
+                print(orig_search)
+           
                 if items_found == 'Protocol not found':
                     return '<script>alert("Protocol not found");location:/alerts;</script>'
                 else:
                     cherrypy.session['items_found'] = items_found
+                    cherrypy.session['orig_search'] = orig_search
                     raise cherrypy.HTTPRedirect('/alerts')
             if 'items_found' in cherrypy.session.keys():
                 context_dict['items_found'] = cherrypy.session['items_found']
                 del cherrypy.session['items_found']
+                context_dict['orig_search'] = cherrypy.session['orig_search']
+                del cherrypy.session['orig_search']
             context_dict['form'] = 'alerts'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit

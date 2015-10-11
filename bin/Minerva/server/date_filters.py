@@ -34,3 +34,5 @@ def iso_to_utc(timestamp):
           return ts
        except:
           return(timestamp)
+def epoch_to_datetime(timestamp):
+    return time.strftime("%m-%d-%Y %H:%M:%S", time.localtime(float(timestamp)))

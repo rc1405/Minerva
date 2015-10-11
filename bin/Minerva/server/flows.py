@@ -109,7 +109,7 @@ class alert_flow(object):
                 try:
                     event_search['proto'] = str(request['proto'].upper())
                 except:
-                    return 'Protocol not found'
+                    return 'Protocol not found', []
         if len(request['start']) > 0:
              start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
         else:
@@ -147,4 +147,6 @@ class alert_flow(object):
                         ]}
                         ]}},
                         { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
-        return results_found
+        event_search['start_epoch'] = start_epoch
+        event_search['stop_epoch'] = stop_epoch
+        return results_found, event_search
