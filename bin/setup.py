@@ -370,9 +370,14 @@ def main():
             print('Invalid Option')
     location = raw_input("Enter installation Directory: ")
     if os.path.exists(location):
-        install_path = os.path.join(location,'minerva')
-        os.makedirs(os.path.join(install_path,'bin'))
-        os.makedirs(os.path.join(install_path,'etc'))
+        if os.path.exists(os.path.join(location,'/bin/')):
+            resp = raw_input("Previous Installation Detected, Install over it? [y/n]")
+            if resp == 'y' or resp == 'Y':
+                install_path = location
+        else:
+            install_path = os.path.join(location,'minerva')
+            os.makedirs(os.path.join(install_path,'bin'))
+            os.makedirs(os.path.join(install_path,'etc'))
     else:
         try:
             os.makedirs(location)
