@@ -35,6 +35,7 @@ class Minerva(object):
     def __init__(self):
         self.configs = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']
         self.sizeLimit = self.configs['events']['maxResults']
+    
     @cherrypy.expose
     def login(self, **kwargs):
         authUser = Users(self.configs)
@@ -62,11 +63,13 @@ class Minerva(object):
         else:
             tmp = env.get_template('login.html')
             return tmp.render()
+    
     @cherrypy.expose
     def logout(self, **kwargs):
         if 'SESSION_KEY' in cherrypy.session.keys():
             del cherrypy.session['SESSION_KEY']
         raise cherrypy.HTTPRedirect("/")
+    
     @cherrypy.expose
     def users(self, **kwargs):
         users = Users(self.configs)
@@ -108,6 +111,7 @@ class Minerva(object):
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource")
         return tmp.render(context_dict)
+    
     @cherrypy.expose
     def index(self, **kwargs):
         user = Users(self.configs)
@@ -123,6 +127,7 @@ class Minerva(object):
             context_dict['items_found'] = items_found
             context_dict['sizeLimit'] = self.sizeLimit
             context_dict['form'] = 'console'
+            context_dict['title'] = 'Alert'
             context_dict['permissions'] = perm_return
             tmp = env.get_template('console.html')
             return tmp.render(context_dict)
@@ -130,6 +135,7 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource.")
+    
     @cherrypy.expose
     def profile(self, **kwargs):
         user = Users(self.configs)
@@ -164,22 +170,23 @@ class Minerva(object):
                 return tmp.render(context_dict)
                  
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def close_nc(self, **kwargs):
-        if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session) or cherrypy.request.method == 'POST':
+        if cherrypy.request.method == 'POST':
             user = Users(self.configs)
+            
             if not 'SESSION_KEY' in cherrypy.session.keys():
                 cherrypy.session['prev_page'] = "/close_nc"
                 cherrypy.session['post_request'] = cherrypy.request.params
                 raise cherrypy.HTTPRedirect('/login')
+                
             perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+            
             if 'console' in perm_return or 'responder' in perm_return:
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
-                else:
-                    request = cherrypy.request.params
+                request = cherrypy.request.json                
                 alerts = alert_console(self.configs)
                 alerts.close_alert_nc(request['events'])
+                
                 if request['formType'] == "AlertFlow":
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
@@ -194,24 +201,26 @@ class Minerva(object):
                 raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource.")
         else:
                 raise cherrypy.HTTPError(404)
+    
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def close(self, **kwargs):
-        if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session) or cherrypy.request.method == 'POST':
+        if cherrypy.request.method == 'POST':
             user = Users(self.configs)
+            
             if not 'SESSION_KEY' in cherrypy.session.keys():
                 cherrypy.session['prev_page'] = '/close'
                 cherrypy.session['post_request'] = cherrypy.request.params
                 raise cherrypy.HTTPRedirect('/login')
+                
             perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+            
             if 'console' in perm_return or 'responder' in perm_return:
+                request = cherrypy.request.json
                 alerts = alert_console(self.configs)
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
-                else:
-                    request = cherrypy.request.params
                 alerts.close_alert(request['events'], request['comments'])
-	        if request['formType'] == "AlertFlow":
+                
+                if request['formType'] == "AlertFlow":
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
@@ -225,23 +234,25 @@ class Minerva(object):
                 raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource")
         else:
             raise cherrypy.HTTPError(404)
+            
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def escalate(self, **kwargs):
-        if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session) or cherrypy.request.method == 'POST':
+        if cherrypy.request.method == 'POST':
             user = Users(self.configs)
+            
             if not 'SESSION_KEY' in cherrypy.session.keys():
                 cherrypy.session['prev_page'] = '/escalate'
                 cherrypy.session['post_request'] = cherrypy.request.params
                 raise cherrypy.HTTPRedirect('/login')
+            
             perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
-            if 'console' in perm_return:
+            
+            if 'console' in perm_return:                
+                request = cherrypy.request.json
                 alerts = alert_console(self.configs)
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
-                else:
-                    request = cherrypy.request.params
                 alerts.escalate_alert(request['events'], request['comments'])
+                
                 if request['formType'] == "AlertFlow":
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
@@ -256,6 +267,7 @@ class Minerva(object):
                 raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource")
         else:
             raise cherrypy.HTTPError(404)
+            
     @cherrypy.expose
     def responder(self):
         user = Users(self.configs)
@@ -271,6 +283,7 @@ class Minerva(object):
             context_dict['items_found'] = items_found
             context_dict['sizeLimit'] = self.sizeLimit
             context_dict['form'] = 'responder'
+            context_dict['title'] = 'Escalation'
             context_dict['permissions'] = perm_return
             tmp = env.get_template('console.html')
             return tmp.render(context_dict)
@@ -278,6 +291,7 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+    
     @cherrypy.expose
     def flow(self, **kwargs):
         user = Users(self.configs)
@@ -319,6 +333,7 @@ class Minerva(object):
             raise cheryypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            
     @cherrypy.expose
     def alerts(self, **kwargs):
         user = Users(self.configs)
@@ -362,23 +377,25 @@ class Minerva(object):
             raise cheryypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def comment(self, **kwargs):
         user = Users(self.configs)
+        
         if not 'SESSION_KEY' in cherrypy.session.keys():
             cherrypy.session['prev_page'] = '/comment'
             cherrypy.session['post_request'] = cherrypy.request.params
             raise cherrypy.HTTPRedirect('/login')
+            
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+        
         if 'console' in perm_return or 'responder' in perm_return:
-            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+            if cherrypy.request.method == 'POST':                
+                request = cherrypy.request.json
                 alerts = alert_console(self.configs)
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
-                else:
-                    request = cherrypy.request.params
                 alerts.add_comments(request['events'], request['comments'])
+                
                 if request['formType'] == "AlertFlow":
                     return '<script type="text/javascript">window.close()</script>'
                 if request['formType'] == 'console':
@@ -393,28 +410,33 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def get_alert_flow(self, **kwargs):
         user = Users(self.configs)
+        
         if not 'SESSION_KEY' in cherrypy.session.keys():
            cherrypy.session['prev_page'] = '/get_alert_flow'
            cherrypy.session['post_request'] = cherrypy.request.params
            raise cherrypy.HTTPRedirect('/login')
+           
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+        
         if 'console' in perm_return or 'responder' in perm_return:
-            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
-                else:
-                    request = cherrypy.request.params
-                context_dict = {}
+            if cherrypy.request.method == 'POST':
+                items = []
                 flow = alert_flow(self.configs)
-                #items_found, orig_alert = flow.get_flow(request['ID'])
-                context_dict['items_found'] = flow.get_flow(request['ID'])
-                #context_dict['orig_alert'] = orig_alert
+                request = cherrypy.request.json
+                
+                for event in request['events']:
+                  items_found, orig_alert = flow.get_flow(event)
+                  items.append({ 'id': event, 'sessions': items_found, 'origin': orig_alert })
+                
+                context_dict = {}
+                context_dict['items'] = items
                 context_dict['form'] = request['formType']
-                context_dict['alert_id'] = request['ID']
+                
                 tmp = env.get_template('alert_flow.html')
                 return tmp.render(context_dict)
             else:
@@ -425,6 +447,7 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+    
     @cherrypy.expose
     def config(self, **kwargs):
         user = Users(self.configs)
@@ -477,7 +500,7 @@ class Minerva(object):
             if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
                 if 'post_request' in cherrypy.session.keys():
                     request = cherrypy.session['post_request']
-                    del cherrpy.session['post_request']
+                    del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.params
                 sensor = sensors(self.configs)
@@ -494,6 +517,7 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+
 def genKey(cur_config):
     if not os.path.exists(os.path.dirname(cur_config['certs']['webserver_cert'])):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_cert']))
@@ -501,12 +525,14 @@ def genKey(cur_config):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_key']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['hostname']]
     subprocess.call(cmd)
+
 def secureheaders():
     headers = cherrypy.response.headers
     headers['X-Frame-Options'] = 'DENY'
     headers['X-XSS-Protection'] = '1; mode=block'
     headers['Content-Security-Policy'] = "default-src='self'"
     headers['Strict-Transport-Security'] = 'max-age=3600'
+
 if __name__ == '__main__':
     server_config = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']['web']
     if not os.path.exists(server_config['certs']['webserver_cert']) or not os.path.exists(server_config['certs']['webserver_cert']):
@@ -515,6 +541,7 @@ if __name__ == '__main__':
         port = 443
     else:
         port = server_config['port']
+        
     cherrypy.tools.secureheaders = cherrypy.Tool('before_finalize', secureheaders, priority=60)
     cherrypy.config.update({'server.socket_host': server_config['bindIp'],
                             'server.socket_port': port,

@@ -1,4 +1,4 @@
-{#
+<!--
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,101 +16,142 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
+-->
 <!DOCTYPE html>
 <html>
   <head>
-  <link rel="icon" type="image/png" href="/images/favicon.ico">
-  <script src="/jquery.min.js"></script>
-  <link rel="stylesheet" href="/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
-  <script src="/js/bootstrap.min.js"></script>
-  <script src="/js/console.js"></script>
-  <input type="hidden" id="form_type" value="{{form}}"></input>
-  <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+    <link rel="icon" type="image/png" href="/images/favicon.ico"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="/css/console.css"/>
+    <script src="/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
   </head>
-	<style>
-	body {background-color:lightblue; padding-top:60px}
-	</style>
-	{% if form == "console" %}<title>Minerva Alert Console</title>{% else %}<title>Minerva Escalation Console</title>{% endif %}
+	<title>Minerva {{title}} Console</title>
 	<body>
-	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
-	<div class="container">
-	    <div class="navbar-header">
-	    <a class="navbar-brand" href="/">Minerva</a>
-	    </div>
-	    <div id="navbar" class="navbar-collapse collapse">
-            {% include 'menu.html' %}
-	    <ul class="nav navbar-nav navbar-right nav-pills">
-            <li><a href="javascript:getAlertFlow();" class="submenu_right">Get Flow Data</a></li>
-            <li><a href="javascript:highlightAll();" class="submenu_right">Highlight All</a></li>
-            <li><a href="javascript:unselectAll();" class="submenu_right">UnSelect All</a></li>
-	    <li role="presentation" class="dropdown">
-		<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">Actions <span class="caret"></span></a>
-		<ul class="dropdown-menu">
-            	    <li><a href="javascript:ClearAlerts_nc();" >Close without Comments</a></li>
-            	    <li><a href="javascript:subAlerts('/close');" >Close with Comments</a></li>
-            	    <li><a href="javascript:subAlerts('/comment');" >Add Comments</a></li>
-	    	    {% if form == "console" %}
-            	    <li><a href="javascript:subAlerts('/escalate');" >Escalate</a></li>
-	    	    {% endif %}
-		</ul>
-	    </li>
-	    </ul>
-	    </div>
-	</div>
-	</nav>
-	<div class="container" style="width:100%;" >
-	<div class="starter-template">
-	<div id="NFdiv" style="width:100%;z-index:1000;background-color:lightblue;" >
-	{% if numFound > 0 %}<b>{{ numFound }} </b> Items found{% if numFound > sizeLimit %}. Showing <b>{{ sizeLimit }}</b>{% endif %}{% endif %}<br />
-	</div>
-	<div id="HdrDiv" style="z-index:1000;background-color:lightblue;" width=100% >
-	<table id="EventHdr" border="1" width=100% style="table-layout:fixed;" >
-        <col width="2%">
-        <col width="13%">
-        <col width="8%">
-        <col width="4%">
-        <col width="9%">
-        <col width="6%">
-        <col width="9%">
-        <col width="6%">
-        <col width="14%">
-        <col width="12%">
-        <col width="4%">
-        <col width="5%">
-        <col width="4%">
-        <col width="4%">
-	<tr><th style="display:none;">ID</th><th></th><th style="word-wrap:break-word;" >Timestamp</th><th style="word-wrap:break-word;" >Sensor</th><th style="word-wrap:break-word;" >Proto</th><th style="word-wrap:break-word;" >Src IP</th><th style="word-wrap:break-word;" >Src Port</th><th style="word-wrap:break-word;" >Dest IP</th><th style="word-wrap:break-word;" >Dest Port</th><th style="word-wrap:break-word;" >Signature</th><th style="word-wrap:break-word;" >Category</th><th style="word-wrap:break-word;" >Sev</th><th>SID</th><th>Rev</th><th>GID</th></tr>
-	</table>
-	</div>
-	<div id="TblDiv" style="width:100%;" >
-	<table border="1" width=100% id="EventTable" style="table-layout:fixed;">
-	<col width="2%">
-	<col width="13%">
-	<col width="8%">
-	<col width="4%">
-	<col width="9%">
-	<col width="6%">
-	<col width="9%">
-	<col width="6%">
-	<col width="14%">
-	<col width="12%">
-	<col width="4%">
-	<col width="5%">
-	<col width="4%">
-	<col width="4%">
-	{# autoescape off #}
-	{% for item in items_found %}
-	{% if item.document.alert.severity == 4 %}<tr bgcolor="red" onclick="startTrack(this)">{% elif item.document.alert.severity == 3 %}<tr bgcolor="orange" onclick="startTrack(this)">{% elif item.document.alert.severity == 2 %}<tr bgcolor="yellow" onclick="startTrack(this)"> {% elif item.document.alert.severity == 1 %}<tr bgcolor="green" onclick="startTrack(this)"> {% else %}<tr>{% endif %}<td align="center" style="display:none;">{{ item.ID }}</td><td align="center"><a href="javascript:getOneAlertFlow({{loop.index}});"><img src="/images/arrow.png" height="16" width="16" ></a></td><td align="center" style="word-wrap:break-word;" >{# item.document.time.isoformat #}{{ item.epoch|iso_to_utc}}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.sensor }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.proto }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.src_ip }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.src_port }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.dest_ip }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.dest_port }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.signature }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.category }}</td><td align="center">{{ item.document.alert.severity }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.alert.signature_id }}</td><td align="center">{{ item.document.alert.rev }}</td><td align="center">{{ item.document.alert.gid }}</td></tr>
-	{% endfor %}
-        </table><br />
-        {% if numFound == 0 %}
-        <strong>No Results Found</strong>
-        {% endif %}
-	{# endautoescape #}
-	</div>
-	</div>
-	</div>
-	</body>
+    <nav class="navbar nav-pills navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Minerva</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          {% include 'menu.html' %}
+          <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="#" id="get_flow">Get Flow Data</a></li>
+            <li><a href="#" id="highlight">Highlight All</a></li>
+            <li><a href="#" id="unselect">UnSelect All</a></li>
+            <li role="presentation" class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
+                Actions <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="#" id="clear_alerts">Close without Comments</a></li>
+                <li><a href="#" class="minerva-subalert" data-url="/close">Close with Comments</a></li>
+                <li><a href="#" class="minerva-subalert" data-url="/comment">Add Comments</a></li>
+                {% if form == "console" %}<li><a href="#" class="minerva-subalert" data-url="/escalate">Escalate</a></li>{% endif %}
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container minerva-container">
+      <div class="starter-template">
+        <div id="HdrDiv">
+          <table id="event_header" class="table table-condensed">
+            <colgroup>
+              <col width="2%"/>
+              <col width="13%"/>
+              <col width="8%"/>
+              <col width="4%"/>
+              <col width="9%"/>
+              <col width="6%"/>
+              <col width="9%"/>
+              <col width="6%"/>
+              <col/>
+              <col/>
+              <col width="4%"/>
+              <col width="5%"/>
+              <col width="4%"/>
+              <col width="4%"/>
+            </colgroup>
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th>Timestamp</th>
+                <th>Sensor</th>
+                <th>Proto</th>
+                <th>Src IP</th>
+                <th>Src Port</th>
+                <th>Dest IP</th>
+                <th>Dest Port</th>
+                <th>Signature</th>
+                <th>Category</th>
+                <th>Sev</th>
+                <th>SID</th>
+                <th>Rev</th>
+                <th>GID</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
+        <div id="TblDiv">
+          <table id="event_table" class="table table-striped table-condensed table-hover">
+            <colgroup>
+              <col width="2%"/>
+              <col width="13%"/>
+              <col width="8%"/>
+              <col width="4%"/>
+              <col width="9%"/>
+              <col width="6%"/>
+              <col width="9%"/>
+              <col width="6%"/>
+              <col/>
+              <col/>
+              <col width="4%"/>
+              <col width="5%"/>
+              <col width="4%"/>
+              <col width="4%"/>
+            </colgroup>
+            <tbody>
+            {# autoescape off #}
+            {% set severity_class = ["active", "success", "warning", "minerva-alert", "danger"] %}
+            {% for item in items_found %}
+              <tr class="{{severity_class[item.document.alert.severity]}}" data-id="{{item.ID}}">
+                <td class="minerva-flow">
+                  <a href="#"><span class="glyphicon glyphicon glyphicon-circle-arrow-right" aria-hidden="true"></span></a>
+                </td>
+                <td>{# item.document.time.isoformat #}{{ item.epoch|iso_to_utc}}</td>
+                <td>{{ item.document.sensor }}</td>
+                <td>{{ item.document.proto }}</td>
+                <td>{{ item.document.src_ip }}</td>
+                <td>{{ item.document.src_port }}</td>
+                <td>{{ item.document.dest_ip }}</td>
+                <td>{{ item.document.dest_port }}</td>
+                <td>{{ item.document.alert.signature }}</td>
+                <td>{{ item.document.alert.category }}</td>
+                <td>{{ item.document.alert.severity }}</td>
+                <td>{{ item.document.alert.signature_id }}</td>
+                <td>{{ item.document.alert.rev }}</td>
+                <td>{{ item.document.alert.gid }}</td>
+              </tr>
+            {% endfor %}
+            <tbody>
+          </table>
+          {% if numFound == 0 %}<strong>No Results Found</strong>{% endif %}
+          {# endautoescape #}
+        </div>
+        <div id="NfDiv">
+          {% if numFound > 0 %}
+            <b>{{ numFound }} </b> Items found{% if numFound > sizeLimit %}. Showing <b>{{ sizeLimit }}</b>{% endif %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- tokens -->
+    <input type="hidden" id="form_type" value="{{form}}"></input>
+    <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+    <!-- include deferred scripts here -->
+    <script src="/js/console.js"></script>
+  </body>
 </html>

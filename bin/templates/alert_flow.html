@@ -1,4 +1,4 @@
-{#
+<!--
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,78 +16,189 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
-
+-->
 <!DOCTYPE html>
 <html>
   <head>
-  <link rel="icon" type="image/png" href="/images/favicon.ico">
-  <script src="/jquery.min.js"></script>
-  <link rel="stylesheet" href="/css/bootstrap.min.css">
-  <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
-  <script src="/js/bootstrap.min.js"></script>
-  <script src="/js/alert_flow.js"></script>
-  <input type="hidden" id="alert_id" value="{{alert_id}}"></input>
-  <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+    <title>Minerva Alert Flow</title>
+    <link rel="icon" type="image/png" href="/images/favicon.ico"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="/css/alert_flow.css"/>
+    <script src="/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
   </head>
-	</script>
-	<style>
-	body {background-color:lightblue; padding-top:60px}
-	</style>
-	<title>Minerva Alert Flow</title>
 	<body>
-	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
-	<div class="container">
-	    <div class="navbar-header">
-	    <a class="navbar-brand" href="/">Minerva</a>
-	    </div>
-	    <div id="navbar" class="navbar-collapse collapse">
-	    <ul class="nav navbar-nav nav-pills navbar-right">
-            <li><a href="javascript:subAlerts('/close');" class="submenu_right">Close with Comments</a></li>
-            <li><a href="javascript:subAlerts('/comment');" class="submenu_right">Add Comments</a></li>
-	    {% if form == "console" %}
-            <li><a href="javascript:subAlerts('/escalate');" class="submenu_right">Escalate</a></li>
-	    {% endif %}
-	    </ul>
-	    </div>
-	</div>
- 	</div>
-	</nav>
-	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
-	<center><b>Original Alert</b><br /></center>
-	</div><br />
-	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
-	<table border="1" style="width:100%">
-        <tr><th>Timestamp</th><th>Sensor</th><th>Proto</th><th>Source IP</th><th>Source Port</th><th>Dest IP</th><th>Dest Port</th><th>Signature</th><th>Category</th><th>Severity</th><th>SID</th><th>Rev</th><th>GID</th></tr>
-	{% if orig_alert.document.alert.severity == 4 %}<tr bgcolor="red" >{% elif orig_alert.document.alert.severity == 3 %}<tr bgcolor="orange" >{% elif orig_alert.document.alert.severity == 2 %}<tr bgcolor="yellow" > {% elif orig_alert.document.alert.severity == 1 %}<tr bgcolor="green" > {% else %}<tr>{% endif %}<td align="center">{{ orig_alert.document.timestamp}}</td><td align="center">{{ orig_alert.document.sensor }}</td><td align="center">{{ orig_alert.document.proto }}</td><td align="center">{{ orig_alert.document.src_ip }}</td><td align="center">{{ orig_alert.document.src_port }}</td><td align="center">{{ orig_alert.document.dest_ip }}</td><td align="center">{{ orig_alert.document.dest_port }}</td><td align="center">{{ orig_alert.document.alert.signature }}</td><td align="center">{{ orig_alert.document.alert.category }}</td><td align="center">{{ orig_alert.document.alert.severity }}</td><td align="center">{{ orig_alert.document.alert.signature_id }}</td><td align="center">{{ orig_alert.document.alert.rev }}</td><td align="center">{{ orig_alert.document.alert.gid }}</td></tr>
-	</table>
-	</div><br />
-	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
-	<center><b>ASCII Alert Packet View</b><br /></center>
-	</div><br />
-	<div style="width:100%;word-wrap:break-word;border:1px solid black;background-color:white;">
-	{{ orig_alert.document.payload_printable|e }} 
-	<br />
-	</div><br />
-	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
-	<center><b>Sessions Matching Alert Data</b><br /></center>
-	</div><br />
-	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
-	<table border="1" style="width:100%" id="EventTable">
-	<tr><th style="display:none;">ID</th><th>Flow Start</th><th>Flow Stop</th><th>Sensor</th><th>Proto</th><th>Source IP</th><th>Source Port</th><th>Dest IP</th><th>Dest Port</th><th>Packets</th><th>Bytes</th><th colspan="5">Flags</th></tr>
-	{#{% tcp_flags = [] %}#}
-	{% if items_found == 'No Results Found' %}
-	<b>No Results Found</b>
-	</table><br />
-	<strong>No Results Found</strong>
-	{% else %}
-	{# autoescape off #}
-	{% for item in items_found %}
-	<tr><td align="center" style="display:none;">{{ item.ID }}</td><td align="center">{{ item.document.netflow.start|iso_to_utc }}</td><td align="center">{{ item.document.netflow.end|iso_to_utc }}</td><td align="center">{{ item.document.sensor }}</td><td align="center">{{ item.document.proto }}</td><td align="center">{{ item.document.src_ip }}</td><td align="center">{{ item.document.src_port }}</td><td align="center">{{ item.document.dest_ip }}</td><td align="center">{{ item.document.dest_port }}</td><td align="center">{{ item.document.netflow.pkts}}</td><td align="center">{{ item.document.netflow.bytes }}</td><td align="center">{{ item.document.tcp.tcp_flags }}</td><td align="center">{% if item.document.tcp.ack %}ACK{% endif %}</td><td align="center">{% if item.document.tcp.psh %}PSH{%endif%}</td><td align="center">{% if item.document.tcp.fin %}FIN{% endif %}</td><td align="center">{% if item.document.tcp.syn %}SYN{% endif %}</td></tr>
-	{% endfor %}
-	{# endautoescape #}
-	</table>
-	{% endif %}
-	</div>
+    <nav class="navbar nav-pills navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Minerva</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav nav-pills navbar-right">
+            <li><a href="#" class="minerva-subalert" data-url="/close">Close with Comments</a></li>
+            <li><a href="#" class="minerva-subalert" data-url="/comment">Add Comments</a></li>
+            {% if form == "console" %}<li><a href="#" class="minerva-subalert" data-url="/escalate">Escalate</a></li>{% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+    {% set severity_class = ["active", "success", "warning", "minerva-alert", "danger"] %}
+    <div class="container minerva-container">
+      <ul id="tabs" class="nav nav-tabs" role="tablist">
+        {% for item in items %}
+        <li role="presentation"><a href="#{{item.id}}" role="tab" data-toggle="tab">{{item.id}}</a></li>
+        {% endfor %}
+      </ul>
+      <div class="tab-content">
+        {% for item in items %}
+        <div role="tabpanel" class="tab-pane" id="{{item.id}}">
+          <h4>Original Alert</h4>
+          <div>
+            <table class="table table-condensed">
+              <colgroup>
+                <col width="13%"/>
+                <col width="8%"/>
+                <col width="4%"/>
+                <col width="9%"/>
+                <col width="6%"/>
+                <col width="9%"/>
+                <col width="6%"/>
+                <col/>
+                <col/>
+                <col width="5%"/>
+                <col width="5%"/>
+                <col width="4%"/>
+                <col width="4%"/>
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Sensor</th>
+                  <th>Proto</th>
+                  <th>Source IP</th>
+                  <th>Source Port</th>
+                  <th>Dest IP</th>
+                  <th>Dest Port</th>
+                  <th>Signature</th>
+                  <th>Category</th>
+                  <th>Severity</th>
+                  <th>SID</th>
+                  <th>Rev</th>
+                  <th>GID</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% set oa = item.origin.document %}
+                <tr class="{{severity_class[oa.alert.severity]}}">
+                  <td>{{ oa.timestamp}}</td>
+                  <td>{{ oa.sensor }}</td>
+                  <td>{{ oa.proto }}</td>
+                  <td>{{ oa.src_ip }}</td>
+                  <td>{{ oa.src_port }}</td>
+                  <td>{{ oa.dest_ip }}</td>
+                  <td>{{ oa.dest_port }}</td>
+                  <td>{{ oa.alert.signature }}</td>
+                  <td>{{ oa.alert.category }}</td>
+                  <td>{{ oa.alert.severity }}</td>
+                  <td>{{ oa.alert.signature_id }}</td>
+                  <td>{{ oa.alert.rev }}</td>
+                  <td>{{ oa.alert.gid }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h4>ASCII Alert Packet View</h4>
+          <div>
+            <p class="text-info">{{oa.payload_printable|e}}</p>
+          </div>
+          <h4>Sessions Matching Alert Data</h4>
+          <div id="HdrDiv">
+            <table id="event_header" class="table table-condensed">
+              <colspan>
+                <col width="13%"/>
+                <col width="13%"/>
+                <col width="8%"/>
+                <col width="4%"/>
+                <col width="9%"/>
+                <col width="6%"/>
+                <col width="9%"/>
+                <col width="6%"/>
+                <col width="8%"/>
+                <col width="8%"/>
+                <col/>
+              </colspan>
+              <thead>
+                <tr>
+                  <th>Flow Start</th>
+                  <th>Flow Stop</th>
+                  <th>Sensor</th>
+                  <th>Proto</th>
+                  <th>Source IP</th>
+                  <th>Source Port</th>
+                  <th>Dest IP</th>
+                  <th>Dest Port</th>
+                  <th>Packets</th>
+                  <th>Bytes</th>
+                  <th>Flags</th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div id="TblDiv">
+            <table id="event_table" class="table table-striped table-hover table-condensed">
+              <colspan>
+                <col width="13%"/>
+                <col width="13%"/>
+                <col width="8%"/>
+                <col width="4%"/>
+                <col width="9%"/>
+                <col width="6%"/>
+                <col width="9%"/>
+                <col width="6%"/>
+                <col width="8%"/>
+                <col width="8%"/>
+                <col span="5"/>
+              </colspan>
+              <tbody>
+              {#{% tcp_flags = [] %}#}
+              {% if items_found == 'No Results Found' %}
+                <strong>No Results Found</strong>
+              {% else %}
+              {# autoescape off #}
+              {% for session in item.sessions %}
+                {% set sn = session.document %}
+                <tr>
+                  <td>{{ sn.netflow.start|iso_to_utc }}</td>
+                  <td>{{ sn.netflow.end|iso_to_utc }}</td>
+                  <td>{{ sn.sensor }}</td>
+                  <td>{{ sn.proto }}</td>
+                  <td>{{ sn.src_ip }}</td>
+                  <td>{{ sn.src_port }}</td>
+                  <td>{{ sn.dest_ip }}</td>
+                  <td>{{ sn.dest_port }}</td>
+                  <td>{{ sn.netflow.pkts}}</td>
+                  <td>{{ sn.netflow.bytes }}</td>
+                  <td>{{ sn.tcp.tcp_flags }}</td>
+                  <td>{% if sn.tcp.ack %}ACK{% endif %}</td>
+                  <td>{% if sn.tcp.psh %}PSH{% endif %}</td>
+                  <td>{% if sn.tcp.fin %}FIN{% endif %}</td>
+                  <td>{% if sn.tcp.syn %}SYN{% endif %}</td>
+                </tr>
+              {% endfor %}
+              {# endautoescape #}
+              {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <!-- tokens  -->
+    <input type="hidden" id="alert_id" value="{{alert_id}}"></input>
+    <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+    <!-- include deferred scripts here -->
+    <script src="/js/alert_flow.js"></script>
 	</body>
 </html>
