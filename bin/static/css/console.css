@@ -9,16 +9,45 @@ body {
   table-layout: fixed;
 }
 
-.table > tbody > tr.minerva-alert > td {
-  background-color: #f2edde;
-}
-
-.table-hover > tbody > tr.minerva-alert:hover > td {
-  background-color: #ebe4cc;
-}
-
 .table th, .table td {
   word-wrap: break-word;
+}
+
+.table > tbody > tr.minerva-active > td {
+  background-color: #aaa !important;
+}
+.table-hover > tbody > tr.minerva-active:hover > td {
+  background-color: #ccc !important;
+}
+
+.table > tbody > tr.minerva-success > td {
+  background-color: #0b0;
+}
+.table-hover > tbody > tr.minerva-success:hover > td {
+  background-color: #0d0;
+}
+
+.table > tbody > tr.minerva-warning > td {
+  background-color: #cc0;
+}
+.table-hover > tbody > tr.minerva-warning:hover > td {
+  background-color: #ee0;
+}
+
+.table > tbody > tr.minerva-alert > td {
+  background-color: #ffa500;
+}
+.table-hover > tbody > tr.minerva-alert:hover > td {
+  background-color: #ffa500;
+}
+
+.table > tbody > tr.minerva-danger > td {
+  color: #eee;
+  background-color: #b00;
+}
+.table-hover > tbody > tr.minerva-danger:hover > td {
+  color: #eee;
+  background-color: #d00;
 }
 
 .minerva-container {

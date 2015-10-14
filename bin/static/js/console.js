@@ -31,16 +31,16 @@ minerva.console = {};
   
   // declare module functions
   app.clearSelected = function() {
-    app.table.children('tr.info').removeClass('info');
+    app.table.children('tr.minerva-active').removeClass('minerva-active');
     app.selected = [];
   };
   
   app.selectAll = function() {
-    app.table.children('tr').not('.info').each(function(i, el) {
+    app.table.children('tr').not('.minerva-active').each(function(i, el) {
       var row = $(el);
       var id = row.data('id');
       
-      row.addClass('info');
+      row.addClass('minerva-active');
       app.selected.push(id);
     });
   };
@@ -49,11 +49,11 @@ minerva.console = {};
     var row = $(e.currentTarget);
     var id = row.data('id');
     
-    if (row.hasClass('info')) {
-      row.removeClass('info');
+    if (row.hasClass('minerva-active')) {
+      row.removeClass('minerva-active');
       app.selected.splice(app.selected.indexOf(id), 1);
     } else {
-      row.addClass('info');
+      row.addClass('minerva-active');
       app.selected.push(id);
     }
     
