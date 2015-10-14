@@ -60,25 +60,29 @@ class alert_console(object):
             numFound = i['count']
         return numFound, items_found
     def close_alert_nc(self, events):
-        for event in events.split(','):
+        #for event in events.split(','):
+        for event in events:
             self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": "NONE" }})
         return
     def close_alert(self, events, comments):
         if comments == '':
             comments = 'NONE'
-        for event in events.split(','):
+        #for event in events.split(','):
+        for event in events:
             self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": comments }})
         return
     def escalate_alert(self, events, comments):
         if comments == '':
             comments = 'NONE'
-        for event in events.split(','):
+        #for event in events.split(','):
+        for event in events:
             self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "ESCALATED"}, "$push": { "MINERVA_COMMENTS": comments }})
         return
     def add_comments(self, events, comments):
         if comments != '':
-            for event in events.split(','):
-                self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": comments }})
+            # for event in events.split(','):
+            for event in events:
+                self.alerts.update({ "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": comments }})
         return
     def search_alerts(self, request):
         event_search = {}

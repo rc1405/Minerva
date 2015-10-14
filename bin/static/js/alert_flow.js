@@ -17,39 +17,41 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 */
-	function refreshParent() {
-	    window.opener.location.reload();
-	}
-        function subAlerts (postTo) {
-	    var selected = [];
-	    selected.push(document.getElementById("alert_id").value);
-	    var comments = prompt("Enter Comments");
-	    if ( comments != null) {
-                var form = document.createElement("form");
-                form.setAttribute("method", "post");
-                form.setAttribute("action", postTo);
-                var hiddenField = document.createElement("input");
-                hiddenField.setAttribute("type", "hidden");
-                hiddenField.setAttribute("name", "events");
-                hiddenField.setAttribute("value", selected);
-                form.appendChild(hiddenField)
-		var hiddenField1 = document.createElement("input");
-		hiddenField1.setAttribute("type", "hidden");
-		hiddenField1.setAttribute("name", "formType");
-		hiddenField1.setAttribute("value", "AlertFlow" );
-		form.appendChild(hiddenField1);
-                var hiddenField2 = document.createElement("input");
-                hiddenField2.setAttribute("type", "hidden");
-                hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-                hiddenField2.setAttribute("value", document.getElementById("csrf_token").value);
-                form.appendChild(hiddenField2)
-		var hiddenField3 = document.createElement("input");
-		hiddenField3.setAttribute("type", "hidden");
-		hiddenField3.setAttribute("name", "comments");
-		hiddenField3.setAttribute("value", comments);
-		form.appendChild(hiddenField3)
-                document.body.appendChild(form);
-		refreshParent();
-                form.submit();
-	    }
+var minerva = minerva || {};
+
+minerva.alertflow = {};
+
+(function($, app) {
+  app.nav = $('nav');
+  app.tabs = $('#tabs');
+  app.form_type = $('#form_type').val();
+  app.csrf_token = $('#csrf_token').val();
+  
+  app.subAlerts = function(e) {
+    var url = $(e.target).data('url');    
+    var comments = prompt('Enter Comments');
+    
+    if (comments) {
+      var data = {
+        events: [], // TODO: determine which events to send (i.e. active tab?)
+        formType: app.form_type, 
+        comments: comments
+      };
+      
+      $.ajax({
+        method: 'POST',
+        url: url,
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        headers: {
+          csrfmiddlewaretoken: app.csrf_token
         }
+      }).done(function() {
+        app.clearSelected();
+      });
+    }
+  };
+  
+  app.nav.on('click', '.minerva-subalert', app.subAlerts);
+  
+})(jQuery, minerva.alertflow);
