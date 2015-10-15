@@ -440,17 +440,14 @@ class Minerva(object):
         
         if 'console' in perm_return or 'responder' in perm_return:
             if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
-                items = []
                 flow = alert_flow(self.configs)
                 if 'post_request' in cherrypy.session:
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.json
-                
-                for event in request['events']:
-                  items_found, orig_alert = flow.get_flow(event)
-                  items.append({ 'id': event, 'sessions': items_found, 'origin': orig_alert })
+
+                items = flow.get_flow(request['events'])
                 
                 context_dict = {}
                 context_dict['items'] = items

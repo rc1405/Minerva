@@ -36,12 +36,10 @@ class alert_flow(object):
         self.sizeLimit = configs['events']['maxResults']
 
     def get_flow(self, IDs):
-        results_found = {}
+        results_found = []
         for ID in IDs:
-            results_found[ID] = {}
             results = self.alerts.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(ID) }}, { "$project": { "document": "$$ROOT"}}])
-            results_found[ID]['orig_alert'] = results
-	    results_found[ID]['results'] = []
+            flow_results = []
             for orig_alert in results:
                 src_ip = orig_alert['document']['src_ip']
                 src_port = orig_alert['document']['src_port']
@@ -51,8 +49,7 @@ class alert_flow(object):
                 epoch = orig_alert['document']['epoch']
                 start_epoch = int(epoch) - 300
                 stop_epoch = int(epoch) + 300
-                #results_found = self.flow.aggregate([ { "$match": { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto }}, { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
-                results_found[ID]['results'] = self.flow.aggregate([ { "$match": 
+                flow_results = self.flow.aggregate([ { "$match": 
                         { "$and": [
                         { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
                         { "$or": [
@@ -71,6 +68,7 @@ class alert_flow(object):
                         ]}
                         ]}}, 
                         { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+                results_found.append({ 'id': ID, 'sessions': flow_results, 'origin': orig_alert })
         return results_found
     def search_flow(self, request):
         event_search = {}
@@ -97,13 +95,13 @@ class alert_flow(object):
                     event_search['proto'] = 'EGP'
                 elif proto == 9:
                     event_search['proto'] = 'IGP'
-                elif proto == '17':
+                elif proto == 17:
                     event_search['proto'] = 'UDP'
-                elif proto == '27':
+                elif proto == 27:
                     event_search['proto'] = 'RDP'
-                elif proto == '41':
+                elif proto == 41:
                     event_search['proto'] = 'IPv6'
-                elif proto == '51':
+                elif proto == 51:
                     event_search['proto'] = 'AH'
             except:
                 try:

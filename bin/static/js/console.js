@@ -80,10 +80,13 @@ minerva.console = {};
           contentType: 'application/json',
           headers: {
             csrfmiddlewaretoken: app.csrf_token
-          }
-        }).done(function() {
-          app.clearSelected();
-        });
+          },
+          success: function (data) {
+              document.open();
+              document.write(data);
+              document.close();
+          },
+        })
       }
     } else {
       alert('No events selected');
@@ -104,9 +107,12 @@ minerva.console = {};
         contentType: 'application/json',
         headers: {
           csrfmiddlewaretoken: app.csrf_token
-        }
-      }).done(function() {
-        app.clearSelected();
+        },
+        success: function (data) {
+            document.open();
+            document.write(data);
+            document.close();
+        },
       });
     } else {
       alert('No events selected');
