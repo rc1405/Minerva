@@ -465,6 +465,7 @@ class Minerva(object):
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
     
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def config(self, **kwargs):
         user = Users(self.configs)
         cherrypy.session['prev_page'] = "/config"
@@ -479,7 +480,7 @@ class Minerva(object):
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
                 else:
-                    request = cherrypy.request.params
+                    request = cherrypy.request.json
                 server_config = core.MinervaConfigs()
                 new_config = server_config.parse_web_configs(request)
                 out_tmp = env.get_template('minerva.yaml')

@@ -17,125 +17,39 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 */
-	function saveChanges() {
-	    var form1 = document.createElement("form");
-	    form1.setAttribute("method", "post");
-	    form1.setAttribute("action", "/config");
-	    var db_ipField = document.createElement("input");
-	    db_ipField.setAttribute("type", "hidden");
-	    db_ipField.setAttribute("name", "db_ip");
-	    db_ipField.setAttribute("value", document.getElementById('db_ip').value);
-	    form1.appendChild(db_ipField);
-	    var db_portField = document.createElement("input");
-	    db_portField.setAttribute("type", "hidden");
-	    db_portField.setAttribute("name", "db_port");
-	    db_portField.setAttribute("value", document.getElementById('db_port').value );
-	    form1.appendChild(db_portField);
-            var useAuthField = document.createElement("input");
-            useAuthField.setAttribute("type", "hidden");
-            useAuthField.setAttribute("name", "useAuth");
-            useAuthField.setAttribute("value", document.getElementById('db_useAuth').checked );
-            form1.appendChild(useAuthField);
-            var dbuserField = document.createElement("input");
-            dbuserField.setAttribute("type", "hidden");
-            dbuserField.setAttribute("name", "db_user");
-            dbuserField.setAttribute("value", document.getElementById('db_user').value );
-            form1.appendChild(dbuserField);
-            var dbpassField = document.createElement("input");
-            dbpassField.setAttribute("type", "hidden");
-            dbpassField.setAttribute("name", "db_pass");
-            dbpassField.setAttribute("value", document.getElementById('db_pass').value );
-            form1.appendChild(dbpassField);
-	    var csrftokenField = document.createElement("input");
-	    csrftokenField.setAttribute("type", "hidden");
-	    csrftokenField.setAttribute("name", "csrfmiddlewaretoken");
-	    csrftokenField.setAttribute("value", document.getElementById("csrf_token").value);
-	    form1.appendChild(csrftokenField);
-            var webhostField = document.createElement("input");
-            webhostField.setAttribute("type", "hidden");
-            webhostField.setAttribute("name", "web_host");
-            webhostField.setAttribute("value", document.getElementById('web_host').value);
-            form1.appendChild(webhostField);
-            var web_ipField = document.createElement("input");
-            web_ipField.setAttribute("type", "hidden");
-            web_ipField.setAttribute("name", "web_ip");
-            web_ipField.setAttribute("value", document.getElementById('web_ip').value );
-            form1.appendChild(web_ipField);
-            var webportField = document.createElement("input");
-            webportField.setAttribute("type", "hidden");
-            webportField.setAttribute("name", "web_port");
-            webportField.setAttribute("value", document.getElementById('web_port').value );
-            form1.appendChild(webportField);
-            var webthreadField = document.createElement("input");
-            webthreadField.setAttribute("type", "hidden");
-            webthreadField.setAttribute("name", "web_threads");
-            webthreadField.setAttribute("value", document.getElementById('web_threads').value );
-            form1.appendChild(webthreadField);
-            var cert_pathField = document.createElement("input");
-            cert_pathField.setAttribute("type", "hidden");
-            cert_pathField.setAttribute("name", "cert_path");
-            cert_pathField.setAttribute("value", document.getElementById('cert_path').value );
-            form1.appendChild(cert_pathField);
-            var key_pathField = document.createElement("input");
-            key_pathField.setAttribute("type", "hidden");
-            key_pathField.setAttribute("name", "key_path");
-            key_pathField.setAttribute("value", document.getElementById('key_path').value );
-            form1.appendChild(key_pathField);
-            var sesstimedField = document.createElement("input");
-            sesstimedField.setAttribute("type", "hidden");
-            sesstimedField.setAttribute("name", "session_timeout");
-            sesstimedField.setAttribute("value", document.getElementById('session_timeout').value );
-            form1.appendChild(sesstimedField);
-            var passtriesField = document.createElement("input");
-            passtriesField.setAttribute("type", "hidden");
-            passtriesField.setAttribute("name", "pass_tries");
-            passtriesField.setAttribute("value", document.getElementById('pass_tries').value );
-            form1.appendChild(passtriesField);
-            var pass_minField = document.createElement("input");
-            pass_minField.setAttribute("type", "hidden");
-            pass_minField.setAttribute("name", "pass_min");
-            pass_minField.setAttribute("value", document.getElementById('pass_min').value );
-            form1.appendChild(pass_minField);
-            var pass_agedField = document.createElement("input");
-            pass_agedField.setAttribute("type", "hidden");
-            pass_agedField.setAttribute("name", "pass_age");
-            pass_agedField.setAttribute("value", document.getElementById('pass_age').value );
-            form1.appendChild(pass_agedField);
-            var pass_lowerField = document.createElement("input");
-            pass_lowerField.setAttribute("type", "hidden");
-            pass_lowerField.setAttribute("name", "lower_count");
-            pass_lowerField.setAttribute("value", document.getElementById('lower_count').value );
-            form1.appendChild(pass_lowerField);
-            var pass_upperField = document.createElement("input");
-            pass_upperField.setAttribute("type", "hidden");
-            pass_upperField.setAttribute("name", "upper_count");
-            pass_upperField.setAttribute("value", document.getElementById('upper_count').value );
-            form1.appendChild(pass_upperField);
-            var pass_digitField = document.createElement("input");
-            pass_digitField.setAttribute("type", "hidden");
-            pass_digitField.setAttribute("name", "digit_count");
-            pass_digitField.setAttribute("value", document.getElementById('digit_count').value );
-            form1.appendChild(pass_digitField);
-            var pass_specialField = document.createElement("input");
-            pass_specialField.setAttribute("type", "hidden");
-            pass_specialField.setAttribute("name", "special_count");
-            pass_specialField.setAttribute("value", document.getElementById('special_count').value );
-            form1.appendChild(pass_specialField);
-            var maxeventsField = document.createElement("input");
-            maxeventsField.setAttribute("type", "hidden");
-            maxeventsField.setAttribute("name", "max_events");
-            maxeventsField.setAttribute("value", document.getElementById('max_events').value );
-            form1.appendChild(maxeventsField);
-            var max_ageField = document.createElement("input");
-            max_ageField.setAttribute("type", "hidden");
-            max_ageField.setAttribute("name", "max_age");
-            max_ageField.setAttribute("value", document.getElementById('max_age').value );
-            form1.appendChild(max_ageField);
-            var flow_agedField = document.createElement("input");
-            flow_agedField.setAttribute("type", "hidden");
-            flow_agedField.setAttribute("name", "flow_age");
-            flow_agedField.setAttribute("value", document.getElementById('flow_age').value );
-            form1.appendChild(flow_agedField);
-            document.body.appendChild(form1);
-	    form1.submit();
-	}
+var minerva = minerva || {};
+
+minerva.console = {};
+
+(function ($, app) {
+  // declare module properties
+  app.nav = $('nav');
+  app.csrf_token = $('#csrf_token').val();
+
+  app.saveConfig = function() {
+    var data = {};
+    $('input').each(
+      function() {
+        data[$(this).attr('id')] = $(this).val();
+    });
+    $.ajax({
+      method: 'POST',
+      url: '/config',
+      data: JSON.stringify(data),
+      contentType: 'application/json',
+      headers: {
+        csrfmiddlewaretoken: app.csrf_token
+      },
+      success: function (data) {
+        document.open();
+        document.write(data);
+        document.close();
+      },
+    });
+  };
+
+  // bind events
+  //
+  app.nav.on('click', '.minerva-saveConf', app.saveConfig);
+
+})(jQuery, minerva.console);
