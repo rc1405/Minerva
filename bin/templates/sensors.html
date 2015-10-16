@@ -1,4 +1,4 @@
-{#
+<!--
     Copyright (C) 2015  Ryan M Cote.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,22 +16,17 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
-#}
+-->
 <!DOCTYPE html>
 <html>
   <head>
   <link rel="icon" type="image/png" href="/images/favicon.ico">
-  <script src="/jquery.min.js"></script>
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="/css/console.css">
+  <script src="/jquery.min.js"></script>
   <script src="/js/bootstrap.min.js"></script>
-  <script src="/js/sensors.js"></script>
-  <input type="hidden" id="form_type" value="{{form}}"></input>
-  <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
   </head>
-	<style>
-	body {background-color:lightblue; padding-top:60px}
-	</style>
 	<title>Minerva Sensors</title>
 	<body>
 	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
@@ -42,44 +37,65 @@
 	    <div id="navbar" class="navbar-collapse collapse">
             {% include 'menu.html' %}
 	    <ul class="nav navbar-nav navbar-right nav-pills">
-            <li><a href="javascript:subChanges('enable');" class="submenu_right">Approve/Enable</a></li>
-            <li><a href="javascript:subChanges('disable');" class="submenu_right">Disable/Deny</a></li>
+            <li><a href="#" class="minerva-sensor" data-action="enable">Approve/Enable</a></li>
+            <li><a href="#" class="minerva-sensor" data-action="disable">Disable/Deny</a></li>
 	    </ul>
 	    </div>
 	</div>
 	</nav>
-	<div class="container" style="width:100%;" >
+	<div class="container minerva-container" >
         <div class="starter-template">
-	<div id="HdrDiv" style="z-index:1000;background-color:lightblue;width:100%;" >
-	<table id="EventHdr" border="1" width=100% style="table-layout:fixed;" >
-        <col width="20%">
-        <col width="20%">
-        <col width="20%">
-        <col width="20%">
-        <col width="20%">
-	<tr><th style="display:none;">ID</th><th style="word-wrap:break-word;" >Time Created</th><th style="word-wrap:break-word">Last Modified</th><th style="word-wrap:break-word;" >Sensor</th><th style="word-wrap:break-word;" >Sensor IP</th><th style="word-wrap:break-word;" >Status</th></tr>
+	<div id="HdrDiv">
+	<table id="event_header" class="table table-condensed">
+          <colgroup>
+            <col width="20%"/>
+            <col width="20%"/>
+            <col width="20%"/>
+            <col width="20%"/>
+            <col width="20%"/>
+          </colgroup>
+        <thead>
+	  <tr>
+            <th>Time Created</th>
+            <th>Last Modified</th>
+            <th>Sensor</th>
+            <th>Sensor IP</th>
+            <th>Status</th>
+          </tr>
+        </thead>
 	</table>
 	</div>
-	<div id="TblDiv" style="width:100%;" >
-	<table border="1" width=100% id="EventTable" style="table-layout:fixed;">
-	<col width="20%">
-	<col width="20%">
-	<col width="20%">
-	<col width="20%">
-	<col width="20%">
+	<div id="TblDiv">
+	<table id="event_table" class="table table-striped table-condensed table-hover">
+        <colgroup>
+	  <col width="20%">
+	  <col width="20%">
+	  <col width="20%">
+	  <col width="20%">
+	  <col width="20%">
+        </colgroup>
 	{% if items_found == "No Results Found" %}
 	</table><br />
 	<strong>No Results Found</strong>
 	{% else %}
-	{# autoescape off #}
+        {% set status_class = { "_DENIED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGE": "minerva-warning", "APPROVED": "minerva-success" } %}
+        <tbody>
 	{% for item in items_found %}
-        {% if item.STATUS == '_DENIED' %}<tr bgcolor="red" onclick="startTrack(this)">{% elif item.STATUS == 'NOT_APPROVED' %}<tr bgcolor="orange" onclick="startTrack(this)">{% elif item.STATUS == 'CERT_CHANGED' %}<tr bgcolor="yellow" onclick="startTrack(this)"> {% elif item.STATUS == 'APPROVED' %}<tr bgcolor="green" onclick="startTrack(this)"> {% else %}<tr>{% endif %}<td align="center" style="display:none;">{{ item.ID }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.time_created|iso_to_utc}}</td><td align="center" style="word-wrap:breakword;">{{ item.document.last_modified|iso_to_utc}}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.SERVER }}</td><td align="center" style="word-wrap:break-word;" >{{ item.document.IP }}</td><td align="center" style="word-wrap:break-word;" >{{ item.STATUS }}</td></tr>
+        <tr class={{status_class[item.STATUS]}} data-id="{{item.ID}}">
+        <td>{{ item.document.time_created|iso_to_utc}}</td>
+        <td>{{ item.document.last_modified|iso_to_utc}}</td>
+        <td>{{ item.document.SERVER }}</td>
+        <td>{{ item.document.IP }}</td>
+        <td>{{ item.STATUS }}</td></tr>
 	{% endfor %}
-	{# endautoescape #}
+        </tbody>
 	</table>
 	{% endif %}
 	</div>
 	</div>
         </div>
-	</body>
+      <input type="hidden" id="form_type" value="{{form}}"></input>
+      <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+      <script src="/js/sensors.js"></script>
+    </body>
 </html>

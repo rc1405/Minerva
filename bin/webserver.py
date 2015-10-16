@@ -505,6 +505,7 @@ class Minerva(object):
             raise cherrypy.HTTPError('403 Forbidden', "You are not permitted to access this resource")
             
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def sensors(self, **kwargs):
         user = Users(self.configs)
         cherrypy.session['prev_page'] = "/sensors"
@@ -519,7 +520,7 @@ class Minerva(object):
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
                 else:
-                    request = cherrypy.request.params
+                    request = cherrypy.request.json
                 sensor = sensors(self.configs)
                 sensor.update(request['sensors'],request['action'])
             context_dict = {}

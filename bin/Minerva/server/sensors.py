@@ -38,7 +38,7 @@ class sensors(object):
         items_found = self.collection.aggregate([{ "$match": { "STATUS": { "$in": ["NOT_APPROVED","CERT_CHANGED","APPROVED","_DENIED"]} } }, { "$project": { "ID": "$_id", "STATUS": "$STATUS", "document": "$$ROOT" }},{ "$sort": { "STATUS": -1 }},{ "$limit": self.sizeLimit } ] )
         return items_found
     def update(self, sensors, action):
-        for s in sensors.split(','):
+        for s in sensors:
             if action == 'enable':
                 status = 'APPROVED'
             else:

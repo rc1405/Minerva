@@ -17,71 +17,63 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 */
-	var selected = [];
-	var index;
-	function startTrack(x) {
-	    var cur_color = x.getAttribute("bgcolor");
-	    if (cur_color === "gray" ) {
-		for ( index = 0; index < selected.length; index++) {
-		    if ( selected[index] === x.cells[0].innerHTML) {
-			selected.splice(index, 1);
-			break;
-		    }
-		}
-	    	switch(x.cells[5].innerHTML) {
-		    case "_DENIED":
-			x.setAttribute("bgcolor", "red");
-			break;
-		    case "CERT_CHANGED":
-			x.setAttribute("bgcolor", "orange");
-			break;
-		    case "NOT_APPROVED":
-			x.setAttribute("bgcolor", "yellow");
-			break;
-		    case "APPROVED":
-			x.setAttribute("bgcolor", "green");
-			break;
-		}
-	     } else {
-		selected.push(x.cells[0].innerHTML);
-	    	x.setAttribute("bgcolor", "gray");
-	    }
-	}
-	function clearSelected() {
-	    for ( index = 0; index < selected.length; index++) {
-		//remove row from table
-		selected.splice(index, 1);
-	    }
-	}
-	function subChanges (action) {
-	    if ( selected.length === 0) {
-		alert("No Events Selected");
-	    } else {
-	        var form = document.createElement("form");
-	        form.setAttribute("method", "post");
-	        form.setAttribute("action", "/sensors");
-	        var hiddenField = document.createElement("input");
-	        hiddenField.setAttribute("type", "hidden");
-	        hiddenField.setAttribute("name", "sensors");
-	        hiddenField.setAttribute("value", selected);
-	        form.appendChild(hiddenField);
-		var hiddenField1 = document.createElement("input");
-		hiddenField1.setAttribute("type", "hidden");
-		hiddenField1.setAttribute("name", "formType");
-		hiddenField1.setAttribute("value", document.getElementById('form_type').value );
-		form.appendChild(hiddenField1);
-	        var hiddenField2 = document.createElement("input");
-	        hiddenField2.setAttribute("type", "hidden");
-	        hiddenField2.setAttribute("name", "csrfmiddlewaretoken");
-	        hiddenField2.setAttribute("value", document.getElementById('csrf_token').value);
-	        form.appendChild(hiddenField2);
-                var hiddenField3 = document.createElement("input");
-                hiddenField3.setAttribute("type", "hidden");
-                hiddenField3.setAttribute("name", "action");
-                hiddenField3.setAttribute("value", action);
-                form.appendChild(hiddenField3);
-	        document.body.appendChild(form);
-	        form.submit();
-	        clearSelected();
-	    }
-	}
+var minerva = minerva || {};
+
+minerva.console = {};
+
+(function ($, app) {
+  // declare module properties
+  app.selected = [];  
+  app.nav = $('nav');
+  app.table = $('#event_table tbody');
+  app.form_type = $('#form_type').val();
+  app.csrf_token = $('#csrf_token').val();
+  
+  app.startTrack = function(e) {
+    var row = $(e.currentTarget);
+    var id = row.data('id');
+    
+    if (row.hasClass('minerva-active')) {
+      row.removeClass('minerva-active');
+      app.selected.splice(app.selected.indexOf(id), 1);
+    } else {
+      row.addClass('minerva-active');
+      app.selected.push(id);
+    }
+    
+    e.stopPropagation();
+  };
+  
+  app.subSensor = function(s) {
+    var sensor_action = $(s.target).data('action');
+    if (app.selected.length) {
+      var data = {
+        sensors: app.selected,
+        formType: app.form_type,
+        action: sensor_action
+      };
+      
+      $.ajax({
+        method: 'POST',
+        url: '/sensors',
+        data: JSON.stringify(data),
+        contentType: 'application/json',
+        headers: {
+          csrfmiddlewaretoken: app.csrf_token
+        },
+        success: function (data) {
+            document.open();
+            document.write(data);
+            document.close();
+        },
+      });
+    } else {
+      alert('No Sensors selected');
+    }
+  };
+  
+  // bind events
+  app.table.on('click', 'tr', app.startTrack);
+  app.nav.on('click', '.minerva-sensor', app.subSensor);
+  
+})(jQuery, minerva.console);
