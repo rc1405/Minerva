@@ -85,4 +85,14 @@ Agent_forwarder:
     port: {{config.Agent_forwarder.target_addr.port}}
     send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
     send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
+  pcap:
+    max_packets: {{config.Agent_forwarder.pcap.max_packets}}
+    max_size: {{conf.Agent_forwarder.pcap.max_size}}
+    max_files: {{ config.Agent_forwarder.pcap.max_files}}
+    thres_time: {{ config.Agent_forwarder.pcap.thres_time}}
+    prefix:  {{ config.Agent_forwarder.pcap.prefix}}
+    suffix: {{ config.Agent_forwarder.pcap.suffix}}
+    pcap_directory: {{ config.Agent_forwarder.pcap.pcap_directory }}
+    temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
+
 {%- endif %}

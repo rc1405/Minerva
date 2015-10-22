@@ -336,6 +336,27 @@ def setup_agent():
     send_wait = raw_input("Enter max # of seconds to wait to send events (Will send earlier if max events is reached): [10] ")
     if len(send_wait) == 0:
         send_wait = 10
+    print("Configuring Agent PCAP Requests")
+    max_packets = raw_input("Enter max # of packets to return per request: [10000] ")
+    if len(max_packets) == 0:
+        max_packets = 10000
+    max_size = raw_input("Enter Max size(mb) of pcap files to return per reqeust: [20] ")
+    if len(max_size) == 0:
+        max_size = 20
+    max_files = raw_input("Enter Max # of pcap files to search through per request: [10] ")
+    if len(max_files) == 0:
+        max_files = 10
+    thres_time = raw_input("Enter max time in seconds past an event to grab packets for: [300] ")
+    if len(thres_time) == 0:
+        thres_time = 300
+    prefix = raw_input("Enter prefix for pcap files: []")
+    suffix = raw_input("Enter suffix for pcap files: [.pcap] ")
+    if len(suffix) == 0:
+        suffix = '.pcap'
+    pcap_directory = raw_input("Enter complete path to base directory for pcap files: ")
+    temp_directory = raw_input("Enter complete path of temp storage for pcap requests: ")
+    if not os.path.exists(temp_directory):
+        os.makedirs(temp_directory)
     config['Agent_forwarder'] = {}
     config['Agent_forwarder']['sensor_name'] = sensor_name
     config['Agent_forwarder']['client_cert'] = client_cert
@@ -347,6 +368,16 @@ def setup_agent():
     config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
     config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
     config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
+    config['Agent_forwarder']['pcap'] = {}
+    config['Agent_forwarder']['pcap']['max_packets'] = max_packets
+    config['Agent_forwarder']['pcap']['max_size'] = max_size
+    config['Agent_forwarder']['pcap']['max_files'] = max_files
+    config['Agent_forwarder']['pcap']['thres_time'] = thres_time
+    config['Agent_forwarder']['pcap']['prefix'] = prefix
+    config['Agent_forwarder']['pcap']['suffix'] = suffix
+    config['Agent_forwarder']['pcap']['pcap_directory'] = pcap_directory
+    config['Agent_forwarder']['pcap']['temp_directory'] = temp_directory
+
     shutil.copy('agent.py',os.path.join(install_path,'bin'))
 
 def write_config():
