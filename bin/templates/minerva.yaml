@@ -66,6 +66,10 @@ Event_Receiver:
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
     private_key: {{config.Event_Receiver.certs.private_key}}
+  PCAP:
+    ip: {{config.Event_Receiver.PCAP.ip}}
+    port: {{ config.Event_Receiver.PCAP.port}}
+    threads: {{ config.Event_Receiver.PCAP.threads}}
 {%- endif %}
 {%- if 'Agent_forwarder' in config %}
 Agent_forwarder:
@@ -94,5 +98,8 @@ Agent_forwarder:
     suffix: {{ config.Agent_forwarder.pcap.suffix}}
     pcap_directory: {{ config.Agent_forwarder.pcap.pcap_directory }}
     temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
-
+  listener:
+    ip: {{ config.Agent_forwarder.listener.ip }}
+    port: {{ config.Agent_forwarder.listerner.port }}
+    threads: {{ config.Agent_forwarder.listerner.threads }}
 {%- endif %}

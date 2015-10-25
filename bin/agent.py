@@ -30,6 +30,7 @@ import platform
 import json
 import subprocess
 import pprint
+import M2Crypto
 
 def tailFile(cur_config, fname, send_lock):
     sensor_name = cur_config['sensor_name']
@@ -80,8 +81,11 @@ def send(cur_config, batch):
         s_ssl.send('GET_CERT')
     else:
         s_ssl.send('SERVER_AUTH')
-    s_ssl.send(cert)
+        s_ssl.send(cert)
     stat = s_ssl.read()
+    if stat == 'GET_PORT':
+        s_ssl.send(str(cur_config['listener']['port']))
+        stat = s_ssl.read()
     if stat == 'reject':
         s_ssl.close()
         return stat
@@ -95,6 +99,15 @@ def send(cur_config, batch):
         return server_resp
     s_ssl.close()
     return
+def decrypt_request(request, cur_config):
+    server_key = M2Crypto.RSA.load_key(cur_config['server_cert'])
+    pub_key = cert.get_pubkey()
+    rsa_key = pub_key.get_rsa()
+    #try:
+    parse_request = json.loads(server_key.public_decrypt(request, M2Crypto.RSA.pkcs1_padding))
+    #except:
+        #return 'Invalid request'
+    return parse_request
 def genKey(cur_config):
     if not os.path.exists(os.path.dirname(cur_config['client_cert'])):
         os.mkdir(os.path.dirname(cur_config['client_cert']))

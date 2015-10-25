@@ -78,7 +78,7 @@
 	</table><br />
 	<strong>No Results Found</strong>
 	{% else %}
-        {% set status_class = { "_DENIED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGE": "minerva-warning", "APPROVED": "minerva-success" } %}
+        {% set status_class = { "_DENIED": "minerva-danger", "IP_CHANGED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGE": "minerva-warning", "RECEIVER_CHANGED": "minerva-warning", "APPROVED": "minerva-success" } %}
         <tbody>
 	{% for item in items_found %}
         <tr class={{status_class[item.STATUS]}} data-id="{{item.ID}}">
