@@ -261,8 +261,14 @@ def setup_server():
     config['Webserver']['events']['maxResults'] = maxResults
     #os.makedirs(os.path.join(install_path,'bin/templates'))
     #os.makedirs(os.path.join(install_path,'bin/static'))
+    if os.path.exists(os.path.join(install_path,'bin/templates')):
+        shutil.rmtree(os.path.join(install_path,'bin/templates'))
     shutil.copytree('templates',os.path.join(install_path,'bin/templates'))
+    if os.path.exists(os.path.join(install_path,'bin/static')):
+        shutil.rmtree(os.path.join(install_path,'bin/static'))
     shutil.copytree('static',os.path.join(install_path,'bin/static'))
+    if os.path.exists(os.path.join(install_path,'bin/webserver.py')):
+        os.remove(os.path.join(install_path,'bin/webserver.py'))
     shutil.copy('webserver.py',os.path.join(install_path,'bin/webserver.py'))
 def setup_receiver():
     print("Setting up the event receiver\n")
