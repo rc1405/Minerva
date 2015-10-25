@@ -33,6 +33,12 @@ class MinervaConfigs():
         with open(conf,'r') as f:
             config = yaml.load(f)
         self.conf = config
+    def get_db(self):
+        db_conf = self.conf['Webserver']['db']
+        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
+        if db_conf['useAuth']:
+            client.minerva.authenticate(db_conf['username'], db_conf['password'])
+        return client.minerva
     def parse_web_configs(self, new_config):
         config = self.conf
         db_conf = config['Webserver']['db']

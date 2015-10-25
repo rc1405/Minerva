@@ -296,6 +296,13 @@ def setup_receiver():
         rec_key = '/var/lib/minerva/receiver/private.pem'
     else:
         rec_key = raw_input("Enter full path of private key to use w/ the certificate above: ")
+    pcap_ip = raw_input("Enter IP Address to listen for pcap requests from the webserver: ")
+    pcap_port = raw_input("Enter Port of Receiver to list for pcap requests for: [10009] ")
+    if len(pcap_port) == 0:
+        pcap_port = 10009
+    pcap_threads = raw_input("Enter number of threads to process pcap requests: [4] ")
+    if len(pcap_threads) == 0:
+        pcap_threads = 4
     config['Event_Receiver'] = {}
     config['Event_Receiver']['listen_ip'] = listen_ips
     config['Event_Receiver']['insertion_threads'] = int(ins_threads)
@@ -304,6 +311,10 @@ def setup_receiver():
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key
+    config['Event_Receiver']['PCAP'] = {}
+    config['Event_Receiver']['PCAP']['ip'] = pcap_ip
+    config['Event_Receiver']['PCAP']['port'] = pcap_port
+    config['Event_Receiver']['PCAP']['threads'] = pcap_threads
     shutil.copy('receiver.py',os.path.join(install_path,'bin'))
 def setup_agent():
     print("Setting up the agent\n")
@@ -357,6 +368,13 @@ def setup_agent():
     temp_directory = raw_input("Enter complete path of temp storage for pcap requests: ")
     if not os.path.exists(temp_directory):
         os.makedirs(temp_directory)
+    listener_ip = raw_input("Enter ip address to listen for requests on: ")
+    listener_port = raw_input("Enter port to listen for requests on: [10009] ")
+    if len(listener_port) == 0:
+        listener_port = 10009
+    listener_threads = raw_input("Enter number of threads to process requests: [4] ")
+    if len(listener_threads) == 0:
+        listener_threads = 4
     config['Agent_forwarder'] = {}
     config['Agent_forwarder']['sensor_name'] = sensor_name
     config['Agent_forwarder']['client_cert'] = client_cert
@@ -377,7 +395,10 @@ def setup_agent():
     config['Agent_forwarder']['pcap']['suffix'] = suffix
     config['Agent_forwarder']['pcap']['pcap_directory'] = pcap_directory
     config['Agent_forwarder']['pcap']['temp_directory'] = temp_directory
-
+    config['Agent_forwarder']['listener'] = {}
+    config['Agent_forwarder']['listener']['ip'] = listener_ip
+    config['Agent_forwarder']['listener']['port'] = listener_port
+    config['Agent_forwarder']['listener']['threads'] = listener_threads
     shutil.copy('agent.py',os.path.join(install_path,'bin'))
 
 def write_config():

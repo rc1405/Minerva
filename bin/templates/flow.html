@@ -55,7 +55,17 @@
 	<div style="width:100%;word-wrap:break-word;border:1px solid black;">
 	<center><b>Search Flow Data</b><br /></center>
         <table border="1" style="width:100%" id="SearchInput">
-        <tr><td align="center"><b>Start</b></td><td align="center"><b>Stop</b></td><td align="center"><b>Source IP</b></td><td align="center"><b>Source Port</b></td><td align="center"><b>Destination IP</b></td><td align="center"><b>Destination Port</b></td><td align="center"><b>Proto</b></td><td align="center"><b>Sensor</b></td><td align="center" rowspan="2"><a href="javascript:getFlows();">Submit</a></td></tr>
+        <tr>
+        <td align="center"><b>Start</b></td>
+        <td align="center"><b>Stop</b></td>
+        <td align="center"><b>Source IP</b></td>
+        <td align="center"><b>Source Port</b></td>
+        <td align="center"><b>Destination IP</b></td>
+        <td align="center"><b>Destination Port</b></td>
+        <td align="center"><b>Proto</b></td>
+        <td align="center"><b>Sensor</b></td>
+        <td align="center" rowspan="2"><a href="javascript:getFlows();">Submit</a></td>
+        </tr>
         <tr><td align="center"><input type=text id="start" data-field="datetime" {% if orig_search %}value="{{orig_search.start_epoch|epoch_to_datetime}}"{%endif%} readonly ><div id="datetime_start"></div></td>
         <td align="center"><input type=text id="stop" data-field="datetime" {% if orig_search %}value="{{orig_search['stop_epoch']|epoch_to_datetime}}"{% endif %} readonly ><div id="datetime_stop"></div></td>
         <td align="center"><input type=text id="src_ip" {% if orig_search %}{% if 'src_ip' in orig_search.keys() %}value="{{orig_search['src_ip']}}"{%endif%}{%endif%}></td>

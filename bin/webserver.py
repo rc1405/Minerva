@@ -309,7 +309,7 @@ class Minerva(object):
         cherrypy.session['prev_page'] = "/flow"
         if not 'SESSION_KEY' in cherrypy.session.keys():
             if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
+                cherrypy.session['post_request'] = cherrypy.request.request
             raise cherrypy.HTTPRedirect('/login')
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
         if 'console' in perm_return or 'responder' in perm_return:
@@ -331,6 +331,7 @@ class Minerva(object):
             if 'items_found' in cherrypy.session.keys():
                 context_dict['items_found'] = cherrypy.session['items_found']
                 context_dict['orig_search'] = cherrypy.session['orig_search']
+                print(context_dict['orig_search'])
                 del cherrypy.session['items_found']
                 del cherrypy.session['orig_search']
             context_dict['form'] = 'flow'

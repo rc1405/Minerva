@@ -47,12 +47,12 @@
     <div class="container minerva-container">
       <ul id="tabs" class="nav nav-tabs" role="tablist">
         {% for item in items %}
-        <li role="presentation"><a href="#{{item.id}}" role="tab" data-toggle="tab">{{item.id}}</a></li>
+        <li role="presentation"><a href="#{{item.id}}" {% if loop.index == 1 %}class=active {%endif%}role="tab" data-toggle="tab">{{item.id}}</a></li>
         {% endfor %}
       </ul>
       <div class="tab-content">
         {% for item in items %}
-        <div role="tabpanel" class="tab-pane" id="{{item.id}}">
+        <div role="tabpanel" class="tab-pane" id="{{item.id}}" {% if loop.index == 1 %}class=active {%endif%}>
           <h4>Original Alert</h4>
           <div>
             <table class="table table-condensed">

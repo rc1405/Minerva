@@ -45,7 +45,7 @@ def receiver(cur_config, pname, log_queue):
     proc = AlertProcessor(cur_config, log_queue)
     listener.listener(pname, proc.process)
 
-def pcap_receiver(cur_config, pname, log_queue):
+def pcap_receiver(cur_config, pname):
     listener = EventListener(cur_config, int(cur_config['Event_Receiver']['PCAP']['threads']))
     proc = PCAPprocessor(cur_config)
     listener.listener(pname, proc.process)
@@ -66,6 +66,9 @@ def main():
     active_processes = []
     log_queue = Queue()
     log_procs = []
+    pcap_name = "%s-%s" % (cur_config['PCAP']['ip'], str(cur_config['PCAP']['port']))
+    pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(config, pcap_name))
+    pcap_listener.start()
     for lp in range(0,int(cur_config['insertion_threads'])):
         log_proc = Process(name='logger' + str(lp), target=insert_data, args=(config, log_queue))
         log_proc.start()
@@ -90,9 +93,16 @@ def main():
                     log_proc = Process(name=lp.name, target=insert_data, args=(config, log_queue))
                     log_proc.start()
                     log_procs.append(log_proc)
+            if not pcap_listener in active_children():
+                pcap_listener.join()
+                pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(config, pcap_name))
+                pcap_listener.start()
             time.sleep(10)
     except:
         for p in active_processes:
             p.terminate()
+        for l in log_procs:
+            l.terminate()
+        pcap_listener.terminate()
         sys.exit()
 main()

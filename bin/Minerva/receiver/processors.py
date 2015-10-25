@@ -116,7 +116,7 @@ class PCAPprocessor(object):
         self.config = config
         client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
         cert = client.minerva.certs
-        self.web_cert = conf.findOne({"type": "webserver"})['cert']
+        self.web_cert = cert.find_one({"type": "webserver"})['cert']
 
     def process(self, host, s):
         encrypted_options = ''
