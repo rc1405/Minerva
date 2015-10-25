@@ -537,13 +537,20 @@ class Minerva(object):
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
 
-def genKey(cur_config):
+def genKey(cur_config, minerva_core):
     if not os.path.exists(os.path.dirname(cur_config['certs']['webserver_cert'])):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['webserver_key'])):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_key']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['hostname']]
     subprocess.call(cmd)
+    db = minerva_core.get_db()
+    certdb = db.certs
+    results = list(certdb.find({"type": "webserver"}))
+    if len(results) > 0:
+        certdb.update({"type": "webserver"},{ "$set": { "cert": open(cur_config['certs']['webserver_cert'],'r').read() }})
+    else:
+        certdb.insert({"type": "webserver", "cert": open(cur_config['certs']['webserver_cert'],'r').read() } )
 
 def secureheaders():
     headers = cherrypy.response.headers
@@ -553,9 +560,10 @@ def secureheaders():
     headers['Strict-Transport-Security'] = 'max-age=3600'
 
 if __name__ == '__main__':
-    server_config = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']['web']
+    minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
+    server_config = minerva_core.conf['Webserver']['web']
     if not os.path.exists(server_config['certs']['webserver_cert']) or not os.path.exists(server_config['certs']['webserver_cert']):
-        genKey(server_config)
+        genKey(server_config, minerva_core)
     if 'port' not in server_config:
         port = 443
     else:
