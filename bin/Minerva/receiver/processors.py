@@ -21,6 +21,7 @@
 
 from socket import socket, AF_INET, SOCK_STREAM
 from multiprocessing import Process, active_children, Queue
+from tempfile import SpooledTemporaryFile
 import time
 import ssl
 import M2Crypto
@@ -137,8 +138,7 @@ class PCAPprocessor(object):
         soc_ssl = ssl.wrap_socket(soc, ca_certs=client_cert, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         encrypted_options = self.encrypt_requests(cur_config, options)
         soc_ssl.connect((client_info['IP'], int(client_info['sensor_port'])))
-        #add spooled tmp file
-        tmp_file = open('/tmp/blah.pcap','wb')
+        tmp_file = SpooledTemporaryFile(mode='wb')
         while True:
             data = soc_ssl.recv(8192)
             if data == b'END_EVENT':
