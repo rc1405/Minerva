@@ -21,7 +21,7 @@
 from socket import socket, AF_INET, SOCK_STREAM
 import os
 from Minerva import core
-from Minerva.agent import TailLog, get_parser
+from Minerva.agent import TailLog, get_parser, PCAPprocessor, RequestListener, carvePcap
 from multiprocessing import Process, Lock, active_children
 import time
 import sys
@@ -99,15 +99,13 @@ def send(cur_config, batch):
         return server_resp
     s_ssl.close()
     return
-def decrypt_request(request, cur_config):
-    server_key = M2Crypto.RSA.load_key(cur_config['server_cert'])
-    pub_key = cert.get_pubkey()
-    rsa_key = pub_key.get_rsa()
-    #try:
-    parse_request = json.loads(server_key.public_decrypt(request, M2Crypto.RSA.pkcs1_padding))
-    #except:
-        #return 'Invalid request'
-    return parse_request
+
+def requestListener(cur_config, pname):
+    listener = RequestListener(cur_config)
+    carver = carvePcap(cur_config)
+    proc = PCAPprocessor(cur_config, carver)
+    listener.listen(proc.process)
+
 def genKey(cur_config):
     if not os.path.exists(os.path.dirname(cur_config['client_cert'])):
         os.mkdir(os.path.dirname(cur_config['client_cert']))

@@ -22,6 +22,7 @@ import os
 import sys
 import socket
 from optparser import OptionParser
+from tempfile import NamedTemporaryFile
 
 import dpkt
 
@@ -106,8 +107,9 @@ class carvePcap(object):
         options['event_time'] = event_time
         thres_time = int(options.event_time) + int(self.config['thres_time'])
         pcap_files = find_pcap_files(options, thres_time)
-        tmp_name = os.path.join(self.config['temp_directory'], ('%s_%s.pcap' % (str(time.time()), str(options.event_time))))
-        out_file = open(tmp_name,'w')
+        #tmp_name = os.path.join(self.config['temp_directory'], ('%s_%s.pcap' % (str(time.time()), str(options.event_time))))
+        out_file = NamedTemporaryFile(mode='w+b', dir=self.config['temp_directory'])
+        #out_file = open(tmp_name,'w')
         out_pcap = dpkt.pcap.Writer(out_file)
         for pcap_file in pcap_files:
             get_packets = carve_pcap_file(options, thres_time, pcap_file, out_file, out_pcap)
@@ -115,7 +117,9 @@ class carvePcap(object):
                 continue
             else:
                 break
-        return tmp_name
+        out_pcap.close()
+        return out_file
+
     def parse_flow(self, src_ip=None, src_port=None, dest_ip=None, dest_port=None, proto=None, start_time=None, end_time=None):
         if not src_ip or not src_port or not dest_ip or not dest_port or not proto or not start_time or not end_time:
              raise "Missing Value"
@@ -128,8 +132,9 @@ class carvePcap(object):
         options['event_time'] = start_time
         thres_time = end_time
         pcap_files = find_pcap_files(options, thres_time)
-        tmp_name = os.path.join(self.config['temp_directory'], ('%s_%s.pcap' % (str(time.time()), str(options.event_time))))
-        out_file = open(tmp_name,'w')
+        #tmp_name = os.path.join(self.config['temp_directory'], ('%s_%s.pcap' % (str(time.time()), str(options.event_time))))
+        out_file = NamedTemporaryFile(mode='w+b', dir=self.config['temp_directory'])
+        #out_file = open(tmp_name,'w')
         out_pcap = dpkt.pcap.Writer(out_file)
         for pcap_file in pcap_files:
             get_packets = carve_pcap_file(options, thres_time, pcap_file, out_file, out_pcap)
@@ -143,5 +148,5 @@ class carvePcap(object):
             os.remove(tmp_name)
             return 'No Packets Found'
         else:
-            return tmp_name
+            return out_file
 

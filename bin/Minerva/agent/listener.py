@@ -25,18 +25,18 @@ import time
 import ssl
 
 class RequestListener(object):
-    def __init__(self, config, max_threads):
+    def __init__(self, config):
         self.config = config
-        self.max_threads = max_threads
-    def listener(self, pname, recv_data):
-        ip, port = pname.split('-')
-        #client = pymongo.MongoClient()
-        #collection = client.minerva.sensors
+        self.max_threads = config['listener']['threads']
+        self.ip = config['listener']['ip']
+        self.port = int(config['listener']['port'])
+
+    def listener(self, recv_data):
         print('starting receiver')
         KEYFILE = self.config['client_private']
         CERTFILE = self.config['client_cert']
         s = socket(AF_INET, SOCK_STREAM)
-        s.bind((ip, int(port)))
+        s.bind((self.ip, self.port))
         s.listen(1)
         s_ssl = ssl.wrap_socket(s, keyfile=KEYFILE, certfile=CERTFILE, server_side=True, ssl_version=ssl.PROTOCOL_SSLv3)
         active_recv = []
