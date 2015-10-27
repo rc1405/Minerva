@@ -120,18 +120,20 @@ class PCAPprocessor(object):
         self.web_cert = cert.find_one({"type": "webserver"})['cert']
 
     def process(self, host, s):
+        print('starting processing')
         encrypted_options = ''
         while True:
             data = s.recv(8192)
             if data == b'END_EVENT':
                 break
             else:
-                encrypted_options = encrypt_options + data
+                encrypted_options = encrypted_options + data
         try:
             options = self.decrypt_options(encrypted_options)
         except:
             s.close()
             return
+        return
         soc = socket(AF_INET, SOCK_STREAM)
         client_info = sensors.findOne( { "SERVER": options['sensor'] })
         client_cert = client_info['cert']
@@ -164,11 +166,11 @@ class PCAPprocessor(object):
         return encrypted_request 
 
     def decrypt_options(self, encrypted_options):
-        web_cert = M2Crypto.X509.load_cert_string(self.web_cert)
+        web_cert = M2Crypto.X509.load_cert_string(str(self.web_cert))
         pub_key = web_cert.get_pubkey()
         rsa_key = pub_key.get_rsa()
         try:
-            decrypted_options = json.loads(rsa_key.public_decrypt(request, M2Crypto.RSA.pkcs1_padding))
+            decrypted_options = json.loads(rsa_key.public_decrypt(encrypted_options, M2Crypto.RSA.pkcs1_padding))
         except:
             raise 'Invalid request'
         return decrypted_options

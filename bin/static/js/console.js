@@ -172,9 +172,36 @@ minerva.console = {};
     e.stopPropagation();
   };
   
+  //To be deleted, get one pcap test
+  app.getOnePCAP = function(e) {
+    var row = $(e.currentTarget).parent();
+    var id = row.data('id');
+    var data = {
+      events: [id],
+      formType: app.form_type
+    };
+
+    $.ajax({
+      method: 'POST',
+      url: '/get_pcap',
+      data: JSON.stringify(data),
+      contentType: 'application/json',
+      headers: {
+        csrfmiddlewaretoken: app.csrf_token
+      }
+    }).done(function(html) {
+      var wind = window.open('', '_blank');
+      wind.document.write(html);
+    });
+
+    e.stopPropagation();
+  };
+
+  
   // bind events
   app.table.on('click', 'tr', app.startTrack);
-  app.table.on('click', '.minerva-flow', app.getOneAlertFlow);
+  //app.table.on('click', '.minerva-flow', app.getOneAlertFlow);
+  app.table.on('click', '.minerva-flow', app.getOnePCAP);
   app.nav.on('click', '.minerva-subalert', app.subAlerts);
   app.nav.find('#clear_alerts').click(app.clearAlerts);
   app.nav.find('#unselect').click(app.clearSelected);

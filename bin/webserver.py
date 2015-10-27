@@ -21,20 +21,23 @@
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests
 import os
 import time
 import platform
 import subprocess
 import shutil
+import sys
 env = Environment(loader=FileSystemLoader('templates'))
 env.filters['iso_to_utc'] = iso_to_utc
 env.filters['epoch_to_datetime'] = epoch_to_datetime
 
 class Minerva(object):
-    def __init__(self):
-        self.configs = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']
+    def __init__(self, minerva_core):
+        #minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
+        self.configs = minerva_core.conf['Webserver']
         self.sizeLimit = self.configs['events']['maxResults']
+        self.minerva_core = minerva_core
     
     @cherrypy.expose
     def login(self, **kwargs):
@@ -392,6 +395,43 @@ class Minerva(object):
             
     @cherrypy.expose
     @cherrypy.tools.json_in()
+    def get_pcap(self, **kwargs):
+        user = Users(self.configs)
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            cherrypy.session['prev_page'] = '/get_pcap'
+            cherrypy.session['post_request'] = cherrypy.request.json
+            raise cherrypy.HTTPRedirect('/login')
+        
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+        
+        if 'console' in perm_return or 'responder' in perm_return:
+            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
+                if 'post_request' in cherrypy.session:
+                    request = cherrypy.session['post_request']
+                    del cherrypy.session['post_request']
+                else:
+                    request = cherrypy.request.json
+                pcaps = HandleRequests(self.minerva_core)
+                pcaps.alertPCAP(request['events'])
+                print('done')
+                if request['formType'] == "AlertFlow":
+                    return '<script type="text/javascript">window.close()</script>'
+                if request['formType'] == 'console':
+                    raise cherrypy.HTTPRedirect('/')
+                else:
+                    raise cherrypy.HTTPRedirect('/responder')
+            else:
+                raise cherrypy.HTTPError(404)
+        elif 'newLogin' in perm_return:
+            cherrypy.session['prev_page'] = '/get_pcap'
+            cherrypy.session['post_request'] = cherrypy.request.json
+            raise cherrypy.HTTPRedirect('/login')
+        else:
+            raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+    
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
     def comment(self, **kwargs):
         user = Users(self.configs)
         
@@ -605,4 +645,4 @@ if __name__ == '__main__':
             'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/fonts'),
         },
     }
-    cherrypy.quickstart(Minerva(), config = config)
+    cherrypy.quickstart(Minerva(minerva_core), config = config)
