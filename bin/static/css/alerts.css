@@ -9,10 +9,6 @@ body {
   table-layout: fixed;
 }
 
-.table tbody {
-  background-color: #aaa;
-}
-
 .table th, .table td {
   word-wrap: break-word;
 }
@@ -58,6 +54,14 @@ body {
   width: 100%;
 }
 
+#search {
+  margin-bottom: 12px;
+}
+
+#search .row {
+  padding: 4px 0;
+}
+
 #event_header {
   margin-bottom: 0;
 }
@@ -68,7 +72,8 @@ body {
 }
 
 #TblDiv {
-  height: 640px;
+  background-color: #aaa;
+  height: auto;
   overflow-y: scroll;
   margin-bottom: 12px;
 }

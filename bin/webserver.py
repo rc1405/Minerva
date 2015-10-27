@@ -352,43 +352,42 @@ class Minerva(object):
     @cherrypy.expose
     def alerts(self, **kwargs):
         user = Users(self.configs)
-        cherrypy.session['prev_page'] = "/alerts"
+        
         if not 'SESSION_KEY' in cherrypy.session.keys():
-            if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
+            cherrypy.session['prev_page'] = '/alerts'
+            cherrypy.session['get_request'] = cherrypy.request.params
             raise cherrypy.HTTPRedirect('/login')
+            
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+        
         if 'console' in perm_return or 'responder' in perm_return:
             context_dict = {}
-            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
+            
+            if cherrypy.request.method == 'GET':
+                if 'get_request' in cherrypy.session.keys():
+                    request = cherrypy.session['get_request']
+                    del cherrypy.session['get_request']
                 else:
                     request = cherrypy.request.params
-                flow = alert_flow(self.configs)
-                items_found, orig_search = flow.search_flow(request)
-                print(orig_search)
-           
-                if items_found == 'Protocol not found':
-                    return '<script>alert("Protocol not found");location:/alerts;</script>'
+                
+                if request:
+                    flow = alert_flow(self.configs)
+                    items_found, orig_search = flow.search_flow(request)
+                    context_dict['items_found'] = items_found
+                    context_dict['numFound'] = len(list(items_found))
+                    context_dict['orig_search'] = orig_search
                 else:
-                    cherrypy.session['items_found'] = items_found
-                    cherrypy.session['orig_search'] = orig_search
-                    raise cherrypy.HTTPRedirect('/alerts')
-            if 'items_found' in cherrypy.session.keys():
-                context_dict['items_found'] = cherrypy.session['items_found']
-                del cherrypy.session['items_found']
-                context_dict['orig_search'] = cherrypy.session['orig_search']
-                del cherrypy.session['orig_search']
+                    context_dict['items_found'] = []
+                    context_dict['numFound'] = 0
+                    context_dict['orig_search'] = {}
+                
             context_dict['form'] = 'alerts'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
-            tmp = env.get_template('alerts.html')
+            tmp = env.get_template('alerts.html')            
             return tmp.render(context_dict)
         elif 'newLogin' in perm_return:
-            if cherrypy.request.method == 'POST':
-                cherrypy.session['port_request'] = cherrypy.request.params
+            cherrypy.session['get_request'] = cherrypy.request.params
             raise cheryypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
