@@ -21,7 +21,6 @@ import time
 import os
 import sys
 import socket
-from optparser import OptionParser
 from tempfile import NamedTemporaryFile
 
 import dpkt
@@ -33,8 +32,33 @@ class carvePcap(object):
     def epoch_to_utc(self, epoch):
         return int(time.mktime(time.gmtime(float(epoch))))
 
+    def determine_proto(self, proto):
+        try:
+            pr = int(proto)
+            if proto == 1:
+                protocol = dpkt.ip.IP_PROTO_ICMP
+            elif proto == 6:
+                protocol = dpkt.ip.IP_PROTO_TCP
+            elif proto == 17:
+                protocol = dpkt.ip.IP_PROTO_UDP
+            else:
+                raise("Protocol %s not supported" % str(proto))
+        except:
+            try:
+                pr = str(proto).upper()
+                if pr == 'ICMP':
+                    protocol = dpkt.ip.IP_PROTO_ICMP
+                elif pr == 'TCP':
+                    protocol = dpkt.ip.IP_PROTO_TCP
+                elif pr == 'UDP':
+                    protocol = dpkt.ip.IP_PROTO_UDP
+                else:
+                    raise("Protocol %s not supported" % str(proto))
+            except:
+                raise("Protocol %s not supported" % str(proto))
+
     def carve_pcap_file(self, options, thres_time, pcap_file, out_file, out_pcap):
-        proto = determine_proto(options['proto'])
+        proto = self.determine_proto(options['proto'])
         src_ip = options['src_ip']
         src_port = int(options['src_port'])
         dest_ip = options['dest_ip']
@@ -44,7 +68,7 @@ class carvePcap(object):
         max_packets = int(self.config['max_packets'])
         max_size = int(self.config['max_size']) * 1024 * 1024
         for ts, pkt in dpkt.pcap.Reader(open(pcap_file,'r')):
-            ts = epoch_to_utc(ts)
+            ts = self.epoch_to_utc(ts)
             if ts < event_time:
                 continue
             if ts > thres_time:
@@ -82,7 +106,7 @@ class carvePcap(object):
             filenames.sort()
             for fname in filenames:
                 last_file = os.path.join(root, fname)
-                if epoch_to_utc(fname.strip(self.config['prefix']).strip(self.config['suffix'])) < int(options['event_time']):
+                if self.epoch_to_utc(fname.strip(self.config['prefix']).strip(self.config['suffix'])) < int(options['event_time']):
                     continue
                 if len(matches) == 0:
                     matches.append(last_file)
@@ -105,19 +129,19 @@ class carvePcap(object):
         options['dest_port'] = dest_port
         options['proto'] = proto
         options['event_time'] = event_time
-        thres_time = int(options.event_time) + int(self.config['thres_time'])
-        pcap_files = find_pcap_files(options, thres_time)
+        thres_time = int(options['event_time']) + int(self.config['thres_time'])
+        pcap_files = self.find_pcap_files(options, thres_time)
         #tmp_name = os.path.join(self.config['temp_directory'], ('%s_%s.pcap' % (str(time.time()), str(options.event_time))))
         out_file = NamedTemporaryFile(mode='w+b', dir=self.config['temp_directory'])
         #out_file = open(tmp_name,'w')
         out_pcap = dpkt.pcap.Writer(out_file)
         for pcap_file in pcap_files:
-            get_packets = carve_pcap_file(options, thres_time, pcap_file, out_file, out_pcap)
+            get_packets = self.carve_pcap_file(options, thres_time, pcap_file, out_file, out_pcap)
             if get_packets:
                 continue
             else:
                 break
-        out_pcap.close()
+        #out_pcap.close()
         return out_file
 
     def parse_flow(self, src_ip=None, src_port=None, dest_ip=None, dest_port=None, proto=None, start_time=None, end_time=None):
@@ -131,13 +155,13 @@ class carvePcap(object):
         options['proto'] = proto
         options['event_time'] = start_time
         thres_time = end_time
-        pcap_files = find_pcap_files(options, thres_time)
+        pcap_files = self.find_pcap_files(options, thres_time)
         #tmp_name = os.path.join(self.config['temp_directory'], ('%s_%s.pcap' % (str(time.time()), str(options.event_time))))
         out_file = NamedTemporaryFile(mode='w+b', dir=self.config['temp_directory'])
         #out_file = open(tmp_name,'w')
         out_pcap = dpkt.pcap.Writer(out_file)
         for pcap_file in pcap_files:
-            get_packets = carve_pcap_file(options, thres_time, pcap_file, out_file, out_pcap)
+            get_packets = self.carve_pcap_file(options, thres_time, pcap_file, out_file, out_pcap)
             if get_packets:
                 continue
             else:
@@ -145,7 +169,7 @@ class carvePcap(object):
         if int(out_file.tell()) == 24:
             out_pcap.close()
             out_file.close()
-            os.remove(tmp_name)
+            #os.remove(tmp_name)
             return 'No Packets Found'
         else:
             return out_file

@@ -412,8 +412,9 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.json
                 pcaps = HandleRequests(self.minerva_core)
-                pcaps.alertPCAP(request['events'])
-                print('done')
+                #todo, return as file.  might need to change tmp type
+                for pcap in pcaps.alertPCAP(request['events']):
+                    print(pcap)
                 if request['formType'] == "AlertFlow":
                     return '<script type="text/javascript">window.close()</script>'
                 if request['formType'] == 'console':

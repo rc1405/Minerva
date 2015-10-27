@@ -21,7 +21,7 @@
 
 from socket import socket, AF_INET, SOCK_STREAM
 from multiprocessing import Process, active_children, Queue
-from tempfile import SpooledTemporaryFile
+from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 import time
 import ssl
 import M2Crypto
@@ -55,7 +55,6 @@ class AlertProcessor(object):
             s.close()
             return
         results = self.collection.find({ "SERVER": CN })
-        #print('building results')
         result = []
         for r in results:
             result.append(r)
@@ -118,6 +117,7 @@ class PCAPprocessor(object):
         client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
         cert = client.minerva.certs
         self.web_cert = cert.find_one({"type": "webserver"})['cert']
+        self.sensors = client.minerva.sensors
 
     def process(self, host, s):
         print('starting processing')
@@ -133,13 +133,19 @@ class PCAPprocessor(object):
         except:
             s.close()
             return
-        return
+        print('requesting pcap from sensor %s' % options['sensor'])
         soc = socket(AF_INET, SOCK_STREAM)
-        client_info = sensors.findOne( { "SERVER": options['sensor'] })
+        client_info = self.sensors.find_one( { "SERVER": options['sensor'] })
         client_cert = client_info['cert']
-        soc_ssl = ssl.wrap_socket(soc, ca_certs=client_cert, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
-        encrypted_options = self.encrypt_requests(cur_config, options)
+        cert_tmp = NamedTemporaryFile(mode='w+b', suffix='.pem')
+        cert_tmp.write(client_cert)
+        cert_tmp.flush()
+        #soc_ssl = ssl.wrap_socket(soc, ca_certs=client_cert, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
+        soc_ssl = ssl.wrap_socket(soc, ca_certs=cert_tmp.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
+        encrypted_options = self.encrypt_requests(self.config, options)
         soc_ssl.connect((client_info['IP'], int(client_info['sensor_port'])))
+        soc_ssl.send(encrypted_options)
+        soc_ssl.send('END_EVENT')
         tmp_file = SpooledTemporaryFile(mode='wb')
         while True:
             data = soc_ssl.recv(8192)

@@ -104,13 +104,13 @@ def requestListener(cur_config, pname):
     listener = RequestListener(cur_config)
     carver = carvePcap(cur_config)
     proc = PCAPprocessor(cur_config, carver)
-    listener.listen(proc.process)
+    listener.listener(proc.process)
 
 def genKey(cur_config):
     if not os.path.exists(os.path.dirname(cur_config['client_cert'])):
-        os.mkdir(os.path.dirname(cur_config['client_cert']))
+        os.makedirs(os.path.dirname(cur_config['client_cert']))
     if not os.path.exists(os.path.dirname(cur_config['client_private'])):
-        os.mkdir(os.path.dirname(cur_config['client_private']))
+        os.makedirs(os.path.dirname(cur_config['client_private']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['client_private'], '-out', cur_config['client_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['sensor_name'] ]
     subprocess.call(cmd)
 
@@ -120,6 +120,8 @@ def main():
         genKey(cur_config)
     active_processes = []
     send_lock = Lock()
+    listen_proc = Process(name='listen-proc', target=requestListener, args((cur_config,)))
+    listen_proc.start()
     try:
         for l in cur_config['logfiles'].keys():
     	    pr = Process(name=l, target=tailFile, args=((cur_config, l, send_lock)))
@@ -132,6 +134,9 @@ def main():
                     pr = Process(name=l.name, target=tailFile, args=((cur_config, l.name, send_lock)))
                     pr.start()
                     active_processes.append(pr)
+            if not listen_proc in active_children():
+                listen_proc = Process(name='listen-proc', target=requestListener, args((cur_config,)))
+                listen_proc.start()
             time.sleep(10)
     except:
         time.sleep(1)

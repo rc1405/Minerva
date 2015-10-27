@@ -39,7 +39,7 @@ class sensors(object):
         return items_found
     def update(self, sensors, action):
         for s in sensors:
-            if action == 'enable':
+            if str(action) == 'enable':
                 status = 'APPROVED'
             else:
                 status = '_DENIED'

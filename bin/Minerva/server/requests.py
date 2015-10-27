@@ -53,8 +53,6 @@ class HandleRequests(object):
         return encrypted_request
 
     def send_request(self, ip, port, cert, options):
-        print(ip, port, cert)
-        print(cert.name)
         cert.flush()
         s = socket(AF_INET, SOCK_STREAM)
         s_ssl = ssl.wrap_socket(s, ca_certs=cert.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
@@ -64,7 +62,7 @@ class HandleRequests(object):
         tmp_file = SpooledTemporaryFile(mode='wb')
         while True:
             data = s_ssl.recv(8192)
-            if data == b'END':
+            if data == b'END_EVENT':
                 break
             elif data == 'No Packets Found':
                 return 'No Packets Found'
@@ -103,4 +101,5 @@ class HandleRequests(object):
             encrypted_options = self.encrypt_options(options)
             ip, port, cert = self.get_receiver(sensor)
             pcap = self.send_request(ip, port, cert, encrypted_options)
+            yield pcap
 

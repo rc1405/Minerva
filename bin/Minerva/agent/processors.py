@@ -20,6 +20,7 @@
 
 
 import json
+import M2Crypto
 
 class PCAPprocessor(object):
     def __init__(self, config, carver):
@@ -64,7 +65,7 @@ class PCAPprocessor(object):
         return
         
     def decrypt_options(self, encrypted_options):
-        server_cert = M2Crypto.X509.load_cert(self.server_cert)
+        server_cert = M2Crypto.X509.load_cert(str(self.server_cert))
         pub_key = server_cert.get_pubkey()
         rsa_key = pub_key.get_rsa()
         try:
