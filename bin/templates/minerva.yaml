@@ -100,6 +100,6 @@ Agent_forwarder:
     temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
   listener:
     ip: {{ config.Agent_forwarder.listener.ip }}
-    port: {{ config.Agent_forwarder.listerner.port }}
-    threads: {{ config.Agent_forwarder.listerner.threads }}
+    port: {{ config.Agent_forwarder.listener.port }}
+    threads: {{ config.Agent_forwarder.listener.threads }}
 {%- endif %}
