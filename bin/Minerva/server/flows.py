@@ -73,16 +73,7 @@ class alert_flow(object):
         
         
     def search_flow(self, request):
-        event_search = {
-          'src_ip': '',
-          'src_port': 0,
-          'dest_ip': '',
-          'dest_port': 0,
-          'sensor': '',
-          'proto': '',
-          'start_epoch': '',
-          'stop_epoch': ''
-        }
+        event_search = {}
         
         if len(request['src_ip']) > 0:
             event_search['src_ip'] = str(request['src_ip'])
