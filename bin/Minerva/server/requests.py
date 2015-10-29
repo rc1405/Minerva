@@ -73,6 +73,7 @@ class HandleRequests(object):
         return tmp_file
 
     def alertPCAP(self, events, grab_all=False):
+        #TODO Add loop around events
         results = self.alerts.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(events[0]) }}, { "$project": { "document": "$$ROOT"}}])
         for orig_alert in results:
             src_ip = orig_alert['document']['src_ip']

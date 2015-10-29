@@ -172,40 +172,43 @@ minerva.console = {};
     e.stopPropagation();
   };
   
-  //To be deleted, get one pcap test
-  app.getOnePCAP = function(e) {
-    var row = $(e.currentTarget).parent();
-    var id = row.data('id');
-    var data = {
-      events: [id],
-      formType: app.form_type
-    };
-
-    $.ajax({
-      method: 'POST',
-      url: '/get_pcap',
-      data: JSON.stringify(data),
-      contentType: 'application/json',
-      headers: {
-        csrfmiddlewaretoken: app.csrf_token
+  app.getOnePCAP = function() {
+    if (app.selected.length) {
+      if (app.selected.length <= 1) {
+        var data = {
+          events: app.selected,
+          formType: app.form_type
+        };
+        $.ajax({
+          method: 'POST',
+          url: '/get_pcap',
+          data: JSON.stringify(data),
+          contentType: 'application/json',
+          headers: {
+            csrfmiddlewaretoken: app.csrf_token
+          }
+        }).done(function(html) {
+          var wind = window.open('data:application/download', '_blank');
+          wind.document.write(html);
+        });
+      } else {
+        alert('Can only request PCAP for one event at a time');
       }
-    }).done(function(html) {
-      var wind = window.open('data:application/download', '_blank');
-      wind.document.write(html);
-    });
+    } else {
+      alert('No events selected');
+    }
 
-    e.stopPropagation();
   };
 
   
   // bind events
   app.table.on('click', 'tr', app.startTrack);
-  //app.table.on('click', '.minerva-flow', app.getOneAlertFlow);
-  app.table.on('click', '.minerva-flow', app.getOnePCAP);
+  app.table.on('click', '.minerva-flow', app.getOneAlertFlow);
   app.nav.on('click', '.minerva-subalert', app.subAlerts);
   app.nav.find('#clear_alerts').click(app.clearAlerts);
   app.nav.find('#unselect').click(app.clearSelected);
   app.nav.find('#highlight').click(app.selectAll);
   app.nav.find('#get_flow').click(app.getAlertFlow);
+  app.nav.find('#get_pcap').click(app.getOnePCAP);
   
 })(jQuery, minerva.console);
