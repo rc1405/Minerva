@@ -156,6 +156,7 @@ class PCAPprocessor(object):
             else:
                 s.send('No Packets Found')
                 s.close()
+                cert_tmp.close()
                 return
         tmp_file.seek(0)
         pcap = tmp_file.read(8192)
@@ -164,6 +165,7 @@ class PCAPprocessor(object):
             pcap = tmp_file.read(8192)
         s.send(b'END_EVENT')
         s.close()
+        cert_tmp.close()
         return
         
     def encrypt_requests(self, cur_config, request):

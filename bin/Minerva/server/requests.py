@@ -45,6 +45,7 @@ class HandleRequests(object):
         cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
         cert_file = NamedTemporaryFile(mode='w+b', suffix='.pem')
         cert_file.writelines(cert)
+        cert_file.flush()
         return ip, port, cert_file
 
     def encrypt_options(self, request):
@@ -53,7 +54,6 @@ class HandleRequests(object):
         return encrypted_request
 
     def send_request(self, ip, port, cert, options):
-        cert.flush()
         s = socket(AF_INET, SOCK_STREAM)
         s_ssl = ssl.wrap_socket(s, ca_certs=cert.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         s_ssl.connect((ip, int(port)))
@@ -69,6 +69,7 @@ class HandleRequests(object):
             else:
                 tmp_file.write(data)
         tmp_file.seek(0)
+        cert.close()
         return tmp_file
 
     def alertPCAP(self, events, grab_all=False):

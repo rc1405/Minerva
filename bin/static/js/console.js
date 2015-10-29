@@ -190,7 +190,7 @@ minerva.console = {};
         csrfmiddlewaretoken: app.csrf_token
       }
     }).done(function(html) {
-      var wind = window.open('', '_blank');
+      var wind = window.open('data:application/download', '_blank');
       wind.document.write(html);
     });
 

@@ -28,6 +28,7 @@ import platform
 import subprocess
 import shutil
 import sys
+from tempfile import NamedTemporaryFile
 env = Environment(loader=FileSystemLoader('templates'))
 env.filters['iso_to_utc'] = iso_to_utc
 env.filters['epoch_to_datetime'] = epoch_to_datetime
@@ -392,6 +393,18 @@ class Minerva(object):
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
             
+    def download_complete(self):
+        tmp_file = cherrypy.session['pcap_file']
+        tmp_file.close()
+    
+    @cherrypy.expose
+    def download(self, **kwargs):
+        if 'pcap_file' in cherrypy.session.keys():
+            cherrypy.request.hooks.attach('on_end_request', self.download_complete)
+            return cherrypy.lib.static.serve_download(cherrypy.session['pcap_file'].name)
+        else:
+            return '<script>window.close();</script>'
+
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def get_pcap(self, **kwargs):
@@ -412,15 +425,17 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.json
                 pcaps = HandleRequests(self.minerva_core)
-                #todo, return as file.  might need to change tmp type
+                #todo, zip up multiple file and return that
                 for pcap in pcaps.alertPCAP(request['events']):
                     print(pcap)
-                if request['formType'] == "AlertFlow":
-                    return '<script type="text/javascript">window.close()</script>'
-                if request['formType'] == 'console':
-                    raise cherrypy.HTTPRedirect('/')
+                if pcap == 'No Packets Found':
+                    return '<script type="text/javascript">window.alert(%s);window.close();</script>' % pcap
                 else:
-                    raise cherrypy.HTTPRedirect('/responder')
+                    tmp = NamedTemporaryFile(mode='w+b', suffix='.pcap')
+                    tmp.write(pcap.read())
+                    tmp.flush()
+                    cherrypy.session['pcap_file'] = tmp
+                    return '<script type="text/javascript">location="/download";</script>'
             else:
                 raise cherrypy.HTTPError(404)
         elif 'newLogin' in perm_return:
