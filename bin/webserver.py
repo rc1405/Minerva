@@ -372,10 +372,11 @@ class Minerva(object):
                     request = cherrypy.request.params
                 
                 if request:
-                    flow = alert_flow(self.configs)
-                    items_found, orig_search = flow.search_flow(request)
+                    alert = alert_console(self.configs)
+                    items_found, orig_search = alert.search_alerts(request)
                     context_dict['items_found'] = items_found
                     context_dict['numFound'] = len(list(items_found))
+                    print(request)
                     context_dict['orig_search'] = orig_search
                 else:
                     context_dict['items_found'] = []
@@ -395,6 +396,7 @@ class Minerva(object):
             
     def download_complete(self):
         tmp_file = cherrypy.session['pcap_file']
+        del cherrypy.session['pcap_file']
         tmp_file.close()
     
     @cherrypy.expose

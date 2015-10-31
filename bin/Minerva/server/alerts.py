@@ -153,14 +153,41 @@ class alert_console(object):
             else:
                 stop_epoch = start_epoch + 600
         results_found = self.alerts.aggregate([ { "$match":
-                        { "$and": [
-                        event_search,
-                        { "$and": [
+            { "$and": [
+                event_search,
+                    { "$and": [
                         { "epoch": { "$gt": start_epoch }},
                         { "epoch": { "$lt": stop_epoch }},
-                        ] },
-                        ]}
-                        },
-                        { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},
-                        { "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
-        return results_found
+                    ] },
+                ]}
+            },
+            { "$project": { 
+                "ID": "$_id", 
+                "severity": "$alert.severity", 
+                "epoch": "$epoch", 
+                "document": {
+                    "timestamp": "$timestamp", 
+                    "src_ip": "$src_ip", 
+                    "src_port": "$src_port", 
+                    "proto": "$proto", 
+                    "alert": { 
+                        "signature": "$alert.signature", 
+                        "category": "$alert.category", 
+                        "severity": "$alert.severity", 
+                        "signature_id": "$alert.signature_id", 
+                        "rev": "$alert.rev", 
+                        "gid": "$alert.gid"
+                    }, 
+                    "sensor": "$sensor", 
+                    "dest_ip": "$dest_ip", 
+                    "dest_port": "$dest_port" 
+                    }
+                }
+            },
+            { "$sort": { 
+                "ID": 1 
+                }
+            }, 
+            { "$limit": self.sizeLimit }
+            ])
+        return results_found, event_search

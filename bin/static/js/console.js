@@ -172,7 +172,7 @@ minerva.console = {};
     e.stopPropagation();
   };
   
-  app.getOnePCAP = function() {
+  app.getAlertPCAP = function() {
     if (app.selected.length) {
       if (app.selected.length <= 1) {
         var data = {
@@ -209,6 +209,6 @@ minerva.console = {};
   app.nav.find('#unselect').click(app.clearSelected);
   app.nav.find('#highlight').click(app.selectAll);
   app.nav.find('#get_flow').click(app.getAlertFlow);
-  app.nav.find('#get_pcap').click(app.getOnePCAP);
+  app.nav.find('#get_pcap').click(app.getAlertPCAP);
   
 })(jQuery, minerva.console);

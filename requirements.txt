@@ -8,3 +8,5 @@ PyOpenSSL
 bcrypt
 pytz
 markupsafe
+dpkt
+pypcap
