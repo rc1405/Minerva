@@ -127,13 +127,15 @@ class alert_console(object):
         if len(request['category']) > 0:
             event_search['alert.category'] = request['category']
         if len(request['severity']) > 0:
-            event_search['alert.severity'] = request['severity']
+            event_search['alert.severity'] = int(request['severity'])
         if len(request['sid']) > 0:
-            event_search['alert.signature_id'] = request['sid']
+            event_search['alert.signature_id'] = int(request['sid'])
         if len(request['rev']) > 0:
-            event_search['alert.rev'] = request['rev']
+            event_search['alert.rev'] = int(request['rev'])
         if len(request['gid']) > 0:
-            event_search['alert.gid'] = request['gid']
+            event_search['alert.gid'] = int(request['gid'])
+        if len(request['status']) > 0:
+            event_search['MINERVA_STATUS'] = request['status']
         if len(request['start']) > 0:
             start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
         else:
@@ -190,4 +192,8 @@ class alert_console(object):
             }, 
             { "$limit": self.sizeLimit }
             ])
+
+        event_search['start_epoch'] = start_epoch
+        event_search['stop_epoch'] = stop_epoch
+
         return results_found, event_search

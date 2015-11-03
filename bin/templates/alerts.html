@@ -57,14 +57,14 @@
                   <label>Start</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="start" type="text" class="form-control input-sm" data-field="datetime" {% if orig_serach %}value="{{orig_search.start_epoch|epoch_to_datetime}}"{% endif %}/>
+                  <input name="start" type="text" class="form-control input-sm" data-field="datetime" {% if orig_search %}value="{{orig_search.start_epoch|epoch_to_datetime}}"{% endif %}/>
                   <div id="dt_start"></div>
                 </div>          
                 <div class="col-xs-1">
                   <label>Stop</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="stop" type="text" class="form-control input-sm" data-field="datetime" {% if orig_serach %}value="{{orig_search.stop_epoch|epoch_to_datetime}}"{% endif %}/>
+                  <input name="stop" type="text" class="form-control input-sm" data-field="datetime" {% if orig_search %}value="{{orig_search.stop_epoch|epoch_to_datetime}}"{% endif %}/>
                   <div id="dt_stop"></div>
                 </div>
                 <div class="col-xs-6"></div>
@@ -74,25 +74,26 @@
                   <label>Source IP</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="src_ip" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.src_ip}}"{% endif %}/>
+                  <!--{{orig_search}}-->
+                  <input name="src_ip" type="text" class="form-control input-sm" {% if 'src_ip' in orig_search %} id="src_ip" value="{{orig_search.src_ip}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Source Port</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="src_port" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.src_port}}"{% endif %}/>
+                  <input name="src_port" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.src_port}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Dest IP</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="dest_ip" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.dest_ip}}"{% endif %}/>
+                  <input name="dest_ip" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.dest_ip}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Dest Port</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="dest_port" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.dest_port}}"{% endif %}/>
+                  <input name="dest_port" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.dest_port}}"{% endif %}/>
                 </div>
               </div>
               <div class="row">
@@ -100,30 +101,31 @@
                   <label>Proto</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="proto" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.proto}}"{% endif %}/>
+                  <input name="proto" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.proto}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Sensor</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="sensor" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.sensor}}"{% endif %}/>
+                  <input name="sensor" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.sensor}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Status</label>
                 </div>
                 <div class="col-xs-2">
-                  <select name="status" class="form-control input-sm">
+                  {% if orig_search %}{% set event_status = orig_search.MINERVA_STATUS %}{%else%}{% set event_status = '' %}{%endif%}
+                  <select name="status" class="form-control input-sm" >
                     <option value=""></option>
-                    <option value="OPEN">Open</option>
-                    <option value="ClOSED">Closed</option>
-                    <option value="ESCALATED">Escalated</option>
+                    <option value="OPEN" {% if event_status == 'OPEN'%}selected{%endif%}>Open</option>
+                    <option value="CLOSED" {% if event_status == 'CLOSED'%}selected{%endif%}>Closed</option>
+                    <option value="ESCALATED"{% if event_status == 'ESCALATED'%}selected{%endif%}>Escalated</option>
                   </select>
                 </div>
                 <div class="col-xs-1">
                   <label>Sig Name</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="sig_name" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.sig_name}}"{% endif %}/>
+                  <input name="sig_name" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.signature']}}"{% endif %}/>
                 </div>
               </div>
               <div class="row">
@@ -131,25 +133,25 @@
                   <label>Category</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="category" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.category}}"{% endif %}/>
+                  <input name="category" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.category']}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Severity</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="severity" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.severity}}"{% endif %}/>
+                  <input name="severity" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.severity']}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Signature ID</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="sid" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.sid}}"{% endif %}/>
+                  <input name="sid" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.signature_id']}}"{% endif %}/>
                 </div>
                 <div class="col-xs-1">
                   <label>Revision</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="rev" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.rev}}"{% endif %}/>
+                  <input name="rev" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.rev']}}"{% endif %}/>
                 </div>
               </div>
               <div class="row">
@@ -157,11 +159,11 @@
                   <label>GID</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="gid" type="text" class="form-control input-sm" {% if orig_serach %}value="{{orig_search.gid}}"{% endif %}/>
+                  <input name="gid" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.gid']}}"{% endif %}/>
                 </div>
               </div>
             </div>
-            <button type="submit" class="btn btn-default">Search</button>
+            <a href="#" class="btn btn-default" id="minerva-searchAlerts">Search</a>
           </form>
         </div>
       </div>

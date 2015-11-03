@@ -21,22 +21,39 @@ var minerva = minerva || {};
 
 minerva.alerts = {};
 
-(function($, app) {
-  app.form = $('#search');
-  
-  function search_alerts(e) {
-    e.preventDefault();
-    
-    var data = $(e.target).serialize();
-    
-    $.get('/alerts', data).fail(function() {
-      alert('Search request failed');
+(function ($, app) {
+  // declare module properties
+  //app.container = $("#minerva-container");
+  app.csrf_token = $('#csrf_token').val();
+
+  app.search_alerts = function() {
+    //var data = $('form').serializeArray();
+    data = {}
+    $.each($('form').serializeArray(), function(i, item) { 
+      data[item.name] = item.value; 
     });
-  }
-  
-  app.form.submit(search_alerts);
-  
+    $.ajax({
+      method: 'POST',
+      url: '/alerts',
+      data: JSON.stringify(data),
+      contentType: 'application/json',
+      headers: {
+        csrfmiddlewaretoken: app.csrf_token
+      },
+      success: function (html) {
+        document.open();
+        document.write(html);
+        document.close();
+      },
+    });
+  };
+
   $("#dt_start").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
   $("#dt_stop").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
-  
+
+
+  // bind events
+  //
+  $("#minerva-searchAlerts").click(app.search_alerts);
+
 })(jQuery, minerva.alerts);

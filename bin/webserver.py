@@ -351,37 +351,33 @@ class Minerva(object):
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
             
     @cherrypy.expose
+    @cherrypy.tools.json_in()
     def alerts(self, **kwargs):
         user = Users(self.configs)
+        cherrypy.session['prev_page'] = '/alerts'
         
         if not 'SESSION_KEY' in cherrypy.session.keys():
-            cherrypy.session['prev_page'] = '/alerts'
-            cherrypy.session['get_request'] = cherrypy.request.params
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['get_request'] = cherrypy.request.json
             raise cherrypy.HTTPRedirect('/login')
             
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
         
         if 'console' in perm_return or 'responder' in perm_return:
-            context_dict = {}
+            context_dict = { 'numFound': 0 }
             
-            if cherrypy.request.method == 'GET':
+            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'get_request' in cherrypy.session):
                 if 'get_request' in cherrypy.session.keys():
                     request = cherrypy.session['get_request']
                     del cherrypy.session['get_request']
                 else:
-                    request = cherrypy.request.params
+                    request = cherrypy.request.json
                 
-                if request:
-                    alert = alert_console(self.configs)
-                    items_found, orig_search = alert.search_alerts(request)
-                    context_dict['items_found'] = items_found
-                    context_dict['numFound'] = len(list(items_found))
-                    print(request)
-                    context_dict['orig_search'] = orig_search
-                else:
-                    context_dict['items_found'] = []
-                    context_dict['numFound'] = 0
-                    context_dict['orig_search'] = {}
+                alert = alert_console(self.configs)
+                items_found, orig_search = alert.search_alerts(request)
+                context_dict['items_found'] = list(items_found)
+                context_dict['numFound'] = len(context_dict['items_found'])
+                context_dict['orig_search'] = orig_search
                 
             context_dict['form'] = 'alerts'
             context_dict['permissions'] = perm_return
