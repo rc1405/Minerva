@@ -1,57 +1,60 @@
-        function getFlows() {
-            var form = document.createElement("form");
-            form.setAttribute("method", "post");
-            form.setAttribute("action", "/flow");
-            var formField = document.createElement("input");
-            formField.setAttribute("type", "hidden");
-            formField.setAttribute("name", "formType");
-            formField.setAttribute("value", document.getElementById('form_type').value );
-            form.appendChild(formField);
-            var tokenField = document.createElement("input");
-            tokenField.setAttribute("type", "hidden");
-            tokenField.setAttribute("name", "csrfmiddlewaretoken");
-            tokenField.setAttribute("value", document.getElementById('csrf_token').value);
-            form.appendChild(tokenField);
-            var startField = document.createElement("input");
-            startField.setAttribute("type", "hidden");
-            startField.setAttribute("name", "start");
-            startField.setAttribute("value", document.getElementById("start").value);
-            form.appendChild(startField);
-            var stopField = document.createElement("input");
-            stopField.setAttribute("type", "hidden");
-            stopField.setAttribute("name", "stop");
-            stopField.setAttribute("value", document.getElementById("stop").value);
-            form.appendChild(stopField);
-            var src_ipField = document.createElement("input");
-            src_ipField.setAttribute("type", "hidden");
-            src_ipField.setAttribute("name", "src_ip");
-            src_ipField.setAttribute("value", document.getElementById("src_ip").value);
-            form.appendChild(src_ipField);
-            var src_portField = document.createElement("input");
-            src_portField.setAttribute("type", "hidden");
-            src_portField.setAttribute("name", "src_port");
-            src_portField.setAttribute("value", document.getElementById("src_port").value);
-            form.appendChild(src_portField);
-            var dest_ipField = document.createElement("input");
-            dest_ipField.setAttribute("type", "hidden");
-            dest_ipField.setAttribute("name", "dest_ip");
-            dest_ipField.setAttribute("value", document.getElementById("dest_ip").value);
-            form.appendChild(dest_ipField);
-            var dest_portField = document.createElement("input");
-            dest_portField.setAttribute("type", "hidden");
-            dest_portField.setAttribute("name", "dest_port");
-            dest_portField.setAttribute("value", document.getElementById("dest_port").value);
-            form.appendChild(dest_portField);
-            var protoField = document.createElement("input");
-            protoField.setAttribute("type", "hidden");
-            protoField.setAttribute("name", "proto");
-            protoField.setAttribute("value", document.getElementById("proto").value);
-            form.appendChild(protoField);
-            var sensorField = document.createElement("input");
-            sensorField.setAttribute("type", "hidden");
-            sensorField.setAttribute("name", "sensor");
-            sensorField.setAttribute("value", document.getElementById("sensor").value);
-            form.appendChild(sensorField);
-            document.body.appendChild(form);
-            form.submit();
-        }
+/*
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+*/
+var minerva = minerva || {};
+
+minerva.flow = {};
+
+(function ($, app) {
+  // declare module properties
+  //app.container = $("#minerva-container");
+  app.csrf_token = $('#csrf_token').val();
+
+  app.search_flow = function() {
+    //var data = $('form').serializeArray();
+    data = {}
+    $.each($('form').serializeArray(), function(i, item) { 
+      data[item.name] = item.value; 
+    });
+    alert(JSON.stringify(data));
+    $.ajax({
+      method: 'POST',
+      url: '/flow',
+      data: JSON.stringify(data),
+      contentType: 'application/json',
+      headers: {
+        csrfmiddlewaretoken: app.csrf_token
+      },
+      success: function (html) {
+        document.open();
+        document.write(html);
+        document.close();
+      },
+    });
+  };
+
+  $("#dt_start").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+  $("#dt_stop").DateTimePicker({dateTimeFormat: "MM-dd-yyyy hh:mm:ss"});
+
+
+  // bind events
+  //
+  $("#minerva-searchFlows").click(app.search_flow);
+
+})(jQuery, minerva.flow);

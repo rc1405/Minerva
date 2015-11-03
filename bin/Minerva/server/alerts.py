@@ -182,7 +182,8 @@ class alert_console(object):
                     }, 
                     "sensor": "$sensor", 
                     "dest_ip": "$dest_ip", 
-                    "dest_port": "$dest_port" 
+                    "dest_port": "$dest_port",
+                    "MINERVA_STATUS": "$MINERVA_STATUS"
                     }
                 }
             },
