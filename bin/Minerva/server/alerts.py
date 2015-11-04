@@ -110,13 +110,13 @@ class alert_console(object):
                         event_search['proto'] = 'EGP'
                     elif proto == 9:
                         event_search['proto'] = 'IGP'
-                    elif proto == '17':
+                    elif proto == 17:
                         event_search['proto'] = 'UDP'
-                    elif proto == '27':
+                    elif proto == 27:
                         event_search['proto'] = 'RDP'
-                    elif proto == '41':
+                    elif proto == 41:
                         event_search['proto'] = 'IPv6'
-                    elif proto == '51':
+                    elif proto == 51:
                         event_search['proto'] = 'AH'
                 except:
                     try:
