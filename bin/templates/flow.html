@@ -39,6 +39,7 @@
         <div id="navbar" class="navbar-collapse collapse">
           {% include 'menu.html' %}
           <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="#" id="get_pcap">Get PCAP</a></li>
             <li><a href="/alerts" class="submenu_right">Reset</a></li>
           </ul>
         </div>
@@ -163,7 +164,7 @@
           <tbody>
           {% for item in items_found %}
             {% set sn = item.document %}
-            <tr>
+            <tr data-id="{{item.ID}}">
               <td>{{ sn.netflow.start|iso_to_utc }}</td>
               <td>{{ sn.netflow.end|iso_to_utc }}</td>
               <td>{{ sn.sensor }}</td>
@@ -203,5 +204,6 @@
     <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
     <!-- include deferred scripts here -->
     <script src="/js/flow.js"></script>
+    <script src="/js/console.js"></script>
 	</body>
 </html>

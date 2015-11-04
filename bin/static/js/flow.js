@@ -25,6 +25,7 @@ minerva.flow = {};
   // declare module properties
   //app.container = $("#minerva-container");
   app.csrf_token = $('#csrf_token').val();
+  app.formType = $('#form_type').val();
 
   app.search_flow = function() {
     //var data = $('form').serializeArray();
@@ -32,6 +33,7 @@ minerva.flow = {};
     $.each($('form').serializeArray(), function(i, item) { 
       data[item.name] = item.value; 
     });
+    data['formType'] = app.formType;
     $.ajax({
       method: 'POST',
       url: '/flow',

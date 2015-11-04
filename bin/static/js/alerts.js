@@ -24,6 +24,7 @@ minerva.alerts = {};
 (function ($, app) {
   // declare module properties
   app.csrf_token = $('#csrf_token').val();
+  app.formType = $('#form_type').val();
 
   app.search_alerts = function() {
     //var data = $('form').serializeArray();
@@ -31,6 +32,7 @@ minerva.alerts = {};
     $.each($('form').serializeArray(), function(i, item) { 
       data[item.name] = item.value; 
     });
+    data['formType'] = app.formType;
     $.ajax({
       method: 'POST',
       url: '/alerts',

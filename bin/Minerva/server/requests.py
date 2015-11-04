@@ -70,6 +70,7 @@ class HandleRequests(object):
                 tmp_file.write(data)
         tmp_file.seek(0)
         cert.close()
+        s_ssl.close()
         return tmp_file
 
     def alertPCAP(self, events, grab_all=False):
@@ -98,10 +99,51 @@ class HandleRequests(object):
         options['event_time'] = epoch
         #convert from list or do it on the receiver
         options['request_type'] = 'alert'
-        for sensor in sensors:
+        # not yet implemented
+        #for sensor in sensors:
+        sensor = sensors[0]
+        if 1 == 1:
             options['sensor'] = sensor
             encrypted_options = self.encrypt_options(options)
             ip, port, cert = self.get_receiver(sensor)
             pcap = self.send_request(ip, port, cert, encrypted_options)
-            yield pcap
+            #yield pcap
+            return pcap
+
+    def flowPCAP(self, events, grab_all=False):
+        #TODO Add loop around events
+        results = self.flow.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(events[0]) }}, { "$project": { "document": "$$ROOT"}}])
+
+        for orig_alert in results:
+            src_ip = orig_alert['document']['src_ip']
+            src_port = orig_alert['document']['src_port']
+            dest_ip =orig_alert['document']['dest_ip']
+            dest_port = orig_alert['document']['dest_port']
+            proto = orig_alert['document']['proto']
+            start_epoch = orig_alert['document']['netflow']['start_epoch']
+            stop_epoch = orig_alert['document']['netflow']['stop_epoch']
+        if grab_all:
+            sensors = list(self.flow.distinct("sensor", filter={ "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto, "netflow.start_epoch": start_epoch, "netflow.stop_epoch": stop_epoch, }))
+        else:
+            sensors = [orig_alert['document']['sensor']]
+        options = {}
+        options['src_ip'] = src_ip
+        options['src_port'] = src_port
+        options['dest_ip'] = dest_ip
+        options['dest_port'] = dest_port
+        options['proto'] = proto
+        options['start_time'] = start_epoch
+        options['end_time'] = stop_epoch
+        #convert from list or do it on the receiver
+        options['request_type'] = 'flow'
+        # not yet implemented
+        #for sensor in sensors:
+        sensor = sensors[0]
+        if 1 == 1:
+            options['sensor'] = sensor
+            encrypted_options = self.encrypt_options(options)
+            ip, port, cert = self.get_receiver(sensor)
+            pcap = self.send_request(ip, port, cert, encrypted_options)
+            #yield pcap
+            return pcap
 

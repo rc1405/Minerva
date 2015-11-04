@@ -314,6 +314,11 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def flow(self, **kwargs):
         user = Users(self.configs)
+   
+        if 'prev_page' in cherrypy.session and 'orig_search' in cherrypy.session:
+            if cherrypy.session['prev_page'] == '/flow' and not 'get_request' in cherrypy.session:
+                del cherrypy.session['orig_search']
+
         cherrypy.session['prev_page'] = "/flow"
 
         if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -326,18 +331,27 @@ class Minerva(object):
         if 'console' in perm_return or 'responder' in perm_return:
             context_dict = {'numFound': 0}
 
-            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
-                if 'post_request' in cherrypy.session.keys():
-                    request = cherrypy.session['post_request']
-                    del cherrypy.session['post_request']
-                else:
-                    request = cherrypy.request.json
+            if (cherrypy.request.method == 'GET' and ('orig_search' in cherrypy.session.keys() or 'post_request' in cherrypy.session.keys())) or cherrypy.request.method == 'POST':
 
                 flow = alert_flow(self.configs)
-                items_found, orig_search = flow.search_flow(request)
+
+                if 'orig_search' in cherrypy.session:
+                    request = cherrypy.session['orig_search']
+                    del cherrypy.session['orig_search']
+                    items_found, orig_search = flow.search_flow(request, orig_search=True)
+                else:
+                    if 'post_request' in cherrypy.session.keys():
+                        request = cherrypy.session['post_request']
+                        del cherrypy.session['post_request']
+                    else:
+                        request = cherrypy.request.json
+
+                    items_found, orig_search = flow.search_flow(request)
+
                 context_dict['items_found'] = list(items_found)
                 context_dict['numFount'] = len(context_dict['items_found'])
                 context_dict['orig_search'] = orig_search
+                cherrypy.session['orig_search'] = orig_search
 
             context_dict['form'] = 'flow'
             context_dict['permissions'] = perm_return
@@ -437,10 +451,12 @@ class Minerva(object):
                     request = cherrypy.request.json
                 pcaps = HandleRequests(self.minerva_core)
                 #todo, zip up multiple file and return that
-                for pcap in pcaps.alertPCAP(request['events']):
-                    print(pcap)
+                if request['formType'] == 'flow':
+                    pcap = pcaps.flowPCAP(request['events'])
+                else:
+                    pcap = pcaps.alertPCAP(request['events'])
                 if pcap == 'No Packets Found':
-                    return '<script type="text/javascript">window.alert(%s);window.close();</script>' % pcap
+                    return '<script type="text/javascript">window.alert("No Packets Found");window.close();</script>'
                 else:
                     tmp = NamedTemporaryFile(mode='w+b', suffix='.pcap')
                     tmp.write(pcap.read())

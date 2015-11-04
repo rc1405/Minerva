@@ -72,72 +72,77 @@ class alert_flow(object):
         return results_found
         
         
-    def search_flow(self, request):
-        event_search = {}
+    def search_flow(self, request, orig_search=False):
+        if not orig_search:
+            event_search = {}
         
-        if len(request['src_ip']) > 0:
-            event_search['src_ip'] = str(request['src_ip'])
+            if len(request['src_ip']) > 0:
+                event_search['src_ip'] = str(request['src_ip'])
             
-        if len(request['src_port']) > 0:
-            event_search['src_port'] = int(request['src_port'])
+            if len(request['src_port']) > 0:
+                event_search['src_port'] = int(request['src_port'])
             
-        if len(request['dest_ip']) > 0:
-            event_search['dest_ip'] = str(request['dest_ip'])
+            if len(request['dest_ip']) > 0:
+                event_search['dest_ip'] = str(request['dest_ip'])
             
-        if len(request['dest_port']) > 0:
-            event_search['dest_port'] = int(request['dest_port'])
+            if len(request['dest_port']) > 0:
+                event_search['dest_port'] = int(request['dest_port'])
             
-        if len(request['sensor']) > 0:
-            event_search['sensor'] = str(request['sensor'])
+            if len(request['sensor']) > 0:
+                event_search['sensor'] = str(request['sensor'])
             
-        if len(request['proto']) > 0:
-            try:
-                proto = int(request['proto'])
-                if proto == 1: 
-                    event_search['proto'] = 'ICMP'
-                if proto == 4:
-                    event_search['proto'] = 'IP'
-                if proto == 6:
-                    event_search['proto'] = 'TCP'
-                if proto == 8:
-                    event_search['proto'] = 'EGP'
-                if proto == 9:
-                    event_search['proto'] = 'IGP'
-                if proto == 17:
-                    event_search['proto'] = 'UDP'
-                if proto == 27:
-                    event_search['proto'] = 'RDP'
-                if proto == 41:
-                    event_search['proto'] = 'IPv6'
-                if proto == 51:
-                    event_search['proto'] = 'AH'
-            except:
+            if len(request['proto']) > 0:
                 try:
-                    event_search['proto'] = str(request['proto'].upper())
+                    proto = int(request['proto'])
+                    if proto == 1: 
+                        event_search['proto'] = 'ICMP'
+                    if proto == 4:
+                        event_search['proto'] = 'IP'
+                    if proto == 6:
+                        event_search['proto'] = 'TCP'
+                    if proto == 8:
+                        event_search['proto'] = 'EGP'
+                    if proto == 9:
+                        event_search['proto'] = 'IGP'
+                    if proto == 17:
+                        event_search['proto'] = 'UDP'
+                    if proto == 27:
+                        event_search['proto'] = 'RDP'
+                    if proto == 41:
+                        event_search['proto'] = 'IPv6'
+                    if proto == 51:
+                        event_search['proto'] = 'AH'
                 except:
-                    return 'Protocol not found', event_search
-        
-        if len(request['start']) > 0:
-             start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
-        else:
-             start_epoch = 0
-             
-        if len(request['stop']) > 0:
-             stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
-        else:
-             stop_epoch = 0
-             
-        if start_epoch == 0 and stop_epoch == 0:
-             start_epoch = time.time() - 600
-             stop_epoch = time.time()
-        elif start_epoch == 0 and stop_epoch > 0:
-             start_epoch = stop_epoch - 600
-        elif start_epoch > 0 and stop_epoch == 0:
-             if (start_epoch + 600) > time.time():
-                 stop_epoch = time.time()
-             else:
-                 stop_epoch = start_epoch + 600
+                    try:
+                        event_search['proto'] = str(request['proto'].upper())
+                    except:
+                        return 'Protocol not found', event_search
+            
+            if len(request['start']) > 0:
+                 start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
+            else:
+                 start_epoch = 0
                  
+            if len(request['stop']) > 0:
+                 stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+            else:
+                 stop_epoch = 0
+             
+            if start_epoch == 0 and stop_epoch == 0:
+                 start_epoch = time.time() - 600
+                 stop_epoch = time.time()
+            elif start_epoch == 0 and stop_epoch > 0:
+                 start_epoch = stop_epoch - 600
+            elif start_epoch > 0 and stop_epoch == 0:
+                 if (start_epoch + 600) > time.time():
+                     stop_epoch = time.time()
+                 else:
+                     stop_epoch = start_epoch + 600
+        else:
+            event_search = request
+            stop_epoch = event_search.pop('stop_epoch')
+            start_epoch = event_search.pop('start_epoch')
+                     
         results_found = self.flow.aggregate([
           { '$match': 
             { '$and': [ 
