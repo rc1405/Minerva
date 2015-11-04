@@ -32,7 +32,6 @@ minerva.flow = {};
     $.each($('form').serializeArray(), function(i, item) { 
       data[item.name] = item.value; 
     });
-    alert(JSON.stringify(data));
     $.ajax({
       method: 'POST',
       url: '/flow',
