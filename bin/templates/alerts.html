@@ -39,6 +39,21 @@
         <div id="navbar" class="navbar-collapse collapse">
           {% include 'menu.html' %}
           <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="#" id="get_flow">Get Flow Data</a></li>
+            <li><a href="#" id="get_pcap">Get PCAP</a></li>
+            <li><a href="#" id="highlight">Highlight All</a></li>
+            <li><a href="#" id="unselect">UnSelect All</a></li>
+            <li role="presentation" class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="true">
+                Actions <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="#" id="clear_alerts">Close without Comments</a></li>
+                <li><a href="#" class="minerva-subalert" data-url="/close">Close with Comments</a></li>
+                <li><a href="#" class="minerva-subalert" data-url="/comment">Add Comments</a></li>
+                <li><a href="#" class="minerva-subalert" data-url="/escalate">Escalate</a></li>
+              </ul>
+            </li>
             <li><a href="/alerts" class="submenu_right">Reset</a></li>
           </ul>
         </div>
@@ -266,5 +281,6 @@
     <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
     <!-- include deferred scripts here -->
     <script src="/js/alerts.js"></script>
+    <script src="/js/console.js"></script>
 	</body>
 </html>

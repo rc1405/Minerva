@@ -84,76 +84,82 @@ class alert_console(object):
             for event in events:
                 self.alerts.update({ "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": comments }})
         return
-    def search_alerts(self, request):
-        event_search = {}
-        if len(request['src_ip']) > 0:
-            event_search['src_ip'] = str(request['src_ip'])
-        if len(request['src_port']) > 0:
-            event_search['src_port'] = int(request['src_port'])
-        if len(request['dest_ip']) > 0:
-            event_search['dest_ip'] = str(request['dest_ip'])
-        if len(request['dest_port']) > 0:
-            event_search['dest_port'] = int(request['dest_port'])
-        if len(request['sensor']) > 0:
-            event_search['sensor'] = str(request['sensor'])
-        if len(request['proto']) > 0:
-            try:
-                proto = int(request['proto'])
-                if proto == 1:
-                    event_search['proto'] = 'ICMP'
-                elif proto == 4:
-                    event_search['proto'] = 'IP'
-                elif proto == 6:
-                    event_search['proto'] = 'TCP'
-                elif proto == 8:
-                    event_search['proto'] = 'EGP'
-                elif proto == 9:
-                    event_search['proto'] = 'IGP'
-                elif proto == '17':
-                    event_search['proto'] = 'UDP'
-                elif proto == '27':
-                    event_search['proto'] = 'RDP'
-                elif proto == '41':
-                    event_search['proto'] = 'IPv6'
-                elif proto == '51':
-                    event_search['proto'] = 'AH'
-            except:
+    def search_alerts(self, request, orig_search=False):
+        if not orig_search:
+            event_search = {}
+            if len(request['src_ip']) > 0:
+                event_search['src_ip'] = str(request['src_ip'])
+            if len(request['src_port']) > 0:
+                event_search['src_port'] = int(request['src_port'])
+            if len(request['dest_ip']) > 0:
+                event_search['dest_ip'] = str(request['dest_ip'])
+            if len(request['dest_port']) > 0:
+                event_search['dest_port'] = int(request['dest_port'])
+            if len(request['sensor']) > 0:
+                event_search['sensor'] = str(request['sensor'])
+            if len(request['proto']) > 0:
                 try:
-                    event_search['proto'] = str(request['proto'].upper())
+                    proto = int(request['proto'])
+                    if proto == 1:
+                        event_search['proto'] = 'ICMP'
+                    elif proto == 4:
+                        event_search['proto'] = 'IP'
+                    elif proto == 6:
+                        event_search['proto'] = 'TCP'
+                    elif proto == 8:
+                        event_search['proto'] = 'EGP'
+                    elif proto == 9:
+                        event_search['proto'] = 'IGP'
+                    elif proto == '17':
+                        event_search['proto'] = 'UDP'
+                    elif proto == '27':
+                        event_search['proto'] = 'RDP'
+                    elif proto == '41':
+                        event_search['proto'] = 'IPv6'
+                    elif proto == '51':
+                        event_search['proto'] = 'AH'
                 except:
-                    return 'Protocol not found'
-        if len(request['sig_name']) > 0:
-            event_search['alert.signature'] = request['sig_name']
-        if len(request['category']) > 0:
-            event_search['alert.category'] = request['category']
-        if len(request['severity']) > 0:
-            event_search['alert.severity'] = int(request['severity'])
-        if len(request['sid']) > 0:
-            event_search['alert.signature_id'] = int(request['sid'])
-        if len(request['rev']) > 0:
-            event_search['alert.rev'] = int(request['rev'])
-        if len(request['gid']) > 0:
-            event_search['alert.gid'] = int(request['gid'])
-        if len(request['status']) > 0:
-            event_search['MINERVA_STATUS'] = request['status']
-        if len(request['start']) > 0:
-            start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
-        else:
-            start_epoch = 0
-        if len(request['stop']) > 0:
-            stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
-        else:
-            stop_epoch = 0
-        if start_epoch == 0 and stop_epoch == 0:
-            start_epoch = time.time() - 600
-            stop_epoch = time.time()
-        elif start_epoch == 0 and stop_epoch > 0:
-            start_epoch = stop_epoch - 600
-        elif start_epoch > 0 and stop_epoch == 0:
-            if (start_epoch + 600) > time.time():
-                stop_epoch = time.time()
+                    try:
+                        event_search['proto'] = str(request['proto'].upper())
+                    except:
+                        return 'Protocol not found'
+            if len(request['sig_name']) > 0:
+                event_search['alert.signature'] = request['sig_name']
+            if len(request['category']) > 0:
+                event_search['alert.category'] = request['category']
+            if len(request['severity']) > 0:
+                event_search['alert.severity'] = int(request['severity'])
+            if len(request['sid']) > 0:
+                event_search['alert.signature_id'] = int(request['sid'])
+            if len(request['rev']) > 0:
+                event_search['alert.rev'] = int(request['rev'])
+            if len(request['gid']) > 0:
+                event_search['alert.gid'] = int(request['gid'])
+            if len(request['status']) > 0:
+                event_search['MINERVA_STATUS'] = request['status']
+            if len(request['start']) > 0:
+                start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
             else:
-                stop_epoch = start_epoch + 600
+                start_epoch = 0
+            if len(request['stop']) > 0:
+                stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+            else:
+                stop_epoch = 0
+            if start_epoch == 0 and stop_epoch == 0:
+                start_epoch = time.time() - 600
+                stop_epoch = time.time()
+            elif start_epoch == 0 and stop_epoch > 0:
+                start_epoch = stop_epoch - 600
+            elif start_epoch > 0 and stop_epoch == 0:
+                if (start_epoch + 600) > time.time():
+                    stop_epoch = time.time()
+                else:
+                    stop_epoch = start_epoch + 600
+        else:
+            event_search = request
+            stop_epoch = event_search.pop('stop_epoch')
+            start_epoch = event_search.pop('start_epoch')
+
         results_found = self.alerts.aggregate([ { "$match":
             { "$and": [
                 event_search,

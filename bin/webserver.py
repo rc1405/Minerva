@@ -178,8 +178,8 @@ class Minerva(object):
     def close_nc(self, **kwargs):
         if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session ) or cherrypy.request.method == 'POST':
             user = Users(self.configs)
+            cherrypy.session['prev_page'] = "/close_nc"
             if not 'SESSION_KEY' in cherrypy.session.keys():
-                cherrypy.session['prev_page'] = "/close_nc"
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
                 
@@ -198,10 +198,11 @@ class Minerva(object):
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
-                else:
+                elif request['formType'] == 'responder':
                     raise cherrypy.HTTPRedirect('/responder')
+                elif request['formType'] == 'alerts':
+                    raise cherrypy.HTTPRedirect('/alerts')
             elif 'newLogin' in perm_return:
-                cherrypy.session['prev_page'] = "/close_nc"
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
@@ -214,9 +215,9 @@ class Minerva(object):
     def close(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.session.method == 'GET' and 'post_request' in cherrypy.session):
             user = Users(self.configs)
+            cherrypy.session['prev_page'] = '/close'
             
             if not 'SESSION_KEY' in cherrypy.session.keys():
-                cherrypy.session['prev_page'] = '/close'
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
                 
@@ -235,10 +236,11 @@ class Minerva(object):
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
-                else:
+                elif request['formType'] == 'responder':
                     raise cherrypy.HTTPRedirect('/responder')
+                elif request['formType'] == 'alerts':
+                    raise cherrypy.HTTPRedirect('/alerts')
             elif 'newLogin' in perm_return:
-                cherrypy.session['prev_page'] = '/close'
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
@@ -251,9 +253,9 @@ class Minerva(object):
     def escalate(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
             user = Users(self.configs)
+            cherrypy.session['prev_page'] = '/escalate'
             
             if not 'SESSION_KEY' in cherrypy.session.keys():
-                cherrypy.session['prev_page'] = '/escalate'
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             
@@ -272,10 +274,11 @@ class Minerva(object):
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
-                else:
+                elif request['formType'] == 'responder':
                     raise cherrypy.HTTPRedirect('/responder')
+                elif request['formType'] == 'alerts':
+                    raise cherrypy.HTTPRedirect('/alerts')
             elif 'newLogin' in perm_return:
-                cherrypy.session['prev_page'] = '/escalate'
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
@@ -352,6 +355,11 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def alerts(self, **kwargs):
         user = Users(self.configs)
+        
+        if 'prev_page' in cherrypy.session and 'orig_search' in cherrypy.session:
+            if cherrypy.session['prev_page'] == '/alerts' and not 'get_request' in cherrypy.session:
+                del cherrypy.session['orig_search']
+
         cherrypy.session['prev_page'] = '/alerts'
         
         if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -364,18 +372,25 @@ class Minerva(object):
         if 'console' in perm_return or 'responder' in perm_return:
             context_dict = { 'numFound': 0 }
             
-            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'get_request' in cherrypy.session):
-                if 'get_request' in cherrypy.session.keys():
-                    request = cherrypy.session['get_request']
-                    del cherrypy.session['get_request']
-                else:
-                    request = cherrypy.request.json
-                
+            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and ('get_request' in cherrypy.session or 'orig_search' in cherrypy.session)):
                 alert = alert_console(self.configs)
-                items_found, orig_search = alert.search_alerts(request)
+                if 'orig_search' in cherrypy.session:
+                    request = cherrypy.session['orig_search']
+                    del cherrypy.session['orig_search']
+                    items_found, orig_search = alert.search_alerts(request, orig_search=True)
+                else:
+                    if 'get_request' in cherrypy.session.keys():
+                        request = cherrypy.session['get_request']
+                        del cherrypy.session['get_request']
+                    else:
+                        request = cherrypy.request.json
+                
+                    items_found, orig_search = alert.search_alerts(request)
+
                 context_dict['items_found'] = list(items_found)
                 context_dict['numFound'] = len(context_dict['items_found'])
                 context_dict['orig_search'] = orig_search
+                cherrypy.session['orig_search'] = orig_search
                 
             context_dict['form'] = 'alerts'
             context_dict['permissions'] = perm_return
@@ -445,9 +460,9 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def comment(self, **kwargs):
         user = Users(self.configs)
+        cherrypy.session['prev_page'] = '/comment'
         
         if not 'SESSION_KEY' in cherrypy.session.keys():
-            cherrypy.session['prev_page'] = '/comment'
             cherrypy.session['post_request'] = cherrypy.request.json
             raise cherrypy.HTTPRedirect('/login')
             
@@ -467,12 +482,13 @@ class Minerva(object):
                     return '<script type="text/javascript">window.close()</script>'
                 if request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
-                else:
+                elif request['formType'] == 'responder':
                     raise cherrypy.HTTPRedirect('/responder')
+                elif request['formType'] == 'alerts':
+                    raise cherrypy.HTTPRedirect('/alerts')
             else:
                 raise cherrypy.HTTPError(404)
         elif 'newLogin' in perm_return:
-            cherrypy.session['prev_page'] = '/comment'
             cherrypy.session['post_request'] = cherrypy.request.json
             raise cherrypy.HTTPRedirect('/login')
         else:

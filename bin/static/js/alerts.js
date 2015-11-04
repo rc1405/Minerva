@@ -23,7 +23,6 @@ minerva.alerts = {};
 
 (function ($, app) {
   // declare module properties
-  //app.container = $("#minerva-container");
   app.csrf_token = $('#csrf_token').val();
 
   app.search_alerts = function() {
