@@ -120,7 +120,7 @@ def main():
         genKey(cur_config)
     active_processes = []
     send_lock = Lock()
-    listen_proc = Process(name='listen-proc', target=requestListener, args((cur_config,)))
+    listen_proc = Process(name='listen-proc', target=requestListener, args=((cur_config,)))
     listen_proc.start()
     try:
         for l in cur_config['logfiles'].keys():
@@ -135,7 +135,7 @@ def main():
                     pr.start()
                     active_processes.append(pr)
             if not listen_proc in active_children():
-                listen_proc = Process(name='listen-proc', target=requestListener, args((cur_config,)))
+                listen_proc = Process(name='listen-proc', target=requestListener, args=((cur_config,)))
                 listen_proc.start()
             time.sleep(10)
     except:
