@@ -36,21 +36,7 @@
 	  <a class="navbar-brand" href="/">Minerva</a>
 	  </div>
 	  <div id="navbar" class="navbar-collapse collapse">
-                      <ul class="nav navbar-nav nav-pills">
-            <li role="presentation" class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expand="true"><span class="glyphicon glyphicon-menu-hamburger"></span><span class="caret"></span></a>
-                <ul class="dropdown-menu">
-            <li><a href="/" class="submenu_left">Console</a></li>
-            <li><a href="/responder" class="submenu_left">Escalated Events</a></li>
-            <li><a href="/flow" class="submenu_left">Session Flow</a></li>
-            <li><a href="/alerts" class="submenu_left">Search Alerts</a></li>
-            <li><a href="/sensors" class="submenu_left">Sensors</a></li>
-            <li class="active"><a href="/users" class="submenu_left">User Management</a></li>
-            <li><a href="/config" class="submenu_left">Server Admin</a></li>
-            <li><a href="/profile" class="submenu_left">Change Password</a></li>
-            <li><a href="/logout" class="submenu_left">Logout</a></li>
-            </ul>
-            </li></ul>
+          {% include 'menu.html' %}
 	  </div>
 	</div>
      </nav>
