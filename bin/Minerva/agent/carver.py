@@ -127,7 +127,7 @@ class carvePcap(object):
         options['dest_port'] = dest_port
         options['proto'] = proto
         options['event_time'] = start_time
-        thres_time = end_time
+        thres_time = int(end_time)+1
         pcap_files = self.find_pcap_files(options, thres_time)
         out_file = NamedTemporaryFile(mode='w+b', dir=self.config['temp_directory'])
         out_pcap = dpkt.pcap.Writer(out_file)

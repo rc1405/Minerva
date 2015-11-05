@@ -55,7 +55,7 @@ class MongoInserter(object):
                     alert_events.append(event)
                 elif event['logType'] == 'flow':
                     event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
-                    event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
+                    event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
                     flow_events.append(event)
                 count += 1
             tdiff = time.time() - wait_time
