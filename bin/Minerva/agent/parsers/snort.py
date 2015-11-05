@@ -19,7 +19,7 @@
 '''
 
 import datetime
-from dateutil import reference
+from pytz import reference
 import re
 
 class ConvertFast():

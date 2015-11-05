@@ -100,7 +100,7 @@ def send(cur_config, batch):
     s_ssl.close()
     return
 
-def requestListener(cur_config, pname):
+def requestListener(cur_config):
     listener = RequestListener(cur_config)
     carver = carvePcap(cur_config)
     proc = PCAPprocessor(cur_config, carver)
