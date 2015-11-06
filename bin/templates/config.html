@@ -24,78 +24,275 @@
   <script src="/jquery.min.js"></script>
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="/css/console.css">
   <script src="/js/bootstrap.min.js"></script>
   <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
   </head>
-	<style>
-	body {background-color:lightblue; padding-top:60px}
-	</style>
-	<title>Minerva Server Admin</title>
-	<body>
-	<nav class="navbar nav-pills navbar-default navbar-fixed-top">
+    <title>Minerva Server Admin</title>
+    <body>
+      <nav class="navbar nav-pills navbar-default navbar-fixed-top">
 	<div class="container">
-	    <div class="navbar-header">
+	  <div class="navbar-header">
 	    <a class="navbar-brand" href="/">Minerva</a>
-	    </div>
-	    <div id="navbar" class="navbar-collapse collapse">
+	  </div>
+	  <div id="navbar" class="navbar-collapse collapse">
             {% include 'menu.html' %}
 	    <ul class="nav navbar-nav navbar-right nav-pills">
-            <!--<li><a href="#" class="minerva-saveConf" class="submenu_right">Save</a></li>-->
-            <li><a href="#" class="minerva-saveConf">Save</a></li>
+              <li>
+                <a href="#" class="minerva-saveConf">Save</a>
+              </li>
 	    </ul>
-	    </div>
-	</div>
-	</nav>
-	<div class="container" style="width:100%;" >
-        <div class="starter-template">
-        <h2>Database</h2><br />
-        <table>
-        <col width=15%>
-        <col width=3%>
-        <col width=15%>
-        <col width=67%>
-        <tr><th>Database IP:</th><td></td><td><input type="text" id=db_ip value="{{config.db.url}}"></td><td></td></tr>
-        <tr><th>Database Port:</th><td></td><td><input type="text" id=db_port value="{{config.db.port}}"></td><td></td></tr>
-        <tr><th>Use Authentication:</th><td></td><td><input type="checkbox" id=useAuth {% if config.db.useAuth %}checked{% endif %}></td><td></td></tr>
-        <tr><th>Username:</th><td></td><td><input type="text" id=db_user value="{{config.db.username}}"></td><td></td></tr>
-        <tr><th>Password:</th><td></td><td><input type="password" id=db_pass></td><td></td></tr>
-        </table>
-        <h2>Web Server</h2>
-        <table>
-        <col width=15%>
-        <col width=3%>
-        <col width=15%>
-        <col width=1%>
-        <col width=66%>
-        <tr><th>Hostname:</th><td></td><td><input type="text" id=web_host size=35 value="{{config.web.hostname}}"></td><td></td><td></td></tr>
-        <tr><th>IP Address:</th><td></td><td><input type="text" id=web_ip size=35 value="{{config.web.bindIp}}"></td><td></td><td></td></tr>
-        <tr><th>Port:</th><td></td><td><input type="text" id=web_port size=35 value="{{config.web.port}}"></td><td></td><td></td></tr>
-        <tr><th>Threads:</th><td></td><td><input type="text" id=web_threads size=35 value="{{config.web.threads}}"></td><td></td><td align=left>*Number of threads to process requests from the console</td></tr>
-        <tr><th>Certificate Path:</th><td></td><td><input type="text" size=35 id=cert_path value="{{config.web.certs.webserver_cert}}"></td><td></td><td align=left>*Location of Certificate for SSL</td></tr>
-        <tr><th>Private Key Path:</th><td></td><td><input type="text" size=35 id=key_path value="{{config.web.certs.webserver_key}}"></td><td></td><td align=left>*Location of Private key for Certificate Above</td></tr>
-        <tr><th>Session Timeout:</th><td></td><td><input type="text" id=session_timeout size=35 value="{{config.web.session_timeout}}"></td><td></td><td align=left>*Number of Minutes of inactivity before a user is logged out</td></tr>
-        <tr><th>Password attempts:</th><td></td><td><input type="text" id=pass_tries size=35 value="{{config.web.password_requirements.password_tries}}"></td><td></td><td align=left>*Number of attempts before a user account is disabled</td></tr>
-        <tr><th>Password Minimum Length:</th><td></td><td><input type="text" id=pass_min size=35 value="{{config.web.password_requirements.password_min_length}}"></td><td></td><td align=left>*Minimum length of passwords</td></tr>
-        <tr><th>Password Expiration:</th><td></td><td><input type="text" id=pass_age size=35 value="{{config.web.password_requirements.password_max_age}}"></td><td></td><td align=left>*Number of Days before a password needs to be reset</td></tr>
-        <tr><th>Password Lower Case Min:</th><td></td><td><input type="text" id=lower_count size=35 value="{{config.web.password_requirements.lower_count}}"></td><td></td><td align=left>*Number of lower case characters required in a password</td></tr>
-        <tr><th>Password Upper Case Min:</th><td></td><td><input type="text" id=upper_count size=35 value="{{config.web.password_requirements.upper_count}}"></td><td></td><td align=left>*Number of upper case characters required in a password</td></tr>
-        <tr><th>Password Digit Min:</th><td></td><td><input type="text" id=digit_count size=35 value="{{config.web.password_requirements.digit_count}}"></td><td></td><td align=left>*Number of numbers required in a password</td></tr>
-        <tr><th>Password Special Char Min:</th><td></td><td><input type="text" id=special_count size=35 value="{{config.web.password_requirements.special_count}}"></td><td></td><td align=left>*Number of Special characters required in a password</td></tr>
-        </table>
-        <h2>Events</h2>
-        <table>
-        <col width=15%>
-        <col width=3%>
-        <col width=15%>
-        <col width=1%>
-        <col width=66%>
-        <tr><th>Maximum # of Events:</th><td></td><td><input type="text" id=max_events value="{{config.events.maxResults}}"></td><td></td><td align="left">*Maximum number of events to return to the console at a time, up to 15000.</td></tr>
-        <tr><th>Event Expiration:</th><td></td><td><input type="text" id=max_age value="{{config.events.max_age}}"></td><td></td><td align=left>*Number of Days to retain events in the database</td></tr>
-        <tr><th>Netflow Expiration:</th><td></td><td><input type="text" id=flow_age value="{{config.events.flow_max_age}}"></td><td></td><td align=left>*Number of Days to retain Netflow data in the database</td></tr>
-        </table>
-	</div>
-	</div>
+	  </div>
         </div>
-  <script src="/js/config.js"></script>
-	</body>
+      </nav>
+      <div class="container minerva-container" >
+        <div id="search" class="panel panel-default">
+          <form>
+            <div class="panel-heading">
+              <h4 class="panel-title">Database</h4>
+            </div>
+            <div class="form-inline">
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Database IP:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=db_ip value="{{config.db.url}}">
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Database Port:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=db_port value="{{config.db.port}}">
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Use Authentication:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="checkbox" name=useAuth {% if config.db.useAuth %}checked{% endif %}>
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Username:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=db_user value="{{config.db.username}}">
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="password" name=db_pass>
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+            </div>
+            <div class="panel-heading">
+              <h4 class="panel-title">Web Server</h4>
+            </div>
+            <div class="form-inline">
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Hostname:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=web_host size=35 value="{{config.web.hostname}}">
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>IP Address:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=web_ip size=35 value="{{config.web.bindIp}}">
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Port:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=web_port size=35 value="{{config.web.port}}">
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Threads:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=web_threads size=35 value="{{config.web.threads}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of threads to process requests from the console
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Certificate Path:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" size=35 name=cert_path value="{{config.web.certs.webserver_cert}}">
+                </div>
+                <div class="col-xs-6">
+                  *Location of Certificate for SSL
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Private Key Path:<label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" size=35 name=key_path value="{{config.web.certs.webserver_key}}">
+                </div>
+                <div class="col-xs-6">
+                  *Location of Private key for Certificate Above
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Session Timeout:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=session_timeout size=35 value="{{config.web.session_timeout}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Minutes of inactivity before a user is logged out
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password attempts:</label>
+                </div>
+                <div class="col-xs-3"> 
+                  <input type="text" name=pass_tries size=35 value="{{config.web.password_requirements.password_tries}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of attempts before a user account is disabled
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password Minimum Length:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=pass_min size=35 value="{{config.web.password_requirements.password_min_length}}">
+                </div>
+                <div class="col-xs-6">
+                  *Minimum length of passwords
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password Expiration:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=pass_age size=35 value="{{config.web.password_requirements.password_max_age}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Days before a password needs to be reset
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password Lower Case Min:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=lower_count size=35 value="{{config.web.password_requirements.lower_count}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of lower case characters required in a password
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password Upper Case Min:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=upper_count size=35 value="{{config.web.password_requirements.upper_count}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of upper case characters required in a password
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password Digit Min:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=digit_count size=35 value="{{config.web.password_requirements.digit_count}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of numbers required in a password
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Password Special Char Min:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=special_count size=35 value="{{config.web.password_requirements.special_count}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Special characters required in a password
+                </div>
+              </div>
+            </div>
+            <div class="panel-heading">
+              <h4 class="panel-title">Events</h4>
+            </div>
+            <div class="form-inline">
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Maximum # of Events:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=max_events value="{{config.events.maxResults}}">
+                </div>
+                <div class="col-xs-6">
+                  *Maximum number of events to return to the console at a time, up to 15000.
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Event Expiration:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=max_age value="{{config.events.max_age}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Days to retain events in the database
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Netflow Expiration:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=flow_age value="{{config.events.flow_max_age}}">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Days to retain Netflow data in the database
+                </div>
+              </div>
+              <div class="row"></div>
+            </div>
+          </form>
+        </div>
+      </div>
+      <script src="/js/config.js"></script>
+    </body>
 </html>

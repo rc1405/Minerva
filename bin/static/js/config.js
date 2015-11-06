@@ -19,7 +19,7 @@
 */
 var minerva = minerva || {};
 
-minerva.console = {};
+minerva.config = {};
 
 (function ($, app) {
   // declare module properties
@@ -28,9 +28,8 @@ minerva.console = {};
 
   app.saveConfig = function() {
     var data = {};
-    $('input').each(
-      function() {
-        data[$(this).attr('id')] = $(this).val();
+    $.each($('form').serializeArray(), function(i, item) {
+      data[item.name] = item.value;
     });
     $.ajax({
       method: 'POST',
@@ -41,9 +40,8 @@ minerva.console = {};
         csrfmiddlewaretoken: app.csrf_token
       },
       success: function (data) {
-        document.open();
-        document.write(data);
-        document.close();
+        alert(data);
+        location="/config";
       },
     });
   };
@@ -52,4 +50,4 @@ minerva.console = {};
   //
   app.nav.on('click', '.minerva-saveConf', app.saveConfig);
 
-})(jQuery, minerva.console);
+})(jQuery, minerva.config);

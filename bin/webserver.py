@@ -592,7 +592,7 @@ class Minerva(object):
                 out_yaml = open(os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'), 'w')
                 out_yaml.write(out_tmp.render({"config": new_config}))
                 out_yaml.close()
-                return_msg =  '<script type="text/javascript">window.alert("Changes Saved.  A restart is required to take full effect");location="/config";</script>'
+                return_msg =  'Changes Saved.  A restart is required to take full effect'
                 return return_msg
             else:
                 context_dict = {}
