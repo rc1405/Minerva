@@ -1,6 +1,7 @@
 import pymongo
 import os
 import sys
+import ssl
 import copy
 import datetime
 import time
@@ -112,18 +113,68 @@ def setup_db():
     port = raw_input('Please enter database port: [27017] ')
     if len(port) == 0:
         port = 27017
+    print("****IF AUTHENTICATION METHOD IS CHOSEN, IT MUST BE SETUP PRIOR TO RUNNING SETUP*****")
     useAuth = raw_input('Use db authentication? Y/N [N] ')
     if useAuth == 'y' or useAuth == 'Y':
+        while True:
+            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
+            choice = raw_intput()
+            try:
+                if int(choice) == 1:
+                    authType = 'Password'
+                    break
+                elif int(choice) == 2:
+                    authType = 'X509'
+                    break
+            except:
+                print('Invalid Option')
+                pass
         username = raw_input("Enter a username: ")
-        print('Enter a password: ')
-        password = getpass.getpass()
+        if authType == 'X509':
+            auth_cert = raw_input("Enter full path to cert used for authentication: ")
+            auth_ca = raw_input("Enter full path to ca_certs to be used: ")
+            try:
+                client = pymongo.MongoClient(ip, int(port),
+                                             ssl=True,
+                                             ssl_certfile=auth_cert,
+                                             ssl_cert_reqs=ssl.CERT_REQUIRED,
+                                             ssl_ca_certs=auth_ca)
+                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
+            except:
+                print("Unable to connect to DB")
+                sys.exit()
+        elif authType == 'Password':
+            while True:
+                print('Enter a password: ')
+                password = getpass.getpass()
+                print('Re-Enter the password: ')
+                password1 = getpass.getpass()
+                if password == password1:
+                    break
+                else:
+                    print("Passwords do not match")
+            while True:
+                choice = raw_input("Enter Password Mechanism:\n\t1) SCRAM-SHA-1 [Default MONGODB Option]\n\t2) MONGODB-CR\n")
+                try:
+                    if int(choice) == 1:
+                        PW_Mechanism = "SCRAM-SHA-1"
+                        break
+                    elif int(choice) == 2:
+                        PW_Mechanism = "MONGODB-CR"
+                        break
+                except:
+                    print("Invalid Option")
+                    pass
+            client = pymongo.MongoClient(ip,int(port))
+            try:
+                client.minerva.authenticate(username, password, mechanism=PW_Mechanism)
+            except:
+                print("Unable to connect to DB")
+                sys.exit()
         useAuth = True
     else:
         useAuth = False
-        username = 'NA'
-        password = 'NA'
-    client = pymongo.MongoClient(ip,int(port))
-    db = client.minerva
+        client = pymongo.MongoClient(ip,int(port))
     if 'minerva' in client.database_names():
         resp = raw_input('Database already exists, do you want to keep it? [N]')
         if resp == 'Y' or resp == 'y':
@@ -131,21 +182,28 @@ def setup_db():
         else:
             keep_db = False
             client.drop_database('minerva')
-    try:
-        tmp =  len(db.collection_names())
-    except:
-        try:
-            db.authenticate(username, password)
-        except:
-            print('Unable to connect to database')
-            sys.exit()
-    db.create_collection('alerts')
-    db.create_collection('flow')
-    db.create_collection('sessions')
-    db.create_collection('users')
-    #db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("epoch", pymongo.ASCENDING)])
-    ### search index for alerts
-    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.TEXT),("alert.category", pymongo.TEXT),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
+
+    db = client.minerva
+    collections = db.collection_names()
+    if keep_db:
+        print("Recreating Indexes, this can take some time")
+    if not 'alerts' in collections:
+        db.create_collection('alerts')
+    else:
+        db.alerts.drop_indexes()
+    if not 'flow' in collections:
+        db.create_collection('flow')
+    else:
+        db.flow.drop_indexes()
+    if not 'sessions' in collections:
+        db.create_collection('sessions')
+    else:
+        db.sessions.drop_indexes()
+    if not 'users' in collections:
+        db.create_collection('users')
+   
+    #db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.TEXT),("alert.category", pymongo.TEXT),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
+    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
     expiredDays = raw_input("Enter number of days to keep alerts: ")
     expiredSeconds = int(expiredDays) * 86400
     db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
@@ -166,7 +224,10 @@ def setup_db():
             break
         else:
             print("Passwords do not match")
-    password_salt = bcrypt.gensalt()
+    if keep_db:
+        password_salt = raw_input("Enter previous Password Salt Value: ")
+    else:
+        password_salt = bcrypt.gensalt()
     session_salt = bcrypt.gensalt()
     admin_hashedPW = bcrypt.hashpw(str(admin_pw), str(password_salt))
     db.users.insert(
@@ -187,8 +248,15 @@ def setup_db():
     config['Webserver']['db']['url'] = ip
     config['Webserver']['db']['port'] = port
     config['Webserver']['db']['useAuth'] = useAuth
-    config['Webserver']['db']['username'] = username
-    config['Webserver']['db']['password'] = password
+    if useAuth:
+        config['Webserver']['db']['username'] = username
+        if authType == 'X509':
+            config['Webserver']['db']['auth_cert'] = auth_cert
+            config['Webserver']['db']['auth_ca'] = auth_ca
+        elif authType == 'Password':
+            config['Webserver']['db']['password'] = password
+            config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
+        config['Webserver']['db']['AuthType'] = authType
     config['Webserver']['db']['SECRET_KEY'] = password_salt 
     config['Webserver']['db']['SESSION_KEY'] = session_salt
     config['Webserver']['web'] = {}
@@ -201,6 +269,7 @@ def setup_core():
     if os.path.exists('/usr/lib/python2.7/site-packages/Minerva'):
         shutil.rmtree('/usr/lib/python2.7/site-packages/Minerva')
     shutil.copytree('Minerva','/usr/lib/python2.7/site-packages/Minerva')
+
 def setup_server():
     print("Setting up the web server\n")
     hostname = raw_input("Enter hostname for webserver: ")

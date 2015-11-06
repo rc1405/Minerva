@@ -21,6 +21,7 @@
 import yaml
 import os
 import pymongo
+import ssl
 
 class MinervaConfigs():
     def __init__(self, **kwargs):
@@ -35,9 +36,17 @@ class MinervaConfigs():
         self.conf = config
     def get_db(self):
         db_conf = self.conf['Webserver']['db']
-        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
         if db_conf['useAuth']:
-            client.minerva.authenticate(db_conf['username'], db_conf['password'])
+            if db_conf['AuthType'] = 'Password':
+                client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
+                client.minerva.authenticate(db_conf['username'], db_conf['password'], mechanism=db_conf['PW_Mechanism'])
+            elif db_conf['AuthType'] = 'X509':
+                client = pymongo.MongoClient(db_conf['url'], int(db_conf['port']),
+                                             ssl=True,
+                                             ssl_certfile=db_conf['auth_cert'],
+                                             ssl_cert_reqs=ssl.CERT_REQUIRED,
+                                             ssl_ca_certs=db_conf['auth_ca'])
+                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
         return client.minerva
     def parse_web_configs(self, new_config):
         config = self.conf
