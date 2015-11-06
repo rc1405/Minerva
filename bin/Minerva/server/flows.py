@@ -25,15 +25,11 @@ import time
 #from Minerva import config
 
 class alert_flow(object):
-    def __init__(self, configs):
-        #db_conf = config.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']['db']
-        db_conf = configs['db']
-        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-        if db_conf['useAuth']:
-            client.minerva.authenticate(db_conf['username'], db_conf['password'])
-        self.alerts = client.minerva.alerts
-        self.flow = client.minerva.flow
-        self.sizeLimit = configs['events']['maxResults']
+    def __init__(self, minerva_core):
+        db = minerva_core.get_db()
+        self.alerts = db.alerts
+        self.flow = db.flow
+        self.sizeLimit = minerva_core.conf['Webserver']['events']['maxResults']
 
     def get_flow(self, IDs):
         results_found = []

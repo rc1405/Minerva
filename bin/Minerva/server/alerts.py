@@ -25,16 +25,12 @@ import time
 #import os
 #from Minerva import config
 class alert_console(object):
-    def __init__(self, configs):
-        #db_conf = config.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']['db']
-        db_conf = configs['db']
-        self.sizeLimit = configs['events']['maxResults']
-        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-        if db_conf['useAuth']:
-            client.minerva.authenticate(db_conf['username'], db_conf['password'])
-        self.alerts = client.minerva.alerts
-        self.flow = client.minerva.flow
-        self.sessions = client.minerva.sessions
+    def __init__(self, minerva_core):
+        self.sizeLimit = minerva_core.conf['Webserver']['events']['maxResults']
+        db = minerva_core.get_db()
+        self.alerts = db.alerts
+        self.flow = db.flow
+        self.sessions = db.sessions
     def convert(self, data):
         if isinstance(data, basestring):
             return str(data)

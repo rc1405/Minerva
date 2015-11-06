@@ -42,7 +42,7 @@ class Minerva(object):
     
     @cherrypy.expose
     def login(self, **kwargs):
-        authUser = Users(self.configs)
+        authUser = Users(self.minerva_core)
         if cherrypy.request.method == 'POST':
             request = cherrypy.request.params
             if authUser.login(request['username'], request['password'], cherrypy.session ):
@@ -77,7 +77,7 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def users(self, **kwargs):
-        users = Users(self.configs)
+        users = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/users"
 
         if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -109,7 +109,6 @@ class Minerva(object):
                elif request['updateType'] == 'updatePerms':
                    retstatus = users.changePerms(request['username'], request['console'], request['responder'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
 
-               print(request['updateType'])
             if retstatus == "Password Check Failed":
                 ret_string = '"New Password does not meet strength Requirements: %s lowercase, %s uppercase, %s numbers, %s special characters"' % ( self.configs['web']['password_requirements']['lower_count'], self.configs['web']['password_requirements']['upper_count'], self.configs['web']['password_requirements']['digit_count'], self.configs['web']['password_requirements']['special_count'] )
                 return ret_string
@@ -138,14 +137,14 @@ class Minerva(object):
     
     @cherrypy.expose
     def index(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/"
         if not 'SESSION_KEY' in cherrypy.session.keys():
             raise cherrypy.HTTPRedirect('/login')
         perm_return =  user.get_permissions(cherrypy.session.get('SESSION_KEY'))
         if 'console' in perm_return:
             context_dict = {}
-            alerts = alert_console(self.configs)
+            alerts = alert_console(self.minerva_core)
             numFound, items_found = alerts.get_alerts()
             context_dict['numFound'] = numFound
             context_dict['items_found'] = items_found
@@ -162,7 +161,7 @@ class Minerva(object):
     
     @cherrypy.expose
     def profile(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/profile"
         if not 'SESSION_KEY' in cherrypy.session.keys():
             raise cherrypy.HTTPRedirect('/login')
@@ -197,7 +196,7 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def close_nc(self, **kwargs):
         if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session ) or cherrypy.request.method == 'POST':
-            user = Users(self.configs)
+            user = Users(self.minerva_core)
             cherrypy.session['prev_page'] = "/close_nc"
             if not 'SESSION_KEY' in cherrypy.session.keys():
                 cherrypy.session['post_request'] = cherrypy.request.json
@@ -211,7 +210,7 @@ class Minerva(object):
                     del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.json                
-                alerts = alert_console(self.configs)
+                alerts = alert_console(self.minerva_core)
                 alerts.close_alert_nc(request['events'])
                 
                 if request['formType'] == "AlertFlow":
@@ -234,7 +233,7 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def close(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
-            user = Users(self.configs)
+            user = Users(self.minerva_core)
             cherrypy.session['prev_page'] = '/close'
             
             if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -249,7 +248,7 @@ class Minerva(object):
                     del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.json
-                alerts = alert_console(self.configs)
+                alerts = alert_console(self.minerva_core)
                 alerts.close_alert(request['events'], request['comments'])
                 
                 if request['formType'] == "AlertFlow":
@@ -272,7 +271,7 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def escalate(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
-            user = Users(self.configs)
+            user = Users(self.minerva_core)
             cherrypy.session['prev_page'] = '/escalate'
             
             if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -287,7 +286,7 @@ class Minerva(object):
                     del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.json
-                alerts = alert_console(self.configs)
+                alerts = alert_console(self.minerva_core)
                 alerts.escalate_alert(request['events'], request['comments'])
                 
                 if request['formType'] == "AlertFlow":
@@ -308,14 +307,14 @@ class Minerva(object):
             
     @cherrypy.expose
     def responder(self):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/responder"
         if not 'SESSION_KEY' in cherrypy.session.keys():
             raise cherrypy.HTTPRedirect('/login')
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
         if 'responder' in perm_return:
             context_dict = {}
-            alerts = alert_console(self.configs)
+            alerts = alert_console(self.minerva_core)
             numFound, items_found = alerts.get_escalated_alerts()
             context_dict['numFound'] = numFound
             context_dict['items_found'] = items_found
@@ -333,7 +332,7 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def flow(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
    
         if 'prev_page' in cherrypy.session and 'flow_search' in cherrypy.session:
             if cherrypy.session['prev_page'] == '/flow' and not 'get_request' in cherrypy.session:
@@ -353,7 +352,7 @@ class Minerva(object):
 
             if (cherrypy.request.method == 'GET' and ('flow_search' in cherrypy.session.keys() or 'post_request' in cherrypy.session.keys())) or cherrypy.request.method == 'POST':
 
-                flow = alert_flow(self.configs)
+                flow = alert_flow(self.minerva_core)
 
                 if 'flow_search' in cherrypy.session:
                     request = cherrypy.session['flow_search']
@@ -388,7 +387,7 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def alerts(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
         
         if 'prev_page' in cherrypy.session and 'alert_search' in cherrypy.session:
             if cherrypy.session['prev_page'] == '/alerts' and not 'get_request' in cherrypy.session:
@@ -407,7 +406,7 @@ class Minerva(object):
             context_dict = { 'numFound': 0 }
             
             if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and ('get_request' in cherrypy.session or 'alert_search' in cherrypy.session)):
-                alert = alert_console(self.configs)
+                alert = alert_console(self.minerva_core)
                 if 'alert_search' in cherrypy.session:
                     request = cherrypy.session['alert_search']
                     del cherrypy.session['alert_search']
@@ -453,7 +452,7 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def get_pcap(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
 
         if not 'SESSION_KEY' in cherrypy.session.keys():
             cherrypy.session['prev_page'] = '/get_pcap'
@@ -496,7 +495,7 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def comment(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
-            user = Users(self.configs)
+            user = Users(self.minerva_core)
             cherrypy.session['prev_page'] = '/comment'
         
             if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -511,7 +510,7 @@ class Minerva(object):
                     del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.json
-                alerts = alert_console(self.configs)
+                alerts = alert_console(self.minerva_core)
                 alerts.add_comments(request['events'], request['comments'])
                 
                 if request['formType'] == "AlertFlow":
@@ -534,7 +533,7 @@ class Minerva(object):
     @cherrypy.tools.json_in()
     def get_alert_flow(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
-            user = Users(self.configs)
+            user = Users(self.minerva_core)
         
             if not 'SESSION_KEY' in cherrypy.session.keys():
                cherrypy.session['prev_page'] = '/get_alert_flow'
@@ -544,7 +543,7 @@ class Minerva(object):
             perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
         
             if 'console' in perm_return or 'responder' in perm_return:
-                flow = alert_flow(self.configs)
+                flow = alert_flow(self.minerva_core)
                 if 'post_request' in cherrypy.session:
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
@@ -571,7 +570,7 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def config(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/config"
         if not 'SESSION_KEY' in cherrypy.session.keys():
             if cherrypy.request.method == 'POST':
@@ -611,7 +610,7 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def sensors(self, **kwargs):
-        user = Users(self.configs)
+        user = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/sensors"
         if not 'SESSION_KEY' in cherrypy.session.keys():
             if cherrypy.request.method == 'POST':
@@ -625,10 +624,10 @@ class Minerva(object):
                     del cherrypy.session['post_request']
                 else:
                     request = cherrypy.request.json
-                sensor = sensors(self.configs)
+                sensor = sensors(self.minerva_core)
                 sensor.update(request['sensors'],request['action'])
             context_dict = {}
-            sensor = sensors(self.configs)
+            sensor = sensors(self.minerva_core)
             items_found = sensor.get_sensors()
             context_dict['items_found'] = items_found
             context_dict['form'] = 'sensors'

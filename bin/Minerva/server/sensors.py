@@ -25,14 +25,10 @@ import time
 #from Minerva import config
 
 class sensors(object):
-    def __init__(self, configs):
-        #db_conf = config.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Webserver']['db']
-        db_conf = configs['db']
-        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-        if db_conf['useAuth']:
-            client.minerva.authenticate(db_conf['username'], db_conf['password'])
-        self.collection = client.minerva.sensors
-        self.sizeLimit = configs['events']['maxResults']
+    def __init__(self, minerva_core):
+        db = minerva_core.get_db()
+        self.collection = db.sensors
+        self.sizeLimit = minerva_core.conf['Webserver']['events']['maxResults']
 
     def get_sensors(self):
         items_found = self.collection.aggregate([{ "$match": { "STATUS": { "$in": ["NOT_APPROVED","CERT_CHANGED","APPROVED","_DENIED","RECEIVER_CHANGED","IP_CHANGED"]} } }, { "$project": { "ID": "$_id", "STATUS": "$STATUS", "document": "$$ROOT" }},{ "$sort": { "STATUS": -1 }},{ "$limit": self.sizeLimit } ] )

@@ -25,16 +25,14 @@ import time
 import re
 
 class Users(object):
-    def __init__(self, configs):
-        db_conf = configs['db']
-        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-        if db_conf['useAuth']:
-            client.minerva.authenticate(db_conf['username'], db_conf['password'])
+    def __init__(self, minerva_core):
+        db_conf = minerva_core.conf['Webserver']['db']
+        db = minerva_core.get_db()
         self.salt = db_conf['SECRET_KEY']
-        self.users = client.minerva.users
-        self.sessions = client.minerva.sessions
+        self.users = db.users
+        self.sessions = db.sessions
         self.session_salt = db_conf['SESSION_KEY']
-        web_conf = configs['web']
+        web_conf = minerva_core.conf['Webserver']['web']
         self.password_req = web_conf['password_requirements']
         self.password_tries = self.password_req['password_tries']
         self.password_min_length = self.password_req['password_min_length']
