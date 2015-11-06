@@ -27,22 +27,25 @@ class ConvertFast():
         self.sensor = sensor
         self.timezone = reference.LocalTimezone()
     def convert(self, entry):
-        matches = re.match(r'(?P<timestamp>\d+/\d+/\d+-\d+:\d+:\d+.\d+)'r'(\s+\[\*\*\]\s+)(\[)'r'(?P<gid>\d+)'r'(:)'r'(?P<sid>\d+)'r'(:)'r'(?P<rev>\d+)'r'(])'r'(?P<sig_name>.*)'r'(\[\*\*\])'r'( \[Classification: )'r'(?P<category>.*)'r'(\] \[Priority: )'r'(?P<priority>\d+)'r'(\] \{)'r'(?P<proto>\w+)'r'(\} )'r'(?P<src_ip>\d+.\d+.\d+.\d+)'r'(:)'r'(?P<src_port>\d+)'r'( -> )'r'(?P<dest_ip>\d+.\d+.\d+.\d+)'r'(:)'r'(?P<dest_port>\d+)', entry)
+        matches = re.match(r'(?P<timestamp>\d+/\d+/\d+-\d+:\d+:\d+.\d+)'r'(\s+\[\*\*\]\s+)(\[)'r'(?P<gid>\d+)'r'(:)'r'(?P<sid>\d+)'r'(:)'r'(?P<rev>\d+)'r'(])'r' (?P<sig_name>.*) 'r'(\[\*\*\])'r'( \[Classification: )'r'(?P<category>.*)'r'(\] \[Priority: )'r'(?P<priority>\d+)'r'(\] \{)'r'(?P<proto>\w+)'r'(\} )'r'(?P<src_ip>\d+.\d+.\d+.\d+)'r'(:)'r'(?P<src_port>\d+)'r'( -> )'r'(?P<dest_ip>\d+.\d+.\d+.\d+)'r'(:)'r'(?P<dest_port>\d+)', entry)
         return_dict = {}
-        return_dict['src_port'] = matches.group('src_port')
+        return_dict['src_port'] = int(matches.group('src_port'))
         return_dict['src_ip'] = matches.group('src_ip')
         return_dict['dest_ip'] = matches.group('dest_ip')
-        return_dict['dest_port'] = matches.group('dest_port')
+        return_dict['dest_port'] = int(matches.group('dest_port'))
         return_dict['proto'] = matches.group('proto')
         log_ts = datetime.datetime.strptime(matches.group('timestamp'), "%M/%d/%Y-%H:%m:%S.%f")
         new_ts = log_ts.replace(tzinfo=self.timezone)
         return_dict['timestamp'] = new_ts.isoformat()
         return_dict['alert'] = {}
-        return_dict['alert']['category'] = matches.group('category')
-        return_dict['alert']['severity'] = matches.group('priority')
-        return_dict['alert']['rev'] = matches.group('rev')
-        return_dict['alert']['signature_id'] = matches.group('sid')
-        return_dict['alert']['gid'] = matches.group('gid')
+        if matches.group('category') == '(null)':
+            return_dict['alert']['category'] = ''
+        else:
+            return_dict['alert']['category'] = matches.group('category')
+        return_dict['alert']['severity'] = int(matches.group('priority'))
+        return_dict['alert']['rev'] = int(matches.group('rev'))
+        return_dict['alert']['signature_id'] = int(matches.group('sid'))
+        return_dict['alert']['gid'] = int(matches.group('gid'))
         return_dict['alert']['signature'] = matches.group('sig_name')
         return_dict['sensor'] = self.sensor
         return_dict['logType'] = 'alert'
