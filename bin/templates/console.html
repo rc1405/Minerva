@@ -118,7 +118,6 @@
             {# autoescape off #}
             {% set severity_class = ["", "minerva-success", "minerva-warning", "minerva-alert", "minerva-danger"] %}
             {% for item in items_found %}
-              <!-- {{ item.document }} -->
               <tr class="{{severity_class[item.document.alert.severity]}}" data-id="{{item.ID}}">
                 <td class="minerva-flow">
                   <a href="#"><span class="glyphicon glyphicon glyphicon-circle-arrow-right" aria-hidden="true"></span></a>
