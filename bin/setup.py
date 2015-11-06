@@ -214,35 +214,49 @@ def setup_db():
     sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
     sessionTimeout = int(sessionMinutes) * 60
     db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
-    user_name = raw_input("Enter username of admin user to create: ")
-    while True:
-        print('Enter password: ')
-        admin_pw = getpass.getpass()
-        print('Re-enter password: ')
-        admin_pw2 = getpass.getpass()
-        if admin_pw == admin_pw2:
-            break
-        else:
-            print("Passwords do not match")
     if keep_db:
-        password_salt = raw_input("Enter previous Password Salt Value: ")
+        create_user = raw_input("Create user/reset password? [y/n]")
+        if create_user == 'y' or create_user == 'Y':
+            create_user = True
+        else:
+            create_user = False
+        password_salt = raw_input("Enter previous Password Salt Value or hit enter if you don't know it: ")
+        if len(password_salt) == 0:
+            print("All user passwords will need to be reset")
+            password_salt = bcrypt.gensalt()
+            create_user = True
+
     else:
         password_salt = bcrypt.gensalt()
+        create_user = True
     session_salt = bcrypt.gensalt()
-    admin_hashedPW = bcrypt.hashpw(str(admin_pw), str(password_salt))
-    db.users.insert(
-    {
-            "USERNAME" : user_name,
-            "user_admin" : "true",
-            "ENABLED" : "true",
-            "PASSWORD" : admin_hashedPW,
-            "console" : "true",
-            "date_modified" : datetime.datetime.utcnow(),
-            "sensor_admin" : "true",
-            "responder" : "true",
-            "server_admin" : "true",
-            "date_created" : datetime.datetime.utcnow(),
-    })
+    if create_user:
+        user_name = raw_input("Enter username of admin user to create: ")
+        while True:
+            print('Enter password: ')
+            admin_pw = getpass.getpass()
+            print('Re-enter password: ')
+            admin_pw2 = getpass.getpass()
+            if admin_pw == admin_pw2:
+                break
+            else:
+                print("Passwords do not match")
+        admin_hashedPW = bcrypt.hashpw(str(admin_pw), str(password_salt))
+        if len(list(db.users.find({"USERNAME": user_name }))) > 0:
+            db.users.remove({"USERNAME": user_name})
+        db.users.insert(
+        {
+                "USERNAME" : user_name,
+                "user_admin" : "true",
+                "ENABLED" : "true",
+                "PASSWORD" : admin_hashedPW,
+                "console" : "true",
+                "date_modified" : datetime.datetime.utcnow(),
+                "sensor_admin" : "true",
+                "responder" : "true",
+                "server_admin" : "true",
+                "date_created" : datetime.datetime.utcnow(),
+        })
     config['Webserver'] = {}
     config['Webserver']['db'] = {}
     config['Webserver']['db']['url'] = ip

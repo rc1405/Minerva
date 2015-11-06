@@ -37,33 +37,30 @@ class MinervaConfigs():
     def get_db(self):
         db_conf = self.conf['Webserver']['db']
         if db_conf['useAuth']:
-            if db_conf['AuthType'] = 'Password':
+            if db_conf['AuthType'] == 'Password':
                 client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
                 client.minerva.authenticate(db_conf['username'], db_conf['password'], mechanism=db_conf['PW_Mechanism'])
-            elif db_conf['AuthType'] = 'X509':
+            elif db_conf['AuthType'] == 'X509':
                 client = pymongo.MongoClient(db_conf['url'], int(db_conf['port']),
                                              ssl=True,
                                              ssl_certfile=db_conf['auth_cert'],
                                              ssl_cert_reqs=ssl.CERT_REQUIRED,
                                              ssl_ca_certs=db_conf['auth_ca'])
                 client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
+        else:
+            client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
         return client.minerva
     def parse_web_configs(self, new_config):
         config = self.conf
-        db_conf = config['Webserver']['db']
-        client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-        if db_conf['useAuth']:
-            client.minerva.authenticate(db_conf['username'], db_conf['password'])
-        db = client.minerva
+        db = self.get_db()
         config['Webserver']['db']['url'] = new_config['db_ip']
         config['Webserver']['db']['port'] = int(new_config['db_port'])
-        if not str(config['Webserver']['db']['useAuth']) == 'false':
-            config['Webserver']['db']['useAuth'] = 'False'
-            config['Webserver']['db']['username'] = new_config['db_user']
-            if len(str(new_config['db_pass'])) > 0:
-                config['Webserver']['db']['password'] = new_config['db_pass']  
-        else:
-            config['Webserver']['db']['useAuth'] = 'True'
+        config['Webserver']['db']['auth_ca'] = new_config['auth_ca']
+        config['Webserver']['db']['auth_cert'] = new_config['auth_cert']
+        config['Webserver']['db']['PW_Mechanism'] = new_config['pwmechanism']
+        config['Webserver']['db']['username'] = new_config['db_user']
+        config['Webserver']['db']['password'] = new_config['db_pass']
+        config['Webserver']['db']['AuthType'] = new_config['AuthType']
         config['Webserver']['web']['port'] = int(new_config['web_port'])
         config['Webserver']['web']['hostname'] = str(new_config['web_host'])
         config['Webserver']['web']['bindIp'] = new_config['web_ip']

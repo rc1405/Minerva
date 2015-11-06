@@ -23,17 +23,17 @@ Webserver:
     url: {{config.Webserver.db.url}}
     port: {{config.Webserver.db.port}}
     useAuth: {{config.Webserver.db.useAuth}}
-    {% if config.Webserver.db.useAuth %}
+    {# if config.Webserver.db.useAuth #}
     AuthType: {{config.Webserver.db.AuthType}}
     username: {{config.Webserver.db.username}}
-    {% if config.Webserver.db.AuthType == 'Password' %}
+    {# if config.Webserver.db.AuthType == 'Password' #}
     password: {{config.Webserver.db.password}}
     PW_Mechanism: {{config.Webserver.db.PW_Mechanism}}
-    {% elif config.Webserver.db.AuthType == 'X509' %}
+    {# elif config.Webserver.db.AuthType == 'X509' #}
     auth_cert: {{config.Webserver.db.auth_cert}}
     auth_ca: {{config.Webserver.db.auth_ca}}
-    {% endif %}
-    {% endif %}
+    {# endif #}
+    {# endif #}
     SECRET_KEY: "{{config.Webserver.db.SECRET_KEY}}"
     SESSION_KEY: "{{config.Webserver.db.SESSION_KEY}}"
   web:

@@ -57,7 +57,7 @@
                   <label>Database IP:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=db_ip value="{{config.db.url}}">
+                  <input type="text" name=db_ip value="{{config.db.url}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
               </div>
@@ -66,7 +66,7 @@
                   <label>Database Port:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=db_port value="{{config.db.port}}">
+                  <input type="text" name=db_port value="{{config.db.port}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
               </div>
@@ -75,16 +75,32 @@
                   <label>Use Authentication:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="checkbox" name=useAuth {% if config.db.useAuth %}checked{% endif %}>
+                  <input type="checkbox" name=useAuth {% if config.db.useAuth %}checked{% endif %} class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Authentication Type</label>
+                </div>
+                <div class="col-xs-3">
+                  {% set authtype = config.db.AuthType %}
+                  <select name="AuthType" class="form-control input-sm">
+                    <option value="" {% if authtype == '' %}selected{% endif %}></option>
+                    <option value="Password" {% if authtype == 'Password' %}selected{% endif %}>Password</option>
+                    <option value="X509" {% if authtype == 'X509' %}selected{% endif %}>X509 Certificate</option>
+                  </select>
+                </div>
+                <div class="col-xs-6">
+                  *Authentication Method if Use Authentication is desired
+                </div>
               </div>
               <div class="row">
                 <div class="col-xs-2 text-right">
                   <label>Username:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=db_user value="{{config.db.username}}">
+                  <input type="text" name=db_user value="{{config.db.username}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
               </div>
@@ -93,9 +109,47 @@
                   <label>Password:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="password" name=db_pass>
+                  <input type="password" name=db_pass class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>MONGODB Password Mechanism</label>
+                </div>
+                <div class="col-xs-3">
+                  {% set pwmech = config.db.username %}
+                  <select name="pwmechanism" class="form-control input-sm">
+                    <option value="" {% if pwmech == '' %}selected{% endif %}></option>
+                    <option value="SCRAM-SHA-1" {% if pwmech == 'SCRAM-SHA-1' %}selected{% endif %}>SCRAM-SHA-1</option>
+                    <option value="MONGODB-CR" {% if pwmech == 'MONGODB-CR' %}selected{% endif %}>MONGODB-CR</option>
+                  </select>
+                </div>
+                <div class="col-xs-6">
+                  *Password Mechanism if Use Auth and Password type
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Auth Certificate</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=auth_cert class="form-control input-sm" value="{{config.db.auth_cert}}">
+                </div>
+                <div class="col-xs-6">
+                  *Full path to certificate used for authentication if applicable
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Auth CACERTS file</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=auth_ca class="form-control input-sm" value="{{config.db.auth_ca}}">
+                </div>
+                <div class="col-xs-6">
+                  *Full path to CA_CERTS file used for authentication if applicable
+                </div>
               </div>
             </div>
             <div class="panel-heading">
@@ -107,7 +161,7 @@
                   <label>Hostname:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=web_host size=35 value="{{config.web.hostname}}">
+                  <input type="text" name=web_host size=35 value="{{config.web.hostname}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
               </div>
@@ -116,7 +170,7 @@
                   <label>IP Address:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=web_ip size=35 value="{{config.web.bindIp}}">
+                  <input type="text" name=web_ip size=35 value="{{config.web.bindIp}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
               </div>
@@ -125,7 +179,7 @@
                   <label>Port:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=web_port size=35 value="{{config.web.port}}">
+                  <input type="text" name=web_port size=35 value="{{config.web.port}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6"></div>
               </div>
@@ -134,7 +188,7 @@
                   <label>Threads:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=web_threads size=35 value="{{config.web.threads}}">
+                  <input type="text" name=web_threads size=35 value="{{config.web.threads}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of threads to process requests from the console
@@ -145,7 +199,7 @@
                   <label>Certificate Path:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" size=35 name=cert_path value="{{config.web.certs.webserver_cert}}">
+                  <input type="text" size=35 name=cert_path value="{{config.web.certs.webserver_cert}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Location of Certificate for SSL
@@ -156,7 +210,7 @@
                   <label>Private Key Path:<label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" size=35 name=key_path value="{{config.web.certs.webserver_key}}">
+                  <input type="text" size=35 name=key_path value="{{config.web.certs.webserver_key}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Location of Private key for Certificate Above
@@ -167,7 +221,7 @@
                   <label>Session Timeout:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=session_timeout size=35 value="{{config.web.session_timeout}}">
+                  <input type="text" name=session_timeout size=35 value="{{config.web.session_timeout}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of Minutes of inactivity before a user is logged out
@@ -178,7 +232,7 @@
                   <label>Password attempts:</label>
                 </div>
                 <div class="col-xs-3"> 
-                  <input type="text" name=pass_tries size=35 value="{{config.web.password_requirements.password_tries}}">
+                  <input type="text" name=pass_tries size=35 value="{{config.web.password_requirements.password_tries}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of attempts before a user account is disabled
@@ -189,7 +243,7 @@
                   <label>Password Minimum Length:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=pass_min size=35 value="{{config.web.password_requirements.password_min_length}}">
+                  <input type="text" name=pass_min size=35 value="{{config.web.password_requirements.password_min_length}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Minimum length of passwords
@@ -200,7 +254,7 @@
                   <label>Password Expiration:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=pass_age size=35 value="{{config.web.password_requirements.password_max_age}}">
+                  <input type="text" name=pass_age size=35 value="{{config.web.password_requirements.password_max_age}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of Days before a password needs to be reset
@@ -211,7 +265,7 @@
                   <label>Password Lower Case Min:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=lower_count size=35 value="{{config.web.password_requirements.lower_count}}">
+                  <input type="text" name=lower_count size=35 value="{{config.web.password_requirements.lower_count}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of lower case characters required in a password
@@ -222,7 +276,7 @@
                   <label>Password Upper Case Min:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=upper_count size=35 value="{{config.web.password_requirements.upper_count}}">
+                  <input type="text" name=upper_count size=35 value="{{config.web.password_requirements.upper_count}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of upper case characters required in a password
@@ -233,7 +287,7 @@
                   <label>Password Digit Min:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=digit_count size=35 value="{{config.web.password_requirements.digit_count}}">
+                  <input type="text" name=digit_count size=35 value="{{config.web.password_requirements.digit_count}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of numbers required in a password
@@ -244,7 +298,7 @@
                   <label>Password Special Char Min:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=special_count size=35 value="{{config.web.password_requirements.special_count}}">
+                  <input type="text" name=special_count size=35 value="{{config.web.password_requirements.special_count}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of Special characters required in a password
@@ -260,7 +314,7 @@
                   <label>Maximum # of Events:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=max_events value="{{config.events.maxResults}}">
+                  <input type="text" name=max_events value="{{config.events.maxResults}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Maximum number of events to return to the console at a time, up to 15000.
@@ -271,7 +325,7 @@
                   <label>Event Expiration:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=max_age value="{{config.events.max_age}}">
+                  <input type="text" name=max_age value="{{config.events.max_age}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of Days to retain events in the database
@@ -282,7 +336,7 @@
                   <label>Netflow Expiration:</label>
                 </div>
                 <div class="col-xs-3">
-                  <input type="text" name=flow_age value="{{config.events.flow_max_age}}">
+                  <input type="text" name=flow_age value="{{config.events.flow_max_age}}" class="form-control input-sm">
                 </div>
                 <div class="col-xs-6">
                   *Number of Days to retain Netflow data in the database
