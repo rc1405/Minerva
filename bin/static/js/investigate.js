@@ -19,13 +19,13 @@
 */
 var minerva = minerva || {};
 
-minerva.alertflow = {};
+minerva.investigate = {};
 
 (function($, app) {
   app.nav = $('nav');
   app.tabs = $('#tabs');
   app.tab_content = $('#tab_content');
-  app.form_type = 'AlertFlow'
+  app.form_type = 'investigate'
   app.csrf_token = $('#csrf_token').val();
 
   app.checkActiveTabs = function() {
@@ -105,4 +105,4 @@ minerva.alertflow = {};
   app.nav.on('click', '.minerva-subalert', app.subAlerts);
   app.nav.find('#get_pcap').click(app.getAlertPCAP);
   
-})(jQuery, minerva.alertflow);
+})(jQuery, minerva.investigate);

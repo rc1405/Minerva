@@ -119,7 +119,7 @@ minerva.console = {};
     }
   };
   
-  app.getAlertFlow = function() {
+  app.investigate = function() {
     if (app.selected.length) {
       if (app.selected.length <= 5) {
         var data = {
@@ -129,7 +129,7 @@ minerva.console = {};
         
         $.ajax({
           method: 'POST',
-          url: '/get_alert_flow',
+          url: '/investigate',
           data: JSON.stringify(data),
           contentType: 'application/json',
           headers: {
@@ -148,7 +148,7 @@ minerva.console = {};
     }
   };
   
-  app.getOneAlertFlow = function(e) {
+  app.investigateOne = function(e) {
     var row = $(e.currentTarget).parent();
     var id = row.data('id');
     var data = {
@@ -158,7 +158,7 @@ minerva.console = {};
     
     $.ajax({
       method: 'POST',
-      url: '/get_alert_flow',
+      url: '/investigate',
       data: JSON.stringify(data),
       contentType: 'application/json',
       headers: {
@@ -203,12 +203,12 @@ minerva.console = {};
   
   // bind events
   app.table.on('click', 'tr', app.startTrack);
-  app.table.on('click', '.minerva-flow', app.getOneAlertFlow);
+  app.table.on('click', '.minerva-investigate', app.investigateOne);
   app.nav.on('click', '.minerva-subalert', app.subAlerts);
   app.nav.find('#clear_alerts').click(app.clearAlerts);
   app.nav.find('#unselect').click(app.clearSelected);
   app.nav.find('#highlight').click(app.selectAll);
-  app.nav.find('#get_flow').click(app.getAlertFlow);
+  app.nav.find('#investigate').click(app.investigate);
   app.nav.find('#get_pcap').click(app.getAlertPCAP);
   
 })(jQuery, minerva.console);

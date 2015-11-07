@@ -213,7 +213,7 @@ class Minerva(object):
                 alerts = alert_console(self.minerva_core)
                 alerts.close_alert_nc(request['events'])
                 
-                if request['formType'] == "AlertFlow":
+                if request['formType'] == "investigate":
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
@@ -251,7 +251,7 @@ class Minerva(object):
                 alerts = alert_console(self.minerva_core)
                 alerts.close_alert(request['events'], request['comments'])
                 
-                if request['formType'] == "AlertFlow":
+                if request['formType'] == "investigate":
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
@@ -289,7 +289,7 @@ class Minerva(object):
                 alerts = alert_console(self.minerva_core)
                 alerts.escalate_alert(request['events'], request['comments'])
                 
-                if request['formType'] == "AlertFlow":
+                if request['formType'] == "investigate":
                     return '<script type="text/javascript">window.close()</script>'
                 elif request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
@@ -530,7 +530,7 @@ class Minerva(object):
                 alerts = alert_console(self.minerva_core)
                 alerts.add_comments(request['events'], request['comments'])
                 
-                if request['formType'] == "AlertFlow":
+                if request['formType'] == "investigate":
                     return '<script type="text/javascript">window.close()</script>'
                 if request['formType'] == 'console':
                     raise cherrypy.HTTPRedirect('/')
@@ -548,12 +548,12 @@ class Minerva(object):
             
     @cherrypy.expose
     @cherrypy.tools.json_in()
-    def get_alert_flow(self, **kwargs):
+    def investigate(self, **kwargs):
         if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
             user = Users(self.minerva_core)
         
             if not 'SESSION_KEY' in cherrypy.session.keys():
-               cherrypy.session['prev_page'] = '/get_alert_flow'
+               cherrypy.session['prev_page'] = '/investigate'
                cherrypy.session['post_request'] = cherrypy.request.json
                raise cherrypy.HTTPRedirect('/login')
            
@@ -573,10 +573,10 @@ class Minerva(object):
                 context_dict['items'] = items
                 context_dict['form'] = request['formType']
                 
-                tmp = env.get_template('alert_flow.html')
+                tmp = env.get_template('investigate.html')
                 return tmp.render(context_dict)
             elif 'newLogin' in perm_return:
-                cherrypy.session['prev_page'] = 'get_alert_flow'
+                cherrypy.session['prev_page'] = '/investigate'
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
