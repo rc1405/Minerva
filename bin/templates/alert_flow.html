@@ -36,6 +36,7 @@
         </div>
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav nav-pills navbar-right">
+            <li><a href="#" id="get_pcap">Get PCAP</a></li>
             <li><a href="#" class="minerva-subalert" data-url="/close">Close with Comments</a></li>
             <li><a href="#" class="minerva-subalert" data-url="/comment">Add Comments</a></li>
             {% if form == "console" %}<li><a href="#" class="minerva-subalert" data-url="/escalate">Escalate</a></li>{% endif %}
@@ -47,12 +48,12 @@
     <div class="container minerva-container">
       <ul id="tabs" class="nav nav-tabs" role="tablist">
         {% for item in items %}
-        <li role="presentation"><a href="#{{item.id}}" {% if loop.index == 1 %}class=active {%endif%}role="tab" data-toggle="tab">{{item.id}}</a></li>
+        <li role="presentation" data-id="{{item.id}}"{% if loop.index == 1 %}class="active"{% endif %}><a href="#{{item.id}}" role="tab" data-toggle="tab">{{item.origin.document.alert.signature}}</a></li>
         {% endfor %}
       </ul>
-      <div class="tab-content">
+      <div id="tab_content" class="tab-content">
         {% for item in items %}
-        <div role="tabpanel" class="tab-pane" id="{{item.id}}" {% if loop.index == 1 %}class=active {%endif%}>
+        <div role="tabpanel" id="{{item.id}}" class="tab-pane {% if loop.index == 1 %}active{%endif%}">
           <h4>Original Alert</h4>
           <div>
             <table class="table table-condensed">
@@ -196,7 +197,6 @@
       </div>
     </div>
     <!-- tokens  -->
-    <input type="hidden" id="alert_id" value="{{alert_id}}"></input>
     <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
     <!-- include deferred scripts here -->
     <script src="/js/alert_flow.js"></script>

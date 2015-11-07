@@ -81,8 +81,6 @@ class AlertProcessor(object):
             s.close()
             return
         elif result[0]['IP'] != host and result[0]['STATUS'] == '_DENIED':
-            print(results[0]['IP'])
-            print(host)
             self.collection.update({ "SERVER": CN }, { "$set": { "IP": host, "receiver": self.config['Event_Receiver']['PCAP']['ip'], "cert": cert, "STATUS": "IP_CHANGED", "last_modified": time.time() }})
             s.send('reject')
             s.close()
