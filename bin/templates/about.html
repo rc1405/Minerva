@@ -1,0 +1,84 @@
+<!--
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+  <link rel="icon" type="image/png" href="/images/favicon.ico">
+  <script src="/jquery.min.js"></script>
+  <link rel="stylesheet" href="/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="/css/console.css">
+  <script src="/js/bootstrap.min.js"></script>
+  <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+  </head>
+    <title>Minerva About Page</title>
+    <body>
+      <nav class="navbar nav-pills navbar-default navbar-fixed-top">
+	<div class="container">
+	  <div class="navbar-header">
+	    <a class="navbar-brand" href="/">Minerva</a>
+	  </div>
+	  <div id="navbar" class="navbar-collapse collapse">
+            {% include 'menu.html' %}
+	  </div>
+        </div>
+      </nav>
+      <div class="container minerva-container" >
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">About Minerva</h4>
+          </div>
+          <div class="panel-body">
+            Minerva is an IDS event manager based on python and mongodb. Minerva currently supports Suricata eve logs (netflow and alert) and Snort Fast Alert log format. Functionality will include Bro ascii & json log inputs and additional netflow inputs in the future.
+          </div>
+          <div class="panel-heading">
+            <h4 class="palen-title">Contacts</h4>
+          </div>
+          <div class="panel-body">
+            <a href="www.minerva-ids.com">Minerva-IDS</a>
+            <a href="mailto:minervaconsole@gmail.com">minervaconsole@gmail.com</a>
+          </div>
+          <div class="panel-heading">
+            <h4 class="palen-title">Minerva License</h4>
+          </div>
+          <div class="panel-body">
+            Minerva is licensed under the GPLv2 Lisence.<br /><br />
+                        Copyright (C) 2015  Ryan M Cote.<br />
+<br />
+            This program is free software; you can redistribute it and/or modify<br />
+            it under the terms of the GNU General Public License as published by<br />
+            the Free Software Foundation; either version 2 of the License, or<br />
+            (at your option) any later version.<br />
+        <br />
+            This program is distributed in the hope that it will be useful,<br />
+            but WITHOUT ANY WARRANTY; without even the implied warranty of<br />
+            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br />
+            GNU General Public License for more details.<br />
+        <br />
+            You should have received a copy of the GNU General Public License along<br />
+            with this program; if not, write to the Free Software Foundation, Inc.,<br />
+            51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.<br />
+<br /><br />
+            Author: Ryan M Cote <minervaconsole@gmail.com<br />
+          </div>
+        </div>
+      </div>
+    </body>
+</html>

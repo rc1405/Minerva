@@ -328,7 +328,24 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
         else:
             raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
-    
+    @cherrypy.expose
+    def about(self):
+        user = Users(self.minerva_core)
+        cherrypy.session['prev_page'] = '/about'
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'newLogin' in perm_return:
+            raise cherrypy.HTTPRedirect('/login')
+        else:
+            context_dict = {}
+            context_dict['permissions'] = perm_return
+            context_dict['form'] = 'about'
+            tmp = env.get_template('about.html')
+            return tmp.render(context_dict)
+
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def flow(self, **kwargs):
