@@ -528,7 +528,8 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.json
                 alerts = alert_console(self.minerva_core)
-                alerts.add_comments(request['events'], request['comments'])
+                username = user.get_username(cherrypy.session.get('SESSION_KEY'))
+                alerts.add_comments(request['events'], request['comments'], username)
                 
                 if request['formType'] == "investigate":
                     return '<script type="text/javascript">window.close()</script>'
@@ -561,6 +562,7 @@ class Minerva(object):
         
             if 'console' in perm_return or 'responder' in perm_return:
                 flow = alert_flow(self.minerva_core)
+                alert = alert_console(self.minerva_core)
                 if 'post_request' in cherrypy.session:
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
@@ -572,6 +574,7 @@ class Minerva(object):
                 context_dict = {}
                 context_dict['items'] = items
                 context_dict['form'] = request['formType']
+                context_dict['comments'] = alert.get_comments(request['events'])
                 
                 tmp = env.get_template('investigate.html')
                 return tmp.render(context_dict)

@@ -109,10 +109,26 @@
               </tbody>
             </table>
           </div>
+          <hr>
           <h4>ASCII Alert Packet View</h4>
           <div>
             <p class="text-info">{{oa.payload_printable|e}}</p>
           </div>
+          <hr>
+          <h4>Comments</h4>
+            <p class="text-info">
+            {% for comment in comments[item.id] %}
+            {% if 'MINERVA_COMMENTS' in comment %}
+            {% for c in comment['MINERVA_COMMENTS'] %}
+            {% if c != 'NONE' %}
+            <b>User:</b> {{ c['USER'] }}<br />
+            <b>Time:</b> {{ c['COMMENT_TIME'] }}<br />
+            <b>Comments:</b> {{c['COMMENT']}}<br />
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+            {% endfor %}</p>
+          <hr>
           <h4>Sessions Matching Alert Data</h4>
           <div id="HdrDiv">
             <table id="event_header" class="table table-condensed">

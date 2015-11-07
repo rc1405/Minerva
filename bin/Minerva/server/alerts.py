@@ -22,6 +22,7 @@ import pymongo
 import bson
 import collections
 import time
+import datetime
 #import os
 #from Minerva import config
 class alert_console(object):
@@ -74,12 +75,18 @@ class alert_console(object):
         for event in events:
             self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "ESCALATED"}, "$push": { "MINERVA_COMMENTS": comments }})
         return
-    def add_comments(self, events, comments):
+    def add_comments(self, events, comments, username):
         if comments != '':
             # for event in events.split(','):
             for event in events:
-                self.alerts.update({ "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": comments }})
+                self.alerts.update({ "_id": bson.objectid.ObjectId(event) }, { "$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': comments, 'COMMENT_TIME': datetime.datetime.utcnow() } }})
         return
+    def get_comments(self, events):
+        all_comments = {}
+        for event in events:
+            all_comments[event] = list(self.alerts.aggregate([{"$match": { "_id": bson.objectid.ObjectId(event)}},{"$project": { "MINERVA_COMMENTS": "$MINERVA_COMMENTS"}}]))
+        print(all_comments)
+        return all_comments
     def search_alerts(self, request, orig_search=False):
         if not orig_search:
             event_search = {}

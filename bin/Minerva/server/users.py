@@ -76,6 +76,14 @@ class Users(object):
                     else:
                         self.users.update({"USERNAME": username }, { "$set": { "pass_failed": tries }})
         return False
+
+    def get_username(self, session_id):
+        user_results = list(self.sessions.find({"session_id": session_id}))
+        username = ''
+        if len(user_results) > 0:
+            username = user_results[0]['USERNAME']
+        return username
+
     def get_permissions(self, session_id):
         user_results = list(self.sessions.find({"session_id": session_id}))
         if len(user_results) > 0:
