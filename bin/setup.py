@@ -135,7 +135,7 @@ def setup_db_lite():
     if useAuth == 'y' or useAuth == 'Y':
         while True:
             print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
-            choice = raw_intput()
+            choice = raw_input()
             try:
                 if int(choice) == 1:
                     authType = 'Password'
@@ -235,7 +235,7 @@ def setup_db():
     if useAuth == 'y' or useAuth == 'Y':
         while True:
             print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
-            choice = raw_intput()
+            choice = raw_input()
             try:
                 if int(choice) == 1:
                     authType = 'Password'
@@ -344,12 +344,12 @@ def setup_db():
     expiredSeconds = int(expiredDays) * 86400
     db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
 
-    logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch", pymongo.ASCENDING),("netflow.stop_epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)])'
+    logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch", pymongo.ASCENDING),("netflow.stop_epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)])')
 
     db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch", pymongo.ASCENDING),("netflow.stop_epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)])
 
     expiredflowDays = raw_input("Enter number of days to keep flow data: ")
-    logger.info("Days to keep flow data %s" % expiredflowDays
+    logger.info("Days to keep flow data %s" % expiredflowDays)
     flowexpiredSeconds = int(expiredflowDays) * 86400
     db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
 
@@ -476,7 +476,7 @@ def setup_server():
         password_max_age = 90
     logger.info("Max password age set to %i" % int(password_max_age))
 
-    pcap_timeout = raw_intpu("Enter # of seconds to wait on a pcap request: [300] ")
+    pcap_timeout = raw_input("Enter # of seconds to wait on a pcap request: [300] ")
     if len(pcap_timeout) == 0:
         pcap_timeout = 300
     logger.info("Pcap request timeout set to %i" % int(pcap_timeout))
@@ -685,7 +685,7 @@ def setup_agent():
     max_packets = raw_input("Enter max # of packets to return per request: [10000] ")
     if len(max_packets) == 0:
         max_packets = 10000
-    logger.info("Max packets to return per request is set to %i" % int(max_packets)
+    logger.info("Max packets to return per request is set to %i" % int(max_packets))
 
     max_size = raw_input("Enter Max size(mb) of pcap files to return per reqeust: [20] ")
     if len(max_size) == 0:
@@ -775,8 +775,8 @@ def main():
     config = {}
     while(True):
         print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t")
-        intall_type = raw_input()
-        if int(intall_type) >= 1 and int(intall_type) < 6:
+        install_type = raw_input()
+        if int(install_type) >= 1 and int(install_type) < 6:
             logger.info('Choosing install option %i' % int(install_type))
             break
         else:
@@ -807,7 +807,7 @@ def main():
             print("Unable to make directory %s, check permissions and try again" % location)
             logger.error("Unable to make directory %s, check permissions and try again" % location)
             sys.exit()
-    if int(intall_type) == 1:
+    if int(install_type) == 1:
         check_server()
         check_agent()
         check_receiver()
@@ -816,19 +816,19 @@ def main():
         setup_core()
         setup_receiver()
         setup_agent()
-    elif int(intall_type) == 2:
+    elif int(install_type) == 2:
         check_server()
         check_receiver()
         setup_db()
         setup_server()
         setup_core()
         setup_receiver()
-    elif int(intall_type) == 3:
+    elif int(install_type) == 3:
         check_server()
         setup_db()
         setup_server()
         setup_core()
-    elif int(intall_type) == 4:
+    elif int(install_type) == 4:
         check_receiver()
         resp = raw_input('Connect to existing database? [y/n] ')
         if resp == 'y' or resp == 'Y':
@@ -837,7 +837,7 @@ def main():
             setup_db()
         setup_core()
         setup_receiver()
-    elif int(intall_type) == 5:
+    elif int(install_type) == 5:
         check_agent()
         setup_core()
         setup_agent()
