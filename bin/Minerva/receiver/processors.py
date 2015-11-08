@@ -156,6 +156,7 @@ class PCAPprocessor(object):
             try:
                 data = soc_ssl.recv(8192)
             except ssl.SSLError:
+                print('Timed Out')
                 s.send('Request Timed Out')
                 s.close()
                 return

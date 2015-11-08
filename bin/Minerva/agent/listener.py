@@ -56,5 +56,6 @@ class RequestListener(object):
                 else:
                     print('sleeping')
                     time.sleep(.001)
-            except Exception as e:
-                print('{}: {}'.format(e.__class__.__name__,e))
+            except:
+                s.close()
+                return

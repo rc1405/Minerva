@@ -78,6 +78,8 @@ class HandleRequests(object):
                 return 'No Packets Found'
             elif data == 'Sensor cannot be reached':
                 return 'Sensor cannot be reached'
+            elif data == 'Request Timed Out':
+                return 'Request Timed Out'
             else:
                 tmp_file.write(data)
         tmp_file.seek(0)
