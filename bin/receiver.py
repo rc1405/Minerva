@@ -36,19 +36,28 @@ from dateutil.parser import parse
 import subprocess
 
 def insert_data(config, log_queue):
-    inserter = MongoInserter(config, log_queue)
-    inserter.insert_data()
+    try:
+        inserter = MongoInserter(config, log_queue)
+        inserter.insert_data()
+    except:
+        return
 
 def receiver(cur_config, pname, log_queue):
-    ip, port = pname.split('-')
-    listener = EventListener(cur_config, int(cur_config['Event_Receiver']['listen_ip'][ip]['receive_threads']))
-    proc = AlertProcessor(cur_config, log_queue)
-    listener.listener(pname, proc.process)
+    try:
+        ip, port = pname.split('-')
+        listener = EventListener(cur_config, int(cur_config['Event_Receiver']['listen_ip'][ip]['receive_threads']))
+        proc = AlertProcessor(cur_config, log_queue)
+        listener.listener(pname, proc.process)
+    except:
+        return
 
 def pcap_receiver(cur_config, pname):
-    listener = EventListener(cur_config, int(cur_config['Event_Receiver']['PCAP']['threads']))
-    proc = PCAPprocessor(cur_config)
-    listener.listener(pname, proc.process)
+    try:
+        listener = EventListener(cur_config, int(cur_config['Event_Receiver']['PCAP']['threads']))
+        proc = PCAPprocessor(cur_config)
+        listener.listener(pname, proc.process)
+    except:
+        return
 
 def genKey(cur_config, minerva_core):
     if not os.path.exists(os.path.dirname(cur_config['certs']['server_cert'])):

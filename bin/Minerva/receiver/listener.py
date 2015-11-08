@@ -37,7 +37,7 @@ class EventListener(object):
         CERTFILE = self.config['Event_Receiver']['certs']['server_cert']
         s = socket(AF_INET, SOCK_STREAM)
         s.bind((ip, int(port)))
-        s.listen(1)
+        s.listen(5)
         s_ssl = ssl.wrap_socket(s, keyfile=KEYFILE, certfile=CERTFILE, server_side=True, ssl_version=ssl.PROTOCOL_SSLv3)
         active_recv = []
         while True:

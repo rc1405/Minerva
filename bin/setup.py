@@ -309,6 +309,9 @@ def setup_server():
     password_max_age = raw_input("Enter # of days a password is valid before needed to be changed: [90] ")
     if len(password_max_age) == 0:
         password_max_age = 90
+    pcap_timeout = raw_intpu("Enter # of seconds to wait on a pcap request: [300] ")
+    if len(pcap_timeout) == 0:
+        pcap_timeout = 300
     maxResults = raw_input("Enter # of results to show in the console at a time: [5000] (15000 max) ")
     if len(maxResults) == 0:
         maxResults = 5000
@@ -333,6 +336,7 @@ def setup_server():
     config['Webserver']['web']['certs'] = {}
     config['Webserver']['web']['certs']['webserver_cert'] = web_cert
     config['Webserver']['web']['certs']['webserver_key'] = web_key
+    config['Webserver']['web']['pcap_timeout'] = pcap_timeout
     config['Webserver']['web']['password_requirements'] = {}
     config['Webserver']['web']['password_requirements']['password_tries'] = password_tries
     config['Webserver']['web']['password_requirements']['password_min_length'] = password_min_length
@@ -370,6 +374,9 @@ def setup_receiver():
         resp1 = raw_input("Do you want to add another IP? [y/n] ")
         if resp == 'n' or resp == 'N':
             break
+    listener_timeout = raw_input("Enter number of seconds to timeout on a single receive thread: [20] ")
+    if len(listener_timeout) == 0:
+        listener_timeout = 20
     ins_threads = raw_input("Enter number of processes you want to insert alerts: [4] ")
     if len(ins_threads) == 0:
         ins_threads = 4
@@ -392,8 +399,12 @@ def setup_receiver():
     pcap_threads = raw_input("Enter number of threads to process pcap requests: [4] ")
     if len(pcap_threads) == 0:
         pcap_threads = 4
+    pcap_timeout = raw_input("Enter number of seconds to wait for a pcap request, Should be the same as webserver value: [300] ")
+    if len(pcap_timeout) == 0:
+        pcap_timeout = 300
     config['Event_Receiver'] = {}
     config['Event_Receiver']['listen_ip'] = listen_ips
+    config['Event_Receiver']['listener_timeout'] = listener_timeout
     config['Event_Receiver']['insertion_threads'] = int(ins_threads)
     config['Event_Receiver']['insertion_batch'] = int(ins_batch)
     config['Event_Receiver']['insertion_wait'] = int(ins_wait)
@@ -404,6 +415,7 @@ def setup_receiver():
     config['Event_Receiver']['PCAP']['ip'] = pcap_ip
     config['Event_Receiver']['PCAP']['port'] = pcap_port
     config['Event_Receiver']['PCAP']['threads'] = pcap_threads
+    config['Event_Receiver']['PCAP']['timeout'] = pcap_timeout
     shutil.copy('receiver.py',os.path.join(install_path,'bin'))
 def setup_agent():
     print("Setting up the agent\n")

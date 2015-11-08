@@ -36,6 +36,7 @@ Webserver:
     bindIp: {{config.Webserver.web.bindIp}}
     port: {{config.Webserver.web.port}}
     threads: {{config.Webserver.web.threads}}
+    pcap_timeout: {{config.Webserver.web.pcap_timeout}}
     certs:
       webserver_cert: {{config.Webserver.web.certs.webserver_cert}}
       webserver_key: {{config.Webserver.web.certs.webserver_key}}
@@ -64,6 +65,7 @@ Event_Receiver:
              {%- endfor %}
          receive_threads: {{config.Event_Receiver.listen_ip[ip]['receive_threads']}}
          {%- endfor %}
+  listener_timeout: {{config.Event_Receiver.listener_timeout}}
   insertion_threads: {{config.Event_Receiver.insertion_threads}}
   insertion_batch: {{config.Event_Receiver.insertion_batch}}
   insertion_wait: {{config.Event_Receiver.insertion_wait}}
@@ -74,6 +76,7 @@ Event_Receiver:
     ip: {{config.Event_Receiver.PCAP.ip}}
     port: {{ config.Event_Receiver.PCAP.port}}
     threads: {{ config.Event_Receiver.PCAP.threads}}
+    timeout: {{ config.Event_Receiver.PCAP.timeout}}
 {%- endif %}
 {%- if 'Agent_forwarder' in config %}
 Agent_forwarder:

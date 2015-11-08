@@ -19,7 +19,7 @@
 '''
 
 
-from socket import socket, AF_INET, SOCK_STREAM
+from socket import socket, AF_INET, SOCK_STREAM, error
 from multiprocessing import Process, active_children, Queue
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 import time
@@ -133,6 +133,8 @@ class PCAPprocessor(object):
             return
         print('requesting pcap from sensor %s' % options['sensor'])
         soc = socket(AF_INET, SOCK_STREAM)
+        soc.setblocking(0)
+        soc.settimeout(int(self.config['Event_Receiver']['PCAP']['timeout']))
         client_info = self.sensors.find_one( { "SERVER": options['sensor'] })
         client_cert = client_info['cert']
         cert_tmp = NamedTemporaryFile(mode='w+b', suffix='.pem')
@@ -141,12 +143,22 @@ class PCAPprocessor(object):
         #soc_ssl = ssl.wrap_socket(soc, ca_certs=client_cert, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         soc_ssl = ssl.wrap_socket(soc, ca_certs=cert_tmp.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         encrypted_options = self.encrypt_requests(self.config, options)
-        soc_ssl.connect((client_info['IP'], int(client_info['sensor_port'])))
+        try:
+            soc_ssl.connect((client_info['IP'], int(client_info['sensor_port'])))
+        except error:
+            s.send('Sensor cannot be reached')
+            s.close()
+            return 
         soc_ssl.send(encrypted_options)
         soc_ssl.send('END_EVENT')
         tmp_file = SpooledTemporaryFile(mode='wb')
         while True:
-            data = soc_ssl.recv(8192)
+            try:
+                data = soc_ssl.recv(8192)
+            except ssl.SSLError:
+                s.send('Request Timed Out')
+                s.close()
+                return
             if data == b'END_EVENT':
                 break
             elif data != 'No Packets Found':
@@ -158,10 +170,14 @@ class PCAPprocessor(object):
                 return
         tmp_file.seek(0)
         pcap = tmp_file.read(8192)
-        while (pcap):
-            s.send(pcap)
-            pcap = tmp_file.read(8192)
-        s.send(b'END_EVENT')
+        try:
+            while (pcap):
+                s.send(pcap)
+                pcap = tmp_file.read(8192)
+            s.send(b'END_EVENT')
+        except error:
+            s.close()
+            return 
         s.close()
         cert_tmp.close()
         return

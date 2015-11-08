@@ -491,8 +491,8 @@ class Minerva(object):
                     pcap = pcaps.flowPCAP(request['events'])
                 else:
                     pcap = pcaps.alertPCAP(request['events'])
-                if pcap == 'No Packets Found':
-                    return '<script type="text/javascript">window.alert("No Packets Found");window.close();</script>'
+                if pcap == 'No Packets Found' or pcap == 'Request Timed Out' or pcap == 'Cannot connect to Receiver' or pcap == 'Sensor cannot be reached':
+                    return '<script type="text/javascript">window.alert("%s");window.close();</script>' % pcap
                 else:
                     tmp = NamedTemporaryFile(mode='w+b', suffix='.pcap')
                     tmp.write(pcap.read())

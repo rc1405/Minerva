@@ -23,7 +23,7 @@ import bson
 import time
 import json
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
-from socket import AF_INET, SOCK_STREAM, socket
+from socket import AF_INET, SOCK_STREAM, socket, error
 import ssl
 import M2Crypto
 
@@ -55,17 +55,29 @@ class HandleRequests(object):
 
     def send_request(self, ip, port, cert, options):
         s = socket(AF_INET, SOCK_STREAM)
+        s.setblocking(0)
+        s.settimeout(int(self.conf['Webserver']['web']['pcap_timeout']))
         s_ssl = ssl.wrap_socket(s, ca_certs=cert.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
-        s_ssl.connect((ip, int(port)))
+        try:
+            s_ssl.connect((ip, int(port)))
+        except error:
+            return 'Cannot connect to Receiver'
         s_ssl.send(options)
         s_ssl.send('END_EVENT')
         tmp_file = SpooledTemporaryFile(mode='wb')
         while True:
-            data = s_ssl.recv(8192)
+            try:
+                data = s_ssl.recv(8192)
+            except ssl.SSLError:
+                return 'Request Timed Out'
+            #except:
+                #return 'Cannot connect to Receiver'
             if data == b'END_EVENT':
                 break
             elif data == 'No Packets Found':
                 return 'No Packets Found'
+            elif data == 'Sensor cannot be reached':
+                return 'Sensor cannot be reached'
             else:
                 tmp_file.write(data)
         tmp_file.seek(0)

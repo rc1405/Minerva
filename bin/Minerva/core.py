@@ -65,6 +65,7 @@ class MinervaConfigs():
         config['Webserver']['web']['hostname'] = str(new_config['web_host'])
         config['Webserver']['web']['bindIp'] = new_config['web_ip']
         config['Webserver']['web']['web_threads'] = int(new_config['web_threads'])
+        config['Webserver']['web']['pcap_timeout'] = int(new_config['pcap_timeout'])
         config['Webserver']['web']['password_requirements']['password_tries'] = int(new_config['pass_tries'])
         config['Webserver']['web']['password_requirements']['password_max_age'] = int(new_config['pass_age'])
         config['Webserver']['web']['password_requirements']['password_min_length'] = int(new_config['pass_min'])
