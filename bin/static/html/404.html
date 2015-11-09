@@ -1,0 +1,48 @@
+<!--
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>404 Page Not Found - Minerva</title>
+    <link rel="icon" type="image/png" href="/images/favicon.ico"/>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css"/>
+    <link rel="stylesheet" href="/css/console.css"/>
+    <script src="/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+  </head>
+	<body>
+    <nav class="navbar nav-pills navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Minerva</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse"></div>
+      </div>
+    </nav>
+    <div class="container minerva-container">
+      <h1 class="text-center">404 - Page Not Found</h1>
+      <h3 class="text-center">The page you are looking for cannot be found</h3>
+    </div>
+    <!-- tokens  -->
+    <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+    <!-- include deferred scripts here -->
+	</body>
+</html>

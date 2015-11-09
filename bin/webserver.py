@@ -61,7 +61,7 @@ class Minerva(object):
                 elif 'server_admin' in permissions:
                     raise cherrypy.HTTPRedirect("/")
                 else:
-                    raise cherrypy.HTTPError("403 Forbidden", "You are not allowed to access this resource.")
+                    raise cherrypy.HTTPError(403)
             else:
                 return '<script type="text/javascript">window.alert("Invalid Username or Pasword");location="/login";</script>'
         else:
@@ -132,7 +132,7 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/login')
 
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource")
+            raise cherrypy.HTTPError(403)
 
     
     @cherrypy.expose
@@ -157,7 +157,7 @@ class Minerva(object):
         elif 'newLogin' in perm_return:
             raise cherrypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource.")
+            raise cherrypy.HTTPError(403)
     
     @cherrypy.expose
     def profile(self, **kwargs):
@@ -225,7 +225,7 @@ class Minerva(object):
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
-                raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource.")
+                raise cherrypy.HTTPError(403)
         else:
                 raise cherrypy.HTTPError(404)
     
@@ -263,7 +263,7 @@ class Minerva(object):
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
-                raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource")
+                raise cherrypy.HTTPError(403)
         else:
             raise cherrypy.HTTPError(404)
             
@@ -301,7 +301,7 @@ class Minerva(object):
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
-                raise cherrypy.HTTPError("403 Forbidden", "You are not authorized to access this resource")
+                raise cherrypy.HTTPError(403)
         else:
             raise cherrypy.HTTPError(404)
             
@@ -327,7 +327,7 @@ class Minerva(object):
         elif 'newLogin' in perm_return:
             raise cherrypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            raise cherrypy.HTTPError(403)
     @cherrypy.expose
     def about(self):
         user = Users(self.minerva_core)
@@ -399,7 +399,7 @@ class Minerva(object):
                 cherrypy.session['port_request'] = cherrypy.request.json
             raise cheryypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            raise cherrypy.HTTPError(403)
             
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -451,7 +451,7 @@ class Minerva(object):
             cherrypy.session['get_request'] = cherrypy.request.params
             raise cheryypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            raise cherrypy.HTTPError(403)
             
     def download_complete(self):
         tmp_file = cherrypy.session['pcap_file']
@@ -506,7 +506,7 @@ class Minerva(object):
             cherrypy.session['post_request'] = cherrypy.request.json
             raise cherrypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            raise cherrypy.HTTPError(403)
     
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -543,7 +543,7 @@ class Minerva(object):
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
-                raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+                raise cherrypy.HTTPError(403)
         else:
             raise cherrypy.HTTPError(404)
             
@@ -583,7 +583,7 @@ class Minerva(object):
                 cherrypy.session['post_request'] = cherrypy.request.json
                 raise cherrypy.HTTPRedirect('/login')
             else:
-                raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+                raise cherrypy.HTTPError(403)
         else:
             raise cherrypy.HTTPError(404)
     
@@ -625,7 +625,7 @@ class Minerva(object):
                 cherrypy.session['post_request'] = cherrypy.request.json
             raise cherrypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError('403 Forbidden', "You are not permitted to access this resource")
+            raise cherrypy.HTTPError(403)
             
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -657,7 +657,7 @@ class Minerva(object):
         elif 'newLogin' in perm_return:
             raise cherrypy.HTTPRedirect('/login')
         else:
-            raise cherrypy.HTTPError("403 Forbidden", "You are not permitted to access this resource")
+            raise cherrypy.HTTPError(403)
 
 def genKey(cur_config, minerva_core):
     if not os.path.exists(os.path.dirname(cur_config['certs']['webserver_cert'])):
@@ -680,6 +680,10 @@ def secureheaders():
     headers['X-XSS-Protection'] = '1; mode=block'
     headers['Content-Security-Policy'] = "default-src='self'"
     headers['Strict-Transport-Security'] = 'max-age=3600'
+
+def handleError():
+    cherrypy.response.status = 500
+    cherrypy.response.body = [open(os.path.join(os.getcwd(), 'static/html/500.html'),'r').read()]
 
 if __name__ == '__main__':
     minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
@@ -704,6 +708,10 @@ if __name__ == '__main__':
                             'tools.sessions.timeout': int(server_config['session_timeout']),
                             'server.thread_pool': int(server_config['threads']),
                             'server.thread_pool_max': int(server_config['threads']),
+                            'error_page.404': os.path.join(os.getcwd(), 'static/html/404.html'),
+                            'error_page.403': os.path.join(os.getcwd(), 'static/html/403.html'),
+                            #'request.error_response': os.path.join(os.getcwd(), 'static/html/500.html')
+                            'request.error_response': handleError,
                           })
     config = {
         '/css': { 
