@@ -32,7 +32,7 @@ Included in minerva-ids/examples.  If authentication is required, it must be set
 - dpkt*
 - bcrypt
 
-*I ran into issues installing this one with pip but had no issues installing from google code https://code.google.com/p/dpkt/
+*I ran into issues installing dpkt with pip but had no issues installing from google code https://code.google.com/p/dpkt/
 
 ###Receiver
 - pymongo
