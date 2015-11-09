@@ -17,7 +17,9 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
+
 from .parsers import *
+
 def get_parser( alert_type, sensor):
     if alert_type == 'suricata_alert':
         parser = suricata.ConvertAlert(sensor)

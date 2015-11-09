@@ -19,10 +19,10 @@
 '''
 
 
-from socket import socket, AF_INET, SOCK_STREAM
-from multiprocessing import Process, active_children
 import time
 import ssl
+from socket import socket, AF_INET, SOCK_STREAM
+from multiprocessing import Process, active_children
 
 class RequestListener(object):
     def __init__(self, config):

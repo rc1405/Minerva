@@ -18,16 +18,18 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-import pymongo
 import bson
 import time
 import json
+import ssl
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 from socket import AF_INET, SOCK_STREAM, socket, error
-import ssl
+
 import M2Crypto
+import pymongo
 
 class HandleRequests(object):
+
     def __init__(self, minerva_core):
         db = minerva_core.get_db()
         self.conf = minerva_core.conf
@@ -60,28 +62,36 @@ class HandleRequests(object):
         s_ssl = ssl.wrap_socket(s, ca_certs=cert.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         try:
             s_ssl.connect((ip, int(port)))
+
         except error:
             return 'Cannot connect to Receiver'
+
         s_ssl.send(options)
         s_ssl.send('END_EVENT')
         tmp_file = SpooledTemporaryFile(mode='wb')
+
         while True:
             try:
                 data = s_ssl.recv(8192)
+
             except ssl.SSLError:
                 return 'Request Timed Out'
-            #except:
-                #return 'Cannot connect to Receiver'
+
             if data == b'END_EVENT':
                 break
+
             elif data == 'No Packets Found':
                 return 'No Packets Found'
+
             elif data == 'Sensor cannot be reached':
                 return 'Sensor cannot be reached'
+
             elif data == 'Request Timed Out':
                 return 'Request Timed Out'
+
             else:
                 tmp_file.write(data)
+
         tmp_file.seek(0)
         cert.close()
         s_ssl.close()
@@ -90,6 +100,7 @@ class HandleRequests(object):
     def alertPCAP(self, events, grab_all=False):
         #TODO Add loop around events
         results = self.alerts.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(events[0]) }}, { "$project": { "document": "$$ROOT"}}])
+
         for orig_alert in results:
             src_ip = orig_alert['document']['src_ip']
             src_port = orig_alert['document']['src_port']
@@ -100,10 +111,13 @@ class HandleRequests(object):
             sid = orig_alert['document']['alert']['signature_id']
             rev = orig_alert['document']['alert']['rev']
             gid = orig_alert['document']['alert']['gid']
+
         if grab_all:
             sensors = list(self.alerts.distinct("sensor", filter={ "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto, "epoch": epoch, "alert.signature_id": sid, "alert.rev": rev, "alert.gid": gid}))
+
         else:
             sensors = [orig_alert['document']['sensor']]
+
         options = {}
         options['src_ip'] = src_ip
         options['src_port'] = src_port
@@ -113,6 +127,7 @@ class HandleRequests(object):
         options['event_time'] = epoch
         #convert from list or do it on the receiver
         options['request_type'] = 'alert'
+
         # not yet implemented
         #for sensor in sensors:
         sensor = sensors[0]
@@ -136,10 +151,13 @@ class HandleRequests(object):
             proto = orig_alert['document']['proto']
             start_epoch = orig_alert['document']['netflow']['start_epoch']
             stop_epoch = orig_alert['document']['netflow']['stop_epoch']
+
         if grab_all:
             sensors = list(self.flow.distinct("sensor", filter={ "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto, "netflow.start_epoch": start_epoch, "netflow.stop_epoch": stop_epoch, }))
+
         else:
             sensors = [orig_alert['document']['sensor']]
+
         options = {}
         options['src_ip'] = src_ip
         options['src_port'] = src_port
@@ -148,11 +166,13 @@ class HandleRequests(object):
         options['proto'] = proto
         options['start_time'] = start_epoch
         options['end_time'] = stop_epoch
+
         #convert from list or do it on the receiver
         options['request_type'] = 'flow'
         # not yet implemented
         #for sensor in sensors:
         sensor = sensors[0]
+
         if 1 == 1:
             options['sensor'] = sensor
             encrypted_options = self.encrypt_options(options)

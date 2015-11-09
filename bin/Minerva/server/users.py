@@ -18,11 +18,12 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-import bcrypt
-import pymongo
 import datetime
 import time
 import re
+
+import bcrypt
+import pymongo
 
 class Users(object):
     def __init__(self, minerva_core):

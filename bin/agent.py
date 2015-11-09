@@ -18,11 +18,7 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-from socket import socket, AF_INET, SOCK_STREAM
 import os
-from Minerva import core
-from Minerva.agent import TailLog, get_parser, PCAPprocessor, RequestListener, carvePcap
-from multiprocessing import Process, Lock, active_children
 import time
 import sys
 import ssl
@@ -30,7 +26,13 @@ import platform
 import json
 import subprocess
 import pprint
+from multiprocessing import Process, Lock, active_children
+from socket import socket, AF_INET, SOCK_STREAM
+
 import M2Crypto
+
+from Minerva import core
+from Minerva.agent import TailLog, get_parser, PCAPprocessor, RequestListener, carvePcap
 
 def tailFile(cur_config, fname, send_lock):
     sensor_name = cur_config['sensor_name']

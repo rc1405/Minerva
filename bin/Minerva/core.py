@@ -20,8 +20,9 @@
 
 import yaml
 import os
-import pymongo
 import ssl
+
+import pymongo
 
 class MinervaConfigs():
     def __init__(self, **kwargs):

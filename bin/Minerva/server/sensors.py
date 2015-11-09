@@ -18,11 +18,10 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-import pymongo
 import bson
 import time
-#import os
-#from Minerva import config
+
+import pymongo
 
 class sensors(object):
     def __init__(self, minerva_core):

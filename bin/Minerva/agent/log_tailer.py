@@ -18,7 +18,6 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-import yaml
 import os
 import json
 import time

@@ -19,14 +19,15 @@
 '''
 
 
-from socket import socket, AF_INET, SOCK_STREAM, error
-from multiprocessing import Process, active_children, Queue
-from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 import time
 import ssl
+import json
+from multiprocessing import Process, active_children, Queue
+from tempfile import SpooledTemporaryFile, NamedTemporaryFile
+from socket import socket, AF_INET, SOCK_STREAM, error
+
 import M2Crypto
 import pymongo
-import json
 
 class AlertProcessor(object):
     def __init__(self, config, log_queue):

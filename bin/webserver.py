@@ -18,10 +18,6 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-import cherrypy
-from jinja2 import Environment, FileSystemLoader
-from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests
 import os
 import time
 import platform
@@ -29,13 +25,20 @@ import subprocess
 import shutil
 import sys
 from tempfile import NamedTemporaryFile
+
+import cherrypy
+from jinja2 import Environment, FileSystemLoader
+
+from Minerva import core
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests
+
+
 env = Environment(loader=FileSystemLoader('templates'))
 env.filters['iso_to_utc'] = iso_to_utc
 env.filters['epoch_to_datetime'] = epoch_to_datetime
 
 class Minerva(object):
     def __init__(self, minerva_core):
-        #minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
         self.configs = minerva_core.conf['Webserver']
         self.sizeLimit = self.configs['events']['maxResults']
         self.minerva_core = minerva_core

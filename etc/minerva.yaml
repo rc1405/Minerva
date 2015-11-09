@@ -1,52 +1,54 @@
+
 Webserver:
   db:
     url: 127.0.0.1
     port: 27017
     useAuth: False
+    AuthType: 
     username: example
-    password: example
-    SECRET_KEY: '$2b$12$L4MZbMDNsy0hy9X9c6g8aO'
-    SESSION_KEY: '$2b$12$cwxQSC5MpCP/CteDLG/Rre'
+    password: 
+    PW_Mechanism: 
+    auth_cert: None
+    auth_ca: None
+    SECRET_KEY: "$2b$12$L4MZbMDNsy0hy9X9c6g8aO"
+    SESSION_KEY: "$2b$12$cwxQSC5MpCP/CteDLG/Rre"
   web:
-    hostname: 'hostname'
+    hostname: hostname
     bindIp: 192.168.218.49
     port: 9443
     threads: 4
+    pcap_timeout: 300
     certs:
       webserver_cert: /var/lib/minerva/webserver/server.pem
       webserver_key: /var/lib/minerva/webserver/private.pem
     session_timeout: 60
-    password_tries: 3
-    password_min_length: 8
-    password_max_age: 90
+    password_requirements:
+      password_tries: 3
+      password_min_length: 8
+      password_max_age: 90
+      lower_count: 3
+      upper_count: 3
+      digit_count: 3
+      special_count: 3
   events:
-    maxResults: 10000
+    maxResults: 1000
     max_age: 120
-    flow_max_index_age: 7
+    flow_max_age: 90
 Event_Receiver:
   listen_ip:
-    192.168.218.149:
+    192.168.218.49:
          ports:
-            - 10008
+             - 10008
          receive_threads: 4
+  listener_timeout: None
+  insertion_threads: 4
+  insertion_batch: 500
+  insertion_wait: 10
   certs:
     server_cert: /var/lib/minerva/receiver/server.pem
     private_key: /var/lib/minerva/receiver/private.pem
-Agent_forwarder:
-  sensor_name: ids01
-  client_cert: /var/lib/minerva/agent/cert.pem
-  client_public: /var/lib/minerva/agent/public.pem
-  client_private: /var/lib/minerva/agent/private.pem
-  logfiles:
-    /opt/log/log/suricata/eve.json:
-      type: suricata_alert
-      position_file: /tmp/eve.json.pos
-    /opt/log/log/suricata/eve-flow.pos:
-      type: suricata_flow
-      position_file: /tmp/eve-flow.pos
-  target_addr:
-    server_cert: /var/lib/minerva/agent/target.pem
-    destination: 192.168.218.149
-    port: 10008
-    send_batch: 5000
-    send_wait: 30
+  PCAP:
+    ip: 192.168.218.49
+    port: 10009
+    threads: 3
+    timeout: 300

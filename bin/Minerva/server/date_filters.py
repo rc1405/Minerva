@@ -18,21 +18,27 @@
     Author: Ryan M Cote <minervaconsole@gmail.com>
 '''
 
-from pytz import timezone
-from dateutil.parser import parse
 import time
 
+from pytz import timezone
+from dateutil.parser import parse
+
+'''Function to convert timestamp from iso format to UTC'''
 def iso_to_utc(timestamp):
     try:
        ts = parse(timestamp)
        tz = timezone('UTC')
        tzret = ts.astimezone(tz).ctime()
        return tzret
+
     except:
        try:
           ts = time.strftime("%a %b %d %H:%M:%S %Y", time.gmtime(float(timestamp)))
           return ts
+
        except:
           return(timestamp)
+
+'''Function to convert timestamp from epoch to timestamp'''
 def epoch_to_datetime(timestamp):
     return time.strftime("%m-%d-%Y %H:%M:%S", time.localtime(float(timestamp)))

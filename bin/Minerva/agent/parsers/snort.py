@@ -19,8 +19,9 @@
 '''
 
 import datetime
-from pytz import reference
 import re
+
+from pytz import reference
 
 class ConvertFast():
     def __init__(self, sensor):

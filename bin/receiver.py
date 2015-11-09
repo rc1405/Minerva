@@ -19,21 +19,23 @@
 '''
 
 
-from socket import socket, AF_INET, SOCK_STREAM
 import os
-from Minerva import core
-from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, EventListener
-from multiprocessing import Process, active_children, Queue
 import time
 import sys
 import ssl
 import platform
+import json
+import subprocess
+from multiprocessing import Process, active_children, Queue
+from socket import socket, AF_INET, SOCK_STREAM
+
 import M2Crypto
 import pymongo
-import json
 from pytz import timezone
 from dateutil.parser import parse
-import subprocess
+
+from Minerva import core
+from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, EventListener
 
 def insert_data(config, log_queue):
     try:

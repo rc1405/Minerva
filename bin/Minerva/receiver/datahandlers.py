@@ -20,8 +20,9 @@
 
 
 import time
-import pymongo
 import json
+
+import pymongo
 from pytz import timezone
 from dateutil.parser import parse
 
