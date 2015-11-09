@@ -1,0 +1,14 @@
+[Unit]
+Description=Minerva Receiver
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/minerva/bin
+ExecStart=python receiver.py
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

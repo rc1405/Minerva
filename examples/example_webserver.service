@@ -1,0 +1,15 @@
+[Unit]
+Description=Minerva Webserver
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/minerva/bin
+StandardOutput=/var/log/minerva.log
+ExecStart=python webserver.py
+RestartSec=5
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+

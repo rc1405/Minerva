@@ -774,9 +774,9 @@ def main():
     logger.info('Starting Minerva Setup')
     config = {}
     while(True):
-        print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t")
+        print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t6. Database Only\n\t")
         install_type = raw_input()
-        if int(install_type) >= 1 and int(install_type) < 6:
+        if int(install_type) >= 1 and int(install_type) < 7:
             logger.info('Choosing install option %i' % int(install_type))
             break
         else:
@@ -811,7 +811,11 @@ def main():
         check_server()
         check_agent()
         check_receiver()
-        setup_db()
+        resp = raw_input('Connect to existing database? [y/n] ')
+        if resp == 'y' or resp == 'Y':
+            setup_db_lite()
+        else:
+            setup_db()
         setup_server()
         setup_core()
         setup_receiver()
@@ -819,13 +823,21 @@ def main():
     elif int(install_type) == 2:
         check_server()
         check_receiver()
-        setup_db()
+        resp = raw_input('Connect to existing database? [y/n] ')
+        if resp == 'y' or resp == 'Y':
+            setup_db_lite()
+        else:
+            setup_db()
         setup_server()
         setup_core()
         setup_receiver()
     elif int(install_type) == 3:
         check_server()
-        setup_db()
+        resp = raw_input('Connect to existing database? [y/n] ')
+        if resp == 'y' or resp == 'Y':
+            setup_db_lite()
+        else:
+            setup_db()
         setup_server()
         setup_core()
     elif int(install_type) == 4:
