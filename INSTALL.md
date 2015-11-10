@@ -18,7 +18,7 @@ Included in minerva-ids/examples.  If authentication is required, it must be set
 - PyYAML
 - M2Crypto
 - pytz
-- datutil
+- python-datutil
 
 ###Webserver
 - jinja2
