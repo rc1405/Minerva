@@ -84,6 +84,14 @@ def send(cur_config, batch):
     else:
         s_ssl.send('SERVER_AUTH')
         s_ssl.send(cert)
+    encrypted_challenge = s_ssl.read()
+    if encrypted_challenge == 'reject':
+        s_ssl.close()
+        return encrypted_challenge
+    else:
+        private_key = M2Crypto.RSA.load_key(keyfile)
+        challenge = private_key.private_decrypt(encrypted_challenge, M2Crypto.RSA.pkcs1_padding)
+        s_ssl.send(encrypted_request)
     stat = s_ssl.read()
     if stat == 'GET_PORT':
         s_ssl.send(str(cur_config['listener']['port']))

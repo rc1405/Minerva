@@ -219,8 +219,6 @@ def setup_db_lite():
 def setup_db():
     print("Setting up the Database\n")
     logger.info("Setting up the Database\n")
-    import pymongo
-    import bcrypt
     ip = raw_input('Please enter database ip: [127.0.0.1] ')
     if len(ip) == 0:
         ip = '127.0.0.1'
