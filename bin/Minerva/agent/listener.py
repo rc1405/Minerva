@@ -32,7 +32,7 @@ class RequestListener(object):
         self.port = int(config['listener']['port'])
 
     def listener(self, recv_data):
-        print('starting receiver')
+        #print('starting receiver')
         KEYFILE = self.config['client_private']
         CERTFILE = self.config['client_cert']
         s = socket(AF_INET, SOCK_STREAM)
@@ -47,14 +47,14 @@ class RequestListener(object):
                         p.join()
                         active_recv.remove(p)
                 if len(active_children()) < int(self.max_threads):
-                    print('accepting connections')
+                    #print('accepting connections')
                     c, a = s_ssl.accept()
-                    print('Got connection', c, a)
+                    #print('Got connection', c, a)
                     pr = Process(target=recv_data, args=((a[0], c)))
                     pr.start()
                     active_recv.append(pr)
                 else:
-                    print('sleeping')
+                    #print('sleeping')
                     time.sleep(.001)
             except:
                 s.close()

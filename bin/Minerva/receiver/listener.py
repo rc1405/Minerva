@@ -32,7 +32,7 @@ class EventListener(object):
         ip, port = pname.split('-')
         #client = pymongo.MongoClient()
         #collection = client.minerva.sensors
-        print('starting receiver')
+        #print('starting receiver')
         KEYFILE = self.config['Event_Receiver']['certs']['private_key']
         CERTFILE = self.config['Event_Receiver']['certs']['server_cert']
         s = socket(AF_INET, SOCK_STREAM)
@@ -47,14 +47,14 @@ class EventListener(object):
                         p.join()
                         active_recv.remove(p)
                 if len(active_children()) < int(self.max_threads):
-                    print('accepting connections')
+                    #print('accepting connections')
                     c, a = s_ssl.accept()
-                    print('Got connection', c, a)
+                    #print('Got connection', c, a)
                     pr = Process(target=recv_data, args=((a[0], c)))
                     pr.start()
                     active_recv.append(pr)
                 else:
-                    print('sleeping')
+                    #print('sleeping')
                     time.sleep(.001)
             except Exception as e:
-                print('{}: {}'.format(e.__class__.__name__,e))
+                #print('{}: {}'.format(e.__class__.__name__,e))

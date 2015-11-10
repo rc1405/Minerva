@@ -32,7 +32,7 @@ class PCAPprocessor(object):
         self.carver = carver
 
     def process(self, host, s):
-        print('starting processing')
+        #print('starting processing')
         encrypted_options = ''
         while True:
             data = s.recv(8192)
