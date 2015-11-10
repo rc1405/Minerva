@@ -7,5 +7,3 @@ cherrypy
 bcrypt
 pytz
 markupsafe
-dpkt
-pypcap

@@ -38,7 +38,11 @@ Included in minerva-ids/examples.  If authentication is required, it must be set
 - pymongo
 - bcrypt
 
-###Setup with pip install -r requirements.txt
+###Setup with pip 
+- Install all requirements: pip install -r requirements.txt
+- Install webserver requirements only: pip install -r requirements/webserver_requirements.txt
+- Install receiver requirements only: pip install -r requirements/receiver_requirements.txt
+- Install agent requirements only: pip install -r requirements/agent_requirements.txt
 
 ##Setup
 After requirements are installed and mongodb is running; cd to minerva-ids/bin and run 'python setup.py'.  Input information as prompted. 
