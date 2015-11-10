@@ -104,7 +104,7 @@ class AlertProcessor(object):
             encrypted_challenge = rsa_key.public_encrypt(challenge, M2Crypto.RSA.pkcs1_padding)
             s.send(encrypted_challenge)
             challenge_response = s.recv(8192)
-            if str(chalenge) != str(challenge_response):
+            if str(challenge) != str(challenge_response):
                 print('Challenge Response Failed')
                 s.send('reject')
                 s.close()

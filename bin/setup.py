@@ -643,7 +643,7 @@ def setup_agent():
         lfile = raw_input("Enter full pathname of log file to send in: ")
         logger.info("Log file %s added" % lfile)
 
-        ltype = raw_input("Enter alert type of log file: (suricata_alert, suricata_flow,  snort_alert, suricata_alert): ")
+        ltype = raw_input("Enter alert type of log file: (suricata_eve_alert, suricata_eve_flow,  snort_alert, suricata_alert): ")
         logger.info("Log file type is %s" % ltype)
 
         pfile = raw_input("Enter full pathname of position file: ")
@@ -772,7 +772,7 @@ def main():
     logger.info('Starting Minerva Setup')
     config = {}
     while(True):
-        print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t6. Database Only\n\t")
+        print("Please choose an install method:\n\t1.\tStandAlone (Server, Agent and Receiver)\n\t2.\tServer/Receiver\n\t3.\tWebServer only\n\t4.\tReceiver Only\n\t5.\tAgent Only\n\t6.\tDatabase Only\n\t")
         install_type = raw_input()
         if int(install_type) >= 1 and int(install_type) < 7:
             logger.info('Choosing install option %i' % int(install_type))

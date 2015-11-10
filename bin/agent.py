@@ -91,7 +91,7 @@ def send(cur_config, batch):
     else:
         private_key = M2Crypto.RSA.load_key(keyfile)
         challenge = private_key.private_decrypt(encrypted_challenge, M2Crypto.RSA.pkcs1_padding)
-        s_ssl.send(encrypted_request)
+        s_ssl.send(challenge)
     stat = s_ssl.read()
     if stat == 'GET_PORT':
         s_ssl.send(str(cur_config['listener']['port']))
