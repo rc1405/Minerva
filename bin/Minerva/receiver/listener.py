@@ -57,4 +57,4 @@ class EventListener(object):
                     #print('sleeping')
                     time.sleep(.001)
             except Exception as e:
-                #print('{}: {}'.format(e.__class__.__name__,e))
+                print('{}: {}'.format(e.__class__.__name__,e))
