@@ -88,7 +88,7 @@ class alert_console(object):
             comments = 'NONE'
 
         for event in events:
-            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "ESCALATED"}, "$push": { "MINERVA_COMMENTS": comments }})
+            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "ESCALATED"}, "$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': comments, 'COMMENT_TIME': datetime.datetime.utcnow() } }})
 
         return
 
