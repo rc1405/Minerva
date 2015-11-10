@@ -221,8 +221,8 @@ def setup_db_lite():
 def setup_db():
     import pymongo
     import bcrypt
-    print("Setting up the Database\n")
-    logger.info("Setting up the Database\n")
+    print("Setting up the Database")
+    logger.info("Setting up the Database")
     ip = raw_input('Please enter database ip: [127.0.0.1] ')
     if len(ip) == 0:
         ip = '127.0.0.1'
@@ -776,6 +776,7 @@ def main():
     global config, install_path, logger
     logging.basicConfig(format='%(asctime)s: %(message)s',filename='setup.log', level=logging.DEBUG)
     logger = logging.getLogger()
+    logger.info('********************************************************************************************************************************')
     logger.info('Starting Minerva Setup')
     config = {}
     while(True):
@@ -795,7 +796,7 @@ def main():
             resp = raw_input("Previous Installation Detected, Install over it? [y/n]")
             if resp == 'y' or resp == 'Y':
                 install_path = location
-            logger.warning('Keep installtion option chosen is %s' % resp )
+            logger.warning('Write installtion option chosen is %s' % resp )
         else:
             install_path = os.path.join(location,'minerva')
             logger.info('Installing in to %s' % install_path)
@@ -860,4 +861,5 @@ def main():
         setup_agent()
     logger.info('Writing Config to disk')
     write_config()
+    logger.info('********************************************************************************************************************************')
 main()
