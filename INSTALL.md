@@ -36,6 +36,7 @@ Included in minerva-ids/examples.  If authentication is required, it must be set
 
 ###Receiver
 - pymongo
+- bcrypt
 
 ###Setup with pip install -r requirements.txt
 
