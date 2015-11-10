@@ -117,6 +117,8 @@ def check_receiver():
         logger.error('pytz not installed')
 
 def setup_db_lite():
+    import pymongo
+    import bcrypt
     print("Setting Up Receiver DB connection")
     logger.info("Setting Up Receiver DB connection")
     
@@ -217,6 +219,8 @@ def setup_db_lite():
         config['Webserver']['db']['AuthType'] = authType
 
 def setup_db():
+    import pymongo
+    import bcrypt
     print("Setting up the Database\n")
     logger.info("Setting up the Database\n")
     ip = raw_input('Please enter database ip: [127.0.0.1] ')
@@ -309,6 +313,8 @@ def setup_db():
             logger.info('Dropping Current DB')
             keep_db = False
             client.drop_database('minerva')
+    else:
+        keep_db = False
 
     db = client.minerva
     collections = db.collection_names()
