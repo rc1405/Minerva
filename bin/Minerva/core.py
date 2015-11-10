@@ -40,7 +40,7 @@ class MinervaConfigs():
         if db_conf['useAuth']:
             if db_conf['AuthType'] == 'Password':
                 client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-                client.minerva.authenticate(db_conf['username'], db_conf['password'], mechanism=db_conf['PW_Mechanism'])
+                client.minerva.authenticate(db_conf['username'], db_conf['password'].decode('base64'), mechanism=db_conf['PW_Mechanism'])
             elif db_conf['AuthType'] == 'X509':
                 client = pymongo.MongoClient(db_conf['url'], int(db_conf['port']),
                                              ssl=True,
@@ -60,7 +60,8 @@ class MinervaConfigs():
         config['Webserver']['db']['auth_cert'] = new_config['auth_cert']
         config['Webserver']['db']['PW_Mechanism'] = new_config['pwmechanism']
         config['Webserver']['db']['username'] = new_config['db_user']
-        config['Webserver']['db']['password'] = new_config['db_pass']
+        if len(new_config['db_pass']) > 0:
+            config['Webserver']['db']['password'] = new_config['db_pass'].encode('base64')
         config['Webserver']['db']['AuthType'] = new_config['AuthType']
         config['Webserver']['web']['port'] = int(new_config['web_port'])
         config['Webserver']['web']['hostname'] = str(new_config['web_host'])

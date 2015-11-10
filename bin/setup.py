@@ -413,7 +413,7 @@ def setup_db():
             config['Webserver']['db']['auth_cert'] = auth_cert
             config['Webserver']['db']['auth_ca'] = auth_ca
         elif authType == 'Password':
-            config['Webserver']['db']['password'] = password
+            config['Webserver']['db']['password'] = password.encode('base64')
             config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
         config['Webserver']['db']['AuthType'] = authType
     config['Webserver']['db']['SECRET_KEY'] = password_salt 
