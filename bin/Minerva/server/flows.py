@@ -82,13 +82,19 @@ class alert_flow(object):
                 event_search['src_ip'] = str(request['src_ip'])
             
             if len(request['src_port']) > 0:
-                event_search['src_port'] = int(request['src_port'])
+                try:
+                    event_search['src_port'] = int(request['src_port'])
+                except ValueError:
+                    pass
             
             if len(request['dest_ip']) > 0:
                 event_search['dest_ip'] = str(request['dest_ip'])
             
             if len(request['dest_port']) > 0:
-                event_search['dest_port'] = int(request['dest_port'])
+                try:
+                    event_search['dest_port'] = int(request['dest_port'])
+                except ValueError:
+                    pass
             
             if len(request['sensor']) > 0:
                 event_search['sensor'] = str(request['sensor'])

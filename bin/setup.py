@@ -399,6 +399,7 @@ def setup_db():
                 "responder" : "true",
                 "server_admin" : "true",
                 "date_created" : datetime.datetime.utcnow(),
+                "PASSWORD_CHANGED": datetime.datetime.utcnow(),
         })
 
     config['Webserver'] = {}

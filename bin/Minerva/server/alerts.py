@@ -83,7 +83,7 @@ class alert_console(object):
         return
 
     '''Function to escalate menu from console view'''
-    def escalate_alert(self, events, comments):
+    def escalate_alert(self, events, comments, username):
         if comments == '':
             comments = 'NONE'
 
@@ -117,13 +117,19 @@ class alert_console(object):
                 event_search['src_ip'] = str(request['src_ip'])
 
             if len(request['src_port']) > 0:
-                event_search['src_port'] = int(request['src_port'])
+                try:
+                    event_search['src_port'] = int(request['src_port'])
+                except ValueError:
+                    pass
 
             if len(request['dest_ip']) > 0:
                 event_search['dest_ip'] = str(request['dest_ip'])
 
             if len(request['dest_port']) > 0:
-                event_search['dest_port'] = int(request['dest_port'])
+                try:
+                    event_search['dest_port'] = int(request['dest_port'])
+                except ValueError:
+                    pass
 
             if len(request['sensor']) > 0:
                 event_search['sensor'] = str(request['sensor'])
@@ -173,16 +179,28 @@ class alert_console(object):
                 event_search['alert.category'] = request['category']
 
             if len(request['severity']) > 0:
-                event_search['alert.severity'] = int(request['severity'])
+                try:
+                    event_search['alert.severity'] = int(request['severity'])
+                except ValueError:
+                    pass
 
             if len(request['sid']) > 0:
-                event_search['alert.signature_id'] = int(request['sid'])
+                try:
+                    event_search['alert.signature_id'] = int(request['sid'])
+                except ValueError:
+                    pass
 
             if len(request['rev']) > 0:
-                event_search['alert.rev'] = int(request['rev'])
+                try:
+                    event_search['alert.rev'] = int(request['rev'])
+                except ValueError:
+                    pass
 
             if len(request['gid']) > 0:
-                event_search['alert.gid'] = int(request['gid'])
+                try:
+                    event_search['alert.gid'] = int(request['gid'])
+                except ValueError:
+                    pass
 
             if len(request['status']) > 0:
                 event_search['MINERVA_STATUS'] = request['status']
