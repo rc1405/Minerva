@@ -1,25 +1,34 @@
 <!DOCTYPE html>
-<html lang="en-us">
+<html>
   <head>
-    <meta charset="UTF-8">
-    <title>Minerva by rc1405</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">Minerva</h1>
-      <h2 class="project-tagline">Minerva IDS</h2>
-      <a href="https://github.com/rc1405/Minerva" class="btn">View on GitHub</a>
-      <a href="https://github.com/rc1405/Minerva/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/rc1405/Minerva/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-    <section class="main-content">
-      <h1>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>Minerva by rc1405</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Minerva</h1>
+        <h2>Minerva IDS</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/rc1405/Minerva/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/rc1405/Minerva/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/rc1405/Minerva" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
 <a id="minerva" class="anchor" href="#minerva" aria-hidden="true"><span class="octicon octicon-link"></span></a>Minerva</h1>
 
 <p>Minerva is an IDS event manager based on python and mongodb. Minerva currently supports Suricata EVE logs and Snort Fast log formats as the primary source of data for alert and flow logs. Functionality will be expanded in the future to include Bro ascii and json log inputs, and other netflow sources, in the future.</p>
@@ -37,56 +46,56 @@
 
 <p>The console provides the initial alert triage functionality. It displays events by priority, then by date. It allows the user to highlight one to many events to escalate for additional review, close, comment, investigate additional details relating to the event. The additional details includes the original alert, the ascii packet (if available through Suricata's eve log) and any session data within relating to the time frame.</p>
 
-<p><img src="https://dl.dropboxusercontent.com/s/xar43htkuf6elkw/event_console.JPG?dl=0" alt="Console Image"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/xar43htkuf6elkw/event_console.JPG" alt="Console Image"></p>
 
 <h3>
 <a id="escalated-events" class="anchor" href="#escalated-events" aria-hidden="true"><span class="octicon octicon-link"></span></a>Escalated Events:</h3>
 
 <p>This menu provides the final layer of analysis on the events. The look is the same as the console and provides the same options for retreiving additional data about the alert. It also allows the user to close and comment on events.</p>
 
-<p><img src="http://imgur.com/IZqaduL" alt="Responder Console"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/qbkpinb39zyhdct/excalated_console.JPG" alt="Responder Console"></p>
 
 <h3>
 <a id="investigate" class="anchor" href="#investigate" aria-hidden="true"><span class="octicon octicon-link"></span></a>Investigate:</h3>
 
 <p>Additional information may be pivoted from the event consoles.  Such information includes the original event, ASCII payload if available, previous comments and any netflow associated with the session.  From this menu, the analyst has the same options as the console pages; they can comment, close, escalate or request PCAP for a given event.</p>
 
-<p><img src="http://imgur.com/LgH7r6r" alt="Investigate"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/xgaae0znxbeh28l/investigate.JPG" alt="Investigate"></p>
 
 <h3>
 <a id="search-flow" class="anchor" href="#search-flow" aria-hidden="true"><span class="octicon octicon-link"></span></a>Search Flow:</h3>
 
 <p>This menu provides a mechanism to search netflow records of any source and request PCAP for desired sessions.</p>
 
-<p><img src="http://imgur.com/ZYndKfo" alt="Search Flow"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/qehzk32yw8vvxni/flow_search.JPG" alt="Search Flow"></p>
 
 <h3>
 <a id="search-alerts" class="anchor" href="#search-alerts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Search Alerts:</h3>
 
 <p>This menu provides a mechanism to search through alerts and change and/or perform additional research.  This is where a accidentally closed event can be re-opened for example.</p>
 
-<p><img src="http://imgur.com/VGmjeMJ" alt="Alert Search"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/lrpqix4kkek69oo/search_alerts.JPG" alt="Alert Search"></p>
 
 <h3>
 <a id="sensors" class="anchor" href="#sensors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sensors:</h3>
 
 <p>This menu provides management type activities for sensors reporting into the Event Receiver. Status options are APPROVED, NOT_APPROVED, CERT_CHANGED, and DENIED. APPROVED is what allows the event receiver to insert events from the given sensor. The remaining three states prevent events from being loaded. NOT_APPROVED is a sensor that has just checked in and waiting for approval to accept events. CERT_CHANGED indicates that a server name and IP are the same but the authenticating certificate differs that that of what was accepted.</p>
 
-<p><img src="http://imgur.com/HZfxOaT" alt="Sensors"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/anhh520l3s0fu0p/sensor_admin.JPG" alt="Sensors"></p>
 
 <h3>
 <a id="user-management" class="anchor" href="#user-management" aria-hidden="true"><span class="octicon octicon-link"></span></a>User Management:</h3>
 
 <p>This menu provides access to allow modification and creation of users. Modifications include password and permission changes; and enable/disable options. Permissions are assigned on a role basis and are associated with each of the available menus. Permissions are: console, responder, sensor_admin, user_admin and server_admin.</p>
 
-<p><img src="http://imgur.com/iu0q0gg" alt="Users"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/2o9qnil4djy8juv/user_admin.JPG" alt="Users"></p>
 
 <h3>
 <a id="server-administration" class="anchor" href="#server-administration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Server Administration:</h3>
 
 <p>This menu provides configurable options such as: server hostname, server port, mongodb url, mongodb port, mongodb user, mongodb password, event expiration.</p>
 
-<p><img src="http://imgur.com/BZFKbXk" alt="Server Admin"></p>
+<p><img src="https://dl.dropboxusercontent.com/s/que0ut948jabjfm/server_admin.JPG" alt="Server Admin"></p>
 
 <h2>
 <a id="event-receiver" class="anchor" href="#event-receiver" aria-hidden="true"><span class="octicon octicon-link"></span></a>Event Receiver</h2>
@@ -97,15 +106,9 @@
 <a id="sensor-agent" class="anchor" href="#sensor-agent" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sensor Agent</h2>
 
 <p>This process is responsible for tail and keeping track of events generated and send to the event receiver.</p>
+      </section>
+    </div>
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/rc1405/Minerva">Minerva</a> is maintained by <a href="https://github.com/rc1405">rc1405</a>.</span>
-
-        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
-      </footer>
-
-    </section>
-
-  
+    
   </body>
 </html>
