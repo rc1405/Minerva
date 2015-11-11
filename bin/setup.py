@@ -650,7 +650,7 @@ def setup_agent():
         lfile = raw_input("Enter full pathname of log file to send in: ")
         logger.info("Log file %s added" % lfile)
 
-        ltype = raw_input("Enter alert type of log file: (suricata_eve_alert, suricata_eve_flow,  snort_alert, suricata_alert): ")
+        ltype = raw_input("Enter alert type of log file: (suricata_eve,  snort_alert): ")
         logger.info("Log file type is %s" % ltype)
 
         pfile = raw_input("Enter full pathname of position file: ")
