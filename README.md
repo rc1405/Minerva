@@ -12,7 +12,7 @@ The web server runs on cherrypy and has the following views:
 
 The console provides the initial alert triage functionality. It displays events by priority, then by date. It allows the user to highlight one to many events to escalate for additional review, close, comment, investigate additional details relating to the event. The additional details includes the original alert, the ascii packet (if available through Suricata's eve log) and any session data within relating to the time frame.
 
-
+![alt tag](http://imgur.com/XeJ7ici)
 
 ###Escalated Events:
 
