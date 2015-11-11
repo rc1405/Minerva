@@ -1,10 +1,10 @@
 #Installation Guide
 
 ##Mongo DB
-Download and install mongodb 3.x according to your distribution.  Additional resources found here: https://www.mongodb.org/downloads#production
+Download and install mongodb 3.x according to your distribution.  Additional resources found here: https://www.mongodb.org/downloads#production.
 
 ###Mongo DB Sample Configuration
-Included in minerva-ids/examples.  If authentication is required, it must be setup beforehand.  The database name is minerva.  See https://docs.mongodb.org/manual/tutorial/enable-authentication/ for instructions on how to enable mongodb authentication
+Included in minerva-ids/examples.  Make sure mongodb is started before running setup.  If authentication is required, it must be setup beforehand.  The database name is minerva.  See https://docs.mongodb.org/manual/tutorial/enable-authentication/ for instructions on how to enable mongodb authentication
 
 ##Required Packages
 - openssl
