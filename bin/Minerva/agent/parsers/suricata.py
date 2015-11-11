@@ -22,27 +22,36 @@ import json
 import time
 import sys
 
-def _convertJSON(entry, logType, sensor):
+def _convertJSON(entry, sensor):
     try:
         new_entry = json.loads(entry)
+
     except:
-        #print(entry)
         raise "Invalid JSON"
+
     new_entry['sensor'] = sensor
-    new_entry['logType'] = logType
     new_entry['MINERVA_STATUS'] = 'OPEN'
     return new_entry
-class ConvertAlert():
+
+class ConvertEve():
     def __init__(self, sensor):
         self.sensor = sensor
+
     def convert(self, entry):
-        return _convertJSON(entry, 'alert', self.sensor)
-class ConvertFlow():
-    def __init__(self, sensor):
-        self.sensor = sensor
-    def convert(self, entry):
-        new_entry =  _convertJSON(entry, 'flow', self.sensor)
+        new_entry =  _convertJSON(entry, self.sensor)
+
         if new_entry['event_type'] == 'flow':
             flow = new_entry.pop('flow')
             new_entry['netflow'] = flow
+            new_entry['logType'] = 'flow'
+
+        elif new_entry['event_type'] == 'alert':
+            new_entry['logType'] = 'alert'
+
+        elif new_entry['event_type'] == 'netflow':
+            new_entry['logType'] = 'flow'
+
+        else:
+            return False
+
         return new_entry

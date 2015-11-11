@@ -43,7 +43,7 @@ class AlertProcessor(object):
             s.close()
             return
         elif header != 'SERVER_AUTH':
-            #print('bad header: %s' % header)
+            print('bad header: %s' % header)
             s.send('reject')
             s.close()
             return
@@ -52,7 +52,7 @@ class AlertProcessor(object):
         if m2cert.verify(m2cert.get_pubkey()):
             CN = m2cert.get_issuer().get_entries_by_nid(13)[0].get_data().as_text()
         else:
-            #print('bad cert')
+            print('bad cert')
             s.send('reject')
             s.close()
             return
@@ -62,7 +62,7 @@ class AlertProcessor(object):
             result.append(r)
         #print('finished building results')
         if len(result) == 0:
-            #print('sensor not approved, inserting')
+            print('sensor not approved, inserting')
             s.send('GET_PORT')
             recv_port = s.recv()
             if len(recv_port) == 0:
@@ -73,7 +73,7 @@ class AlertProcessor(object):
             s.close()
             return
         elif len(result) > 1:
-            #print('More than one entry exists %s, %s' % (CN, host))
+            print('More than one entry exists %s, %s' % (CN, host))
             s.send('reject')
             s.close()
             return
@@ -87,13 +87,13 @@ class AlertProcessor(object):
             s.send('reject')
             s.close()
         elif result[0]['cert'] != cert:
-            #print('cert changed')
+            print('cert changed')
             self.collection.update({ "SERVER": CN }, { "$set": { "cert": cert, "STATUS": "CERT_CHANGED", "last_modified": time.time() }})
             s.send('reject')
             s.close()
             return
         elif result[0]['STATUS'] != "APPROVED":
-            #print('sensor not approved')
+            print('sensor not approved')
             s.send('reject')
             s.close()
             return
@@ -105,7 +105,7 @@ class AlertProcessor(object):
             s.send(encrypted_challenge)
             challenge_response = s.recv(8192)
             if str(challenge) != str(challenge_response):
-                #print('Challenge Response Failed')
+                print('Challenge Response Failed')
                 s.send('reject')
                 s.close()
                 return

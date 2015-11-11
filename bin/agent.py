@@ -47,7 +47,11 @@ def tailFile(cur_config, fname, send_lock):
     start_wait = time.time()
     try:
         for event in ftailer.tail():
-            batch.append(converter.convert(event))
+            new_event = converter.convert(event)
+            if new_event:
+                batch.append(new_event)
+            else:
+                continue
             count += 1
             tdiff = time.time() - start_wait
             if tdiff > sendwait or count > batchsize:

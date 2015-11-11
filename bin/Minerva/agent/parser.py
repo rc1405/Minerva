@@ -22,10 +22,16 @@ from .parsers import *
 
 def get_parser( alert_type, sensor):
     if alert_type == 'suricata_eve_alert':
-        parser = suricata.ConvertAlert(sensor)
+        parser = suricata.ConvertEve(sensor)
+
     elif alert_type == 'suricata_eve_flow':
-        parser = suricata.ConvertFlow(sensor)
+        parser = suricata.ConvertEve(sensor)
+
+    elif alert_type == 'suricata_eve':
+        parser = suricata.ConvertEve(sensor)
+      
     elif alert_type == 'snort_alert' or alert_type == 'suricata_alert':
         parser = snort.ConvertFast(sensor)
+
     return parser
        
