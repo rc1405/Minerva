@@ -88,21 +88,21 @@ def send(cur_config, batch):
     else:
         s_ssl.send('SERVER_AUTH')
         s_ssl.send(cert)
-    encrypted_challenge = s_ssl.read()
-    if encrypted_challenge == 'reject':
+    response = s_ssl.read()
+    if str(response) == 'GET_PORT':
+        s_ssl.send(str(cur_config['listener']['port']))
+        response = s_ssl.read()
+    if response == 'reject':
         s_ssl.close()
-        return encrypted_challenge
+        return response
     else:
         private_key = M2Crypto.RSA.load_key(keyfile)
-        challenge = private_key.private_decrypt(encrypted_challenge, M2Crypto.RSA.pkcs1_padding)
+        challenge = private_key.private_decrypt(response, M2Crypto.RSA.pkcs1_padding)
         s_ssl.send(challenge)
-    stat = s_ssl.read()
-    if stat == 'GET_PORT':
-        s_ssl.send(str(cur_config['listener']['port']))
-        stat = s_ssl.read()
-    if stat == 'reject':
+    response = s_ssl.read()
+    if response == 'reject':
         s_ssl.close()
-        return stat
+        return response
     if len(batch) > 0:
         for b in batch:
             s_ssl.send(json.dumps(b))

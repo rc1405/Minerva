@@ -617,7 +617,8 @@ class Minerva(object):
                 else:
                     pcap = pcaps.alertPCAP(request['events'])
 
-                if pcap == 'No Packets Found' or pcap == 'Request Timed Out' or pcap == 'Cannot connect to Receiver' or pcap == 'Sensor cannot be reached':
+                #if pcap == 'No Packets Found' or pcap == 'Request Timed Out' or pcap == 'Cannot connect to Receiver' or pcap == 'Sensor cannot be reached':
+                if isinstance(pcap, basestring):
                     return '<script type="text/javascript">window.alert("%s");window.close();</script>' % pcap
 
                 else:

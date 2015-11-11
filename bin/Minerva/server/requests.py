@@ -40,7 +40,16 @@ class HandleRequests(object):
         self.sizeLimit = minerva_core.conf['Webserver']['events']['maxResults']
 
     def get_receiver(self, sensor):
-        results = list(self.sensors.aggregate([ { "$match": { "SERVER": sensor }},{ "$project": { "ip": "$receiver", "port": "$receiver_port" }}]))[0]
+        results = list(self.sensors.aggregate([ { "$match": { "SERVER": sensor }},{ "$project": { "ip": "$receiver", "port": "$receiver_port", "STATUS": "$STATUS" }}]))
+        if len(results) == 0:
+            return 'Cannot find sensor', '', ''
+
+        elif results[0]['STATUS'] != 'APPROVED':
+            return 'Sensor not approved', '', ''
+
+        else:
+            results = results[0]
+
         ip = results['ip']
         port = results['port']
         #ip, port = list(self.sensors.aggregate([ { "$match": { "SERVER": sensor }},{ "$project": { "ip": "$receiver", "port": "$receiver_port" }}]))
@@ -135,6 +144,8 @@ class HandleRequests(object):
             options['sensor'] = sensor
             encrypted_options = self.encrypt_options(options)
             ip, port, cert = self.get_receiver(sensor)
+            if ip == 'Cannot find sensor' or ip == 'Sensor not approved':
+                return ip
             pcap = self.send_request(ip, port, cert, encrypted_options)
             #yield pcap
             return pcap
@@ -177,6 +188,8 @@ class HandleRequests(object):
             options['sensor'] = sensor
             encrypted_options = self.encrypt_options(options)
             ip, port, cert = self.get_receiver(sensor)
+            if ip == 'Cannot find sensor' or ip == 'Sensor not approved':
+                return ip
             pcap = self.send_request(ip, port, cert, encrypted_options)
             #yield pcap
             return pcap
