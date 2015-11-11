@@ -99,4 +99,5 @@ class MinervaConfigs():
             db.command("collMod", "flow", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': flowTimeout})
         except:
             db.flow.ensure_index("timestamp",expireAfterSeconds=flowTimeout)
+
         return config
