@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Minerva : Minerva IDS">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Minerva</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/rc1405/Minerva">View on GitHub</a>
+
+          <h1 id="project_title">Minerva</h1>
+          <h2 id="project_tagline">Minerva IDS</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/rc1405/Minerva/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/rc1405/Minerva/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="minerva" class="anchor" href="#minerva" aria-hidden="true"><span class="octicon octicon-link"></span></a>Minerva</h1>
+
+<p>Minerva is an IDS event manager based on python and mongodb. Minerva currently supports Suricata EVE logs and Snort Fast log formats as the primary source of data for alert and flow logs. Functionality will be expanded in the future to include Bro ascii and json log inputs, and other netflow sources, in the future.</p>
+
+<h2>
+<a id="components" class="anchor" href="#components" aria-hidden="true"><span class="octicon octicon-link"></span></a>Components</h2>
+
+<h3>
+<a id="web-server" class="anchor" href="#web-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Web Server</h3>
+
+<p>The web server runs on cherrypy and has the following views:</p>
+
+<h3>
+<a id="console" class="anchor" href="#console" aria-hidden="true"><span class="octicon octicon-link"></span></a>Console:</h3>
+
+<p>The console provides the initial alert triage functionality. It displays events by priority, then by date. It allows the user to highlight one to many events to escalate for additional review, close, comment, investigate additional details relating to the event. The additional details includes the original alert, the ascii packet (if available through Suricata's eve log) and any session data within relating to the time frame.</p>
+
+<p><img src="http://imgur.com/XeJ7ici" alt="Console Image"></p>
+
+<h3>
+<a id="escalated-events" class="anchor" href="#escalated-events" aria-hidden="true"><span class="octicon octicon-link"></span></a>Escalated Events:</h3>
+
+<p>This menu provides the final layer of analysis on the events. The look is the same as the console and provides the same options for retreiving additional data about the alert. It also allows the user to close and comment on events.</p>
+
+<p><img src="http://imgur.com/IZqaduL" alt="Responder Console"></p>
+
+<h3>
+<a id="investigate" class="anchor" href="#investigate" aria-hidden="true"><span class="octicon octicon-link"></span></a>Investigate:</h3>
+
+<p>Additional information may be pivoted from the event consoles.  Such information includes the original event, ASCII payload if available, previous comments and any netflow associated with the session.  From this menu, the analyst has the same options as the console pages; they can comment, close, escalate or request PCAP for a given event.</p>
+
+<p><img src="http://imgur.com/LgH7r6r" alt="Investigate"></p>
+
+<h3>
+<a id="search-flow" class="anchor" href="#search-flow" aria-hidden="true"><span class="octicon octicon-link"></span></a>Search Flow:</h3>
+
+<p>This menu provides a mechanism to search netflow records of any source and request PCAP for desired sessions.</p>
+
+<p><img src="http://imgur.com/ZYndKfo" alt="Search Flow"></p>
+
+<h3>
+<a id="search-alerts" class="anchor" href="#search-alerts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Search Alerts:</h3>
+
+<p>This menu provides a mechanism to search through alerts and change and/or perform additional research.  This is where a accidentally closed event can be re-opened for example.</p>
+
+<p><img src="http://imgur.com/VGmjeMJ" alt="Alert Search"></p>
+
+<h3>
+<a id="sensors" class="anchor" href="#sensors" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sensors:</h3>
+
+<p>This menu provides management type activities for sensors reporting into the Event Receiver. Status options are APPROVED, NOT_APPROVED, CERT_CHANGED, and DENIED. APPROVED is what allows the event receiver to insert events from the given sensor. The remaining three states prevent events from being loaded. NOT_APPROVED is a sensor that has just checked in and waiting for approval to accept events. CERT_CHANGED indicates that a server name and IP are the same but the authenticating certificate differs that that of what was accepted.</p>
+
+<p><img src="http://imgur.com/HZfxOaT" alt="Sensors"></p>
+
+<h3>
+<a id="user-management" class="anchor" href="#user-management" aria-hidden="true"><span class="octicon octicon-link"></span></a>User Management:</h3>
+
+<p>This menu provides access to allow modification and creation of users. Modifications include password and permission changes; and enable/disable options. Permissions are assigned on a role basis and are associated with each of the available menus. Permissions are: console, responder, sensor_admin, user_admin and server_admin.</p>
+
+<p><img src="http://imgur.com/iu0q0gg" alt="Users"></p>
+
+<h3>
+<a id="server-administration" class="anchor" href="#server-administration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Server Administration:</h3>
+
+<p>This menu provides configurable options such as: server hostname, server port, mongodb url, mongodb port, mongodb user, mongodb password, event expiration.</p>
+
+<p><img src="http://imgur.com/BZFKbXk" alt="Server Admin"></p>
+
+<h2>
+<a id="event-receiver" class="anchor" href="#event-receiver" aria-hidden="true"><span class="octicon octicon-link"></span></a>Event Receiver</h2>
+
+<p>This process is responsible for validation and collection of events from the sensors and inserting them into the db.</p>
+
+<h2>
+<a id="sensor-agent" class="anchor" href="#sensor-agent" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sensor Agent</h2>
+
+<p>This process is responsible for tail and keeping track of events generated and send to the event receiver.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Minerva maintained by <a href="https://github.com/rc1405">rc1405</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
