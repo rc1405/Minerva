@@ -431,10 +431,10 @@ def setup_db():
     config['Webserver']['events']['flow_max_age'] = expiredflowDays
  
 def setup_core():
-    if os.path.exists('/usr/lib/python2.7/site-packages/Minerva'):
+    if os.path.exists('/usr/lib/python2.7/Minerva'):
         logger.info('Old Minerva python modules are removed')
-        shutil.rmtree('/usr/lib/python2.7/site-packages/Minerva')
-    shutil.copytree('Minerva','/usr/lib/python2.7/site-packages/Minerva')
+        shutil.rmtree('/usr/lib/python2.7/Minerva')
+    shutil.copytree('Minerva','/usr/lib/python2.7/Minerva')
     logger.info('Minerva python modules are installed')
 
 def setup_server():
