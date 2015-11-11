@@ -67,3 +67,21 @@ Sets up only the event forwarder Agent
 ####6. Database Only
 Sets up the database only.  Creates the database, collections and indexes.  If Authentication is required, it needs to be configured prior to running the setup process.
 
+##Running
+###Webserver
+cd $INSTALL_DIR/bin
+python webserver.py
+
+See examples/example_webserver.service for a sample systemd service file
+
+###Receiver
+cd $INSTALL_DIR/bin
+python receiver.py
+
+See examples/example_receiver.service for a sample systemd service file
+
+###Agent
+cd $INSTALL_DIR/bin
+python agent.py
+
+See examples/example_agent.service for a sample systemd service file
