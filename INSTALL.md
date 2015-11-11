@@ -76,12 +76,17 @@ See examples/example_webserver.service for a sample systemd service file
 
 ###Receiver
 cd $INSTALL_DIR/bin
+
 python receiver.py
 
 See examples/example_receiver.service for a sample systemd service file
 
 ###Agent
 cd $INSTALL_DIR/bin
+
 python agent.py
 
 See examples/example_agent.service for a sample systemd service file
+
+###How To Access
+Now that Minerva-IDS is up in running, open up your web browser and navigate to http://$SERVER_IP:$SERVER_PORT  where $SERVER_IP and $SERVER_PORT are the webserver inputs specified during setup.  Chrome and Firefox have been tested, all others are not supported.
