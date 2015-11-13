@@ -4,6 +4,7 @@ pymongo
 python-dateutil
 M2Crypto
 cherrypy
-bcrypt
+crypt
+hashlib
 pytz
 markupsafe

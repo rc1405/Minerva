@@ -22,11 +22,11 @@
 import time
 import ssl
 import json
+import uuid
 from multiprocessing import Process, active_children, Queue
 from tempfile import SpooledTemporaryFile, NamedTemporaryFile
 from socket import socket, AF_INET, SOCK_STREAM, error
 
-import bcrypt
 import M2Crypto
 import pymongo
 
@@ -103,7 +103,7 @@ class AlertProcessor(object):
         else:
             public_key = m2cert.get_pubkey()
             rsa_key = public_key.get_rsa()
-            challenge = ('%s-%s' % ( bcrypt.gensalt(), str(time.time())))
+            challenge = ('%s-%s' % ( uuid.uuid4().hex, str(time.time())))
             encrypted_challenge = rsa_key.public_encrypt(challenge, M2Crypto.RSA.pkcs1_padding)
             s.send(encrypted_challenge)
             challenge_response = s.recv(8192)

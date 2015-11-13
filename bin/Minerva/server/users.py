@@ -21,8 +21,9 @@
 import datetime
 import time
 import re
+import hashlib
+import uuid
 
-import bcrypt
 import pymongo
 
 class Users(object):
@@ -30,7 +31,7 @@ class Users(object):
     def __init__(self, minerva_core):
         db_conf = minerva_core.conf['Webserver']['db']
         db = minerva_core.get_db()
-        self.salt = db_conf['SECRET_KEY']
+        #self.salt = db_conf['SECRET_KEY']
         self.users = db.users
         self.sessions = db.sessions
         self.session_salt = db_conf['SESSION_KEY']
@@ -65,13 +66,13 @@ class Users(object):
         return pw_check
 
     def login(self, username, password, session):
-        hashed = bcrypt.hashpw(str(password), self.salt)
         user_results = list(self.users.find({ "USERNAME": username, "ENABLED": "true" }))
 
         if len(user_results) == 1:
+            hashed = hashlib.sha512(str(password) + str(user_results[0]['SALT'])).hexdigest()
             if 'PASSWORD' in user_results[0]:
                 if user_results[0]['PASSWORD'] == hashed:
-                    session_hash = bcrypt.hashpw('%s-%s' % ( str(time.time()), str(username)), self.session_salt)
+                    session_hash = hashlib.sha512('%s-%s-%s' % ( str(time.time()), str(username), self.session_salt)).hexdigest()
                     self.sessions.insert({ "session_id": session_hash, "last_accessed": datetime.datetime.utcnow(), "USERNAME": username})
                     session['SESSION_KEY'] = session_hash
                     self.users.update ({ "USERNAME": username }, { "$set": { "pass_failed": 0, "last_login": datetime.datetime.utcnow()}})
@@ -155,9 +156,24 @@ class Users(object):
         if len(pw_check) > 0:
             return "Password Check Failed"
 
-        hashed = bcrypt.hashpw(str(password), self.salt)
+        user_salt = uuid.uuid4().hex
+        hashed = hashlib.sha512(str(password) + user_salt).hexdigest()
 
-        self.users.insert({"date_created": datetime.datetime.utcnow(), "date_modified": datetime.datetime.utcnow(), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "pass_failed": 0, "PASSWORD_CHANGED": datetime.datetime.utcnow() })
+        self.users.insert({
+             "date_created": datetime.datetime.utcnow(), 
+             "date_modified": datetime.datetime.utcnow(), 
+             "USERNAME": username, 
+             "SALT": user_salt,
+             "PASSWORD": hashed, 
+             "console": console, 
+             "responder": responder, 
+             "sensor_admin": sensor_admin, 
+             "user_admin": user_admin, 
+             "server_admin": server_admin, 
+             "ENABLED": enabled, 
+             "pass_failed": 0, 
+             "PASSWORD_CHANGED": datetime.datetime.utcnow() 
+        })
         return "Success"
 
 
@@ -167,9 +183,27 @@ class Users(object):
         if len(pw_check) > 0:
             return "Password Check Failed"
 
-        hashed = bcrypt.hashpw(str(password), self.salt)
+        user_salt = uuid.uuid4().hex
+        hashed = hashlib.sha512(str(password) + user_salt).hexdigest()
 
-        self.users.update({"USERNAME": username }, { "$set": {"pass_failed": 0 , "date_created": datetime.datetime.utcnow(), "date_modified": datetime.datetime.utcnow(), "USERNAME": username, "PASSWORD": hashed, "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "PASSWORD_CHANGED": datetime.datetime.utcnow() }})
+        self.users.update({
+            "USERNAME": username 
+            }, { 
+            "$set": {
+                 "pass_failed": 0, 
+                 "date_created": datetime.datetime.utcnow(), 
+                 "date_modified": datetime.datetime.utcnow(), 
+                 "USERNAME": username, 
+                 "SALT": user_salt,
+                 "PASSWORD": hashed, 
+                 "console": console, 
+                 "responder": responder, 
+                 "sensor_admin": sensor_admin, 
+                 "user_admin": user_admin, 
+                 "server_admin": server_admin, 
+                 "ENABLED": enabled, 
+                 "PASSWORD_CHANGED": datetime.datetime.utcnow() 
+            }})
 
         return "Success"
 
@@ -202,17 +236,17 @@ class Users(object):
         if len(pw_check) > 0:
             return "Password Check Failed"
 
-        newhash = bcrypt.hashpw(str(new_pw), self.salt)
-        oldhash = bcrypt.hashpw(str(current_pw), self.salt)
         user_results = list(self.sessions.find({"session_id": session_id}))
 
         if len(user_results) > 0:        
             username = user_results[0]['USERNAME']
             results = self.users.find({"USERNAME": username})
+            old_salt = results['SALT']
+            oldhash = hashlib.sha512(str(current_pw) + old_salt).hexdigest()
 
             if oldhash == results[0]['PASSWORD']:
-
-                self.users.update({"USERNAME": username}, { "$set": { "PASSWORD": newhash, "pass_failed": 0, "PASSWORD_CHANGED": datetime.datetime.utcnow() }})
+                user_salt = uuid.uuid4().hex
+                self.users.update({"USERNAME": username}, { "$set": { "PASSWORD": newhash, "pass_failed": 0, "PASSWORD_CHANGED": datetime.datetime.utcnow(), "SALT": user_salt }})
 
                 return "success"
 

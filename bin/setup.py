@@ -7,6 +7,8 @@ import datetime
 import time
 import shutil
 import getpass
+import uuid
+import hashlib
 
 def check_server():
     try:
@@ -57,13 +59,6 @@ def check_server():
     except:
         print('pytz not installed')
         logger.error('pytz not installed')
-        sys.exit()
-    try:
-        import bcrypt
-        logger.info('%s is installed' % 'bcrypt')
-    except:
-        print('bcrypt is not installed')
-        logger.error('bcrypt is not installed')
         sys.exit()
 
 def check_agent():
@@ -118,7 +113,6 @@ def check_receiver():
 
 def setup_db_lite():
     import pymongo
-    import bcrypt
     print("Setting Up Receiver DB connection")
     logger.info("Setting Up Receiver DB connection")
     
@@ -202,6 +196,44 @@ def setup_db_lite():
     else:
         logger.info('No DB Auth Chosen')
         useAuth = False
+        client = pymongo.MongoClient(ip,int(port))
+
+    user = client.minerva.users.findOne()
+    if len(user) > 0:
+        if not 'SALT' in user:
+            print('User Hashing has changed and will require passwords to be reset')
+            logger.info('User Hashing has changed and will require passwords to be reset')
+            user_name = raw_input("Enter username of admin user to create or modify: ")
+            while True:
+                print('Enter password: ')
+                admin_pw = getpass.getpass()
+                print('Re-enter password: ')
+                admin_pw2 = getpass.getpass()
+                if admin_pw == admin_pw2:
+                    break
+                else:
+                    print("Passwords do not match")
+            logger.info("Creating admin user %s" % user_name)
+            password_salt = uuid.uuid4().hex
+            admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
+            client.minerva.users.update({}, { "$set": { "SALT": uuid.uuid4().hex }}, upsert=True, multi=True )
+            if len(list(db.users.find({"USERNAME": user_name }))) > 0:
+                db.users.remove({"USERNAME": user_name})
+            db.users.insert(
+            {
+                    "USERNAME" : user_name,
+                    "user_admin" : "true",
+                    "ENABLED" : "true",
+                    "SALT": password_salt,
+                    "PASSWORD" : admin_hashedPW,
+                    "console" : "true",
+                    "date_modified" : datetime.datetime.utcnow(),
+                    "sensor_admin" : "true",
+                    "responder" : "true",
+                    "server_admin" : "true",
+                    "date_created" : datetime.datetime.utcnow(),
+                    "PASSWORD_CHANGED": datetime.datetime.utcnow(),
+            })
 
     config['Webserver'] = {}
     config['Webserver']['db'] = {}
@@ -220,7 +252,6 @@ def setup_db_lite():
 
 def setup_db():
     import pymongo
-    import bcrypt
     print("Setting up the Database")
     logger.info("Setting up the Database")
     ip = raw_input('Please enter database ip: [127.0.0.1] ')
@@ -368,16 +399,11 @@ def setup_db():
             create_user = True
         else:
             create_user = False
-        password_salt = raw_input("Enter previous Password Salt Value or hit enter if you don't know it: ")
-        if len(password_salt) == 0:
-            print("All user passwords will need to be reset")
-            password_salt = bcrypt.gensalt()
-            create_user = True
+
     else:
-        password_salt = bcrypt.gensalt()
         create_user = True
 
-    session_salt = bcrypt.gensalt()
+    session_salt = uuid.uuid4().hex
     if create_user:
         user_name = raw_input("Enter username of admin user to create: ")
         while True:
@@ -390,7 +416,8 @@ def setup_db():
             else:
                 print("Passwords do not match")
         logger.info("Creating admin user %s" % user_name)
-        admin_hashedPW = bcrypt.hashpw(str(admin_pw), str(password_salt))
+        password_salt = uuid.uuid4().hex
+        admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
         if len(list(db.users.find({"USERNAME": user_name }))) > 0:
             db.users.remove({"USERNAME": user_name})
         db.users.insert(
@@ -398,6 +425,7 @@ def setup_db():
                 "USERNAME" : user_name,
                 "user_admin" : "true",
                 "ENABLED" : "true",
+                "SALT": password_salt,
                 "PASSWORD" : admin_hashedPW,
                 "console" : "true",
                 "date_modified" : datetime.datetime.utcnow(),
@@ -422,7 +450,7 @@ def setup_db():
             config['Webserver']['db']['password'] = password.encode('base64')
             config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
         config['Webserver']['db']['AuthType'] = authType
-    config['Webserver']['db']['SECRET_KEY'] = password_salt 
+    #config['Webserver']['db']['SECRET_KEY'] = password_salt 
     config['Webserver']['db']['SESSION_KEY'] = session_salt
     config['Webserver']['web'] = {}
     config['Webserver']['web']['session_timeout'] = sessionMinutes
