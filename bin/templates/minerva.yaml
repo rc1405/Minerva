@@ -29,7 +29,6 @@ Webserver:
     PW_Mechanism: {{config.Webserver.db.PW_Mechanism}}
     auth_cert: {{config.Webserver.db.auth_cert}}
     auth_ca: {{config.Webserver.db.auth_ca}}
-    SECRET_KEY: "{{config.Webserver.db.SECRET_KEY}}"
     SESSION_KEY: "{{config.Webserver.db.SESSION_KEY}}"
   web:
     hostname: {{config.Webserver.web.hostname}}
