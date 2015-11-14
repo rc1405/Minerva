@@ -33,7 +33,7 @@ from Minerva import core
 from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests
 
 
-env = Environment(loader=FileSystemLoader('templates'))
+env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
 env.filters['iso_to_utc'] = iso_to_utc
 env.filters['epoch_to_datetime'] = epoch_to_datetime
 

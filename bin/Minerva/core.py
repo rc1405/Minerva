@@ -28,7 +28,7 @@ import pymongo
 class MinervaConfigs():
     def __init__(self, **kwargs):
         if not 'conf' in kwargs:
-            conf = os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml')
+            conf = os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),'etc','minerva.yaml')
         else:
             conf = kwargs['conf']
         if not os.path.exists(conf):
