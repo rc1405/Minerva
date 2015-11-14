@@ -6,7 +6,7 @@ Webserver:
     useAuth: False
     AuthType: 
     username: example
-    password: None
+    password: 
     PW_Mechanism: 
     auth_cert: None
     auth_ca: None
@@ -26,10 +26,10 @@ Webserver:
       password_tries: 3
       password_min_length: 8
       password_max_age: 90
-      lower_count: 3
-      upper_count: 3
-      digit_count: 3
-      special_count: 3
+      lower_count: 2
+      upper_count: 2
+      digit_count: 2
+      special_count: 2
   events:
     maxResults: 1000
     max_age: 120
