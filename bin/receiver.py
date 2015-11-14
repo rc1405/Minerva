@@ -79,7 +79,7 @@ def genKey(cur_config, minerva_core):
 
 
 def main():
-    minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
+    minerva_core = core.MinervaConfigs()
     config = minerva_core.conf
     cur_config = config['Event_Receiver']
     if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):

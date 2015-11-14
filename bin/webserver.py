@@ -512,8 +512,8 @@ class Minerva(object):
                 server_config = core.MinervaConfigs()
                 new_config = server_config.parse_web_configs(request)
                 out_tmp = env.get_template('minerva.yaml')
-                shutil.copy(os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'),os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml.bkup'))
-                out_yaml = open(os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'), 'w')
+                shutil.copy(os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml'),os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml.bkup'))
+                out_yaml = open(os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml'), 'w')
                 out_yaml.write(out_tmp.render({"config": new_config}))
                 out_yaml.close()
                 return_msg =  'Changes Saved.  A restart is required to take full effect'
@@ -883,10 +883,11 @@ def secureheaders():
 
 def handleError():
     cherrypy.response.status = 500
-    cherrypy.response.body = [open(os.path.join(os.getcwd(), 'static/html/500.html'),'r').read()]
+    cherrypy.response.body = [open(os.path.join(os.path.dirname(sys.argv[0]),'static','html','500.html'),'r').read()]
 
 if __name__ == '__main__':
-    minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
+    #minerva_core = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml'))
+    minerva_core = core.MinervaConfigs()
     server_config = minerva_core.conf['Webserver']['web']
     if not os.path.exists(server_config['certs']['webserver_cert']) or not os.path.exists(server_config['certs']['webserver_cert']):
         genKey(server_config, minerva_core)
@@ -908,31 +909,30 @@ if __name__ == '__main__':
                             'tools.sessions.timeout': int(server_config['session_timeout']),
                             'server.thread_pool': int(server_config['threads']),
                             'server.thread_pool_max': int(server_config['threads']),
-                            'error_page.404': os.path.join(os.getcwd(), 'static/html/404.html'),
-                            'error_page.403': os.path.join(os.getcwd(), 'static/html/403.html'),
-                            #'request.error_response': os.path.join(os.getcwd(), 'static/html/500.html')
+                            'error_page.404': os.path.join(os.path.dirname(sys.argv[0]),'static','html','404.html'),
+                            'error_page.403': os.path.join(os.path.dirname(sys.argv[0]),'static','html','403.html'),
                             'request.error_response': handleError,
                           })
     config = {
         '/css': { 
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/css'),
+            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','css'),
             },
         '/js': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/js'),
+            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','js'),
         },
         '/jquery.min.js': {
             'tools.staticfile.on': True,
-            'tools.staticfile.filename': os.path.join(os.getcwd(), 'static/jquery/jquery.min.js'),
+            'tools.staticfile.filename': os.path.join(os.path.dirname(sys.argv[0]),'static','jquery','jquery.min.js'),
         },
         '/images': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/images'),
+            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','images'),
         },
         '/fonts': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.getcwd(), 'static/fonts'),
+            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','fonts'),
         },
     }
     cherrypy.quickstart(Minerva(minerva_core), config = config)

@@ -129,7 +129,7 @@ def genKey(cur_config):
     subprocess.call(cmd)
 
 def main():
-    cur_config = core.MinervaConfigs(conf=os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')).conf['Agent_forwarder']
+    cur_config = core.MinervaConfigs()
     if not os.path.exists(cur_config['client_cert']) or not os.path.exists(cur_config['client_private']):
         genKey(cur_config)
     active_processes = []

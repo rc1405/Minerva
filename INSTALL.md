@@ -25,21 +25,18 @@ Included in minerva-ids/examples.  Make sure mongodb is started before running s
 - markupsafe
 - pymongo
 - cherrypy
-- python-bcrypt
 
 ###Agent
 - pypcap
 - dpkt*
-- python-bcrypt
 
 *I ran into issues installing dpkt with pip but had no issues installing from google code https://code.google.com/p/dpkt/
 
 ###Receiver
 - pymongo
-- python-bcrypt
 
 ###Setup with pip 
-** I found it easier to install bcrypt and M2Crypto through packages instead of pip.  There seems to be a good amount of additional dependencies required if building through pip.
+** I found it easier to install M2Crypto through packages instead of pip.  There seems to be a good amount of additional dependencies required if building through pip.
 - Install all requirements: pip install -r requirements.txt
 - Install webserver requirements only: pip install -r requirements/webserver_requirements.txt
 - Install receiver requirements only: pip install -r requirements/receiver_requirements.txt

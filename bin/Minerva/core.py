@@ -21,13 +21,14 @@
 import yaml
 import os
 import ssl
+import sys
 
 import pymongo
 
 class MinervaConfigs():
     def __init__(self, **kwargs):
         if not 'conf' in kwargs:
-            conf = os.path.join(os.path.abspath(os.pardir), 'etc/minerva.yaml')
+            conf = os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml')
         else:
             conf = kwargs['conf']
         if not os.path.exists(conf):
@@ -51,6 +52,7 @@ class MinervaConfigs():
         else:
             client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
         return client.minerva
+
     def parse_web_configs(self, new_config):
         config = self.conf
         db = self.get_db()

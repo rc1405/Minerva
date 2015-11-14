@@ -9,6 +9,7 @@ import shutil
 import getpass
 import uuid
 import hashlib
+import platform
 
 def check_server():
     try:
@@ -235,6 +236,9 @@ def setup_db_lite():
                     "PASSWORD_CHANGED": datetime.datetime.utcnow(),
             })
 
+    sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
+    logger.info("Session timeout %s minutes" % sessionMinutes)
+
     config['Webserver'] = {}
     config['Webserver']['db'] = {}
     config['Webserver']['db']['url'] = ip
@@ -249,6 +253,9 @@ def setup_db_lite():
             config['Webserver']['db']['password'] = password
             config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
         config['Webserver']['db']['AuthType'] = authType
+    config['Webserver']['web'] = {}
+    config['Webserver']['web']['session_timeout'] = sessionMinutes
+    config['Webserver']['events'] = {}
 
 def setup_db():
     import pymongo
@@ -462,7 +469,14 @@ def setup_core():
     if os.path.exists('/usr/lib/python2.7/Minerva'):
         logger.info('Old Minerva python modules are removed')
         shutil.rmtree('/usr/lib/python2.7/Minerva')
-    shutil.copytree('Minerva','/usr/lib/python2.7/Minerva')
+    if os.path.exists('/usr/lib/python2.7/site-packages/Minerva'):
+        logger.info('Old Minerva python modules are removed')
+        shutil.rmtree('/usr/lib/python2.7/site-packages/Minerva')
+    site_dists = [ 'CentOS Linux', 'redhat' ]
+    if platform.linux_distribution()[0] in site_dists:
+        shutil.copytree('Minerva','/usr/lib/python2.7/site-packages/Minerva')
+    else:
+        shutil.copytree('Minerva','/usr/lib/python2.7/Minerva')
     logger.info('Minerva python modules are installed')
 
 def setup_server():
@@ -819,11 +833,20 @@ def main():
     location = raw_input("Enter installation Directory: ")
     logger.info('Installation Directory is %s' % location)
     if os.path.exists(location):
-        if os.path.exists(os.path.join(location,'/bin/')):
+        if os.path.exists(os.path.join(location,'/etc/minerva.yaml')):
             logger.info('%s exists' % location)
             resp = raw_input("Previous Installation Detected, Install over it? [y/n]")
             if resp == 'y' or resp == 'Y':
                 install_path = location
+                if not os.path.exists(location):
+                    os.makedirs(location)
+                if not os.path.exists(os.path.join(location,'bin')):
+                    os.makedirs(os.path.join(location,'bin'))
+                if not os.path.exists(os.path.join(location,'etc')):
+                    os.makedirs(os.path.join(location,'etc'))
+            else:
+                print("Choose a new location and start again")
+                sys.exit()
             logger.warning('Write installtion option chosen is %s' % resp )
         else:
             install_path = os.path.join(location,'minerva')
