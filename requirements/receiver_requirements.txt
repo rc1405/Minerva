@@ -2,5 +2,4 @@ PyYAML
 pymongo
 python-dateutil
 M2Crypto
-crypt
 pytz
