@@ -913,26 +913,27 @@ if __name__ == '__main__':
                             'error_page.403': os.path.join(os.path.dirname(sys.argv[0]),'static','html','403.html'),
                             'request.error_response': handleError,
                           })
+    base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
     config = {
         '/css': { 
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','css'),
+            'tools.staticdir.dir': os.path.join(base_dir,'static','css'),
             },
         '/js': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','js'),
+            'tools.staticdir.dir': os.path.join(base_dir,'static','js'),
         },
         '/jquery.min.js': {
             'tools.staticfile.on': True,
-            'tools.staticfile.filename': os.path.join(os.path.dirname(sys.argv[0]),'static','jquery','jquery.min.js'),
+            'tools.staticfile.filename': os.path.join(base_dir,'static','jquery','jquery.min.js'),
         },
         '/images': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','images'),
+            'tools.staticdir.dir': os.path.join(base_dir,'static','images'),
         },
         '/fonts': {
             'tools.staticdir.on': True,
-            'tools.staticdir.dir': os.path.join(os.path.dirname(sys.argv[0]),'static','fonts'),
+            'tools.staticdir.dir': os.path.join(base_dir,'static','fonts'),
         },
     }
     cherrypy.quickstart(Minerva(minerva_core), config = config)
