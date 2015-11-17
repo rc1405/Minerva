@@ -76,9 +76,13 @@ minerva.users = {};
       updateType: req_type,
       enabled: 'false',
     };
+    $("#username").prop('disabled', false);
+    $("#enabled").prop('disabled', false);
+
     $.each($('form').serializeArray(), function(i, item) {
       data[item.name] = item.value;
     });
+
     if (data['username'].length < 4) {
       alert('Username is too short');
       return;
@@ -102,6 +106,7 @@ minerva.users = {};
   app.resetUser = function() {
     app.clearSelected();
     $("#username").val('');
+    $("#username").prop('disabled', false);
     $("#password").val('');
     $("#console").prop('checked', true);
     $("#responder").prop('checked', false);
@@ -116,6 +121,7 @@ minerva.users = {};
     var row = app.table.children('tr.minerva-active');
     var id = row.data('id');
     $("#username").val(row.find("td:first").html());
+    $("#username").prop('disabled', true);
     $("#console").prop('checked', $("#console" + id).prop('checked'));
     $("#responder").prop('checked', $("#responder" + id).prop('checked'));
     $("#sensor_admin").prop('checked', $("#sensor_admin" + id).prop('checked'));
