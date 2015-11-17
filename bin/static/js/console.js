@@ -81,11 +81,14 @@ minerva.console = {};
           headers: {
             csrfmiddlewaretoken: app.csrf_token
           },
-          success: function (data) {
+          success: function () {
+            location='/';
+          },
+          /*success: function (data) {
               document.open();
               document.write(data);
               document.close();
-          },
+          },*/
         })
       }
     } else {
@@ -108,11 +111,14 @@ minerva.console = {};
         headers: {
           csrfmiddlewaretoken: app.csrf_token
         },
-        success: function (data) {
+        success: function () {
+          location='/';
+        },
+        /*success: function (data) {
             document.open();
             document.write(data);
             document.close();
-        },
+        },*/
       });
     } else {
       alert('No events selected');
