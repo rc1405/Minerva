@@ -25,8 +25,8 @@ import time
 import ssl
 
 class EventListener(object):
-    def __init__(self, config, max_threads):
-        self.config = config
+    def __init__(self, minerva_core, max_threads):
+        self.config = minerva_core.conf
         self.max_threads = max_threads
     def listener(self, pname, recv_data):
         ip, port = pname.split('-')

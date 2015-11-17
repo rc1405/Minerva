@@ -31,10 +31,11 @@ import M2Crypto
 import pymongo
 
 class AlertProcessor(object):
-    def __init__(self, config, log_queue):
-        self.config = config
-        client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
-        self.collection = client.minerva.sensors
+    def __init__(self, minerva_core, log_queue):
+        self.config = minerva_core.conf
+        self.core = minerva_core
+        #client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
+        #self.collection = client.minerva.sensors
         self.log_queue = log_queue
     def process(self, host, s):
         header = s.read()
@@ -56,7 +57,9 @@ class AlertProcessor(object):
             s.send('reject')
             s.close()
             return
-        results = self.collection.find({ "SERVER": CN })
+        db = self.core.get_db()
+        collection = db.sensors
+        results = collection.find({ "SERVER": CN })
         result = []
         for r in results:
             result.append(r)
@@ -71,7 +74,7 @@ class AlertProcessor(object):
                 s.send('reject')
                 s.close()
                 return
-            self.collection.insert({ "time_created": time.time(), "last_modified": time.time(), "SERVER": CN, "cert": cert, "IP": host, "STATUS": "NOT_APPROVED", "sensor_port": int(recv_port), "receiver": self.config['Event_Receiver']['PCAP']['ip'], "receiver_port": int(self.config['Event_Receiver']['PCAP']['port']) })
+            collection.insert({ "time_created": time.time(), "last_modified": time.time(), "SERVER": CN, "cert": cert, "IP": host, "STATUS": "NOT_APPROVED", "sensor_port": int(recv_port), "receiver": self.config['Event_Receiver']['PCAP']['ip'], "receiver_port": int(self.config['Event_Receiver']['PCAP']['port']) })
             s.send('reject')
             s.close()
             return
@@ -81,17 +84,17 @@ class AlertProcessor(object):
             s.close()
             return
         elif result[0]['receiver'] != self.config['Event_Receiver']['PCAP']['ip']:
-            self.collection.update({ "SERVER": CN }, { "$set": { "STATUS": "RECEIVER_CHANGED"}})
+            collection.update({ "SERVER": CN }, { "$set": { "STATUS": "RECEIVER_CHANGED"}})
             s.send('reject')
             s.close()
             return
         elif result[0]['IP'] != host and result[0]['STATUS'] == '_DENIED':
-            self.collection.update({ "SERVER": CN }, { "$set": { "IP": host, "receiver": self.config['Event_Receiver']['PCAP']['ip'], "cert": cert, "STATUS": "IP_CHANGED", "last_modified": time.time() }})
+            collection.update({ "SERVER": CN }, { "$set": { "IP": host, "receiver": self.config['Event_Receiver']['PCAP']['ip'], "cert": cert, "STATUS": "IP_CHANGED", "last_modified": time.time() }})
             s.send('reject')
             s.close()
         elif result[0]['cert'] != cert:
             #print('cert changed')
-            self.collection.update({ "SERVER": CN }, { "$set": { "cert": cert, "STATUS": "CERT_CHANGED", "last_modified": time.time() }})
+            collection.update({ "SERVER": CN }, { "$set": { "cert": cert, "STATUS": "CERT_CHANGED", "last_modified": time.time() }})
             s.send('reject')
             s.close()
             return
@@ -127,12 +130,13 @@ class AlertProcessor(object):
         s.send('accept')
         s.close()
 class PCAPprocessor(object):
-    def __init__(self, config):
-        self.config = config
-        client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
-        cert = client.minerva.certs
-        self.web_cert = cert.find_one({"type": "webserver"})['cert']
-        self.sensors = client.minerva.sensors
+    def __init__(self, minerva_core):
+        self.config = minerva_core.conf
+        self.core = minerva_core
+        #client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
+        #cert = client.minerva.certs
+        #self.web_cert = cert.find_one({"type": "webserver"})['cert']
+        #self.sensors = client.minerva.sensors
 
     def process(self, host, s):
         #print('starting processing')
@@ -152,7 +156,9 @@ class PCAPprocessor(object):
         soc = socket(AF_INET, SOCK_STREAM)
         soc.setblocking(0)
         soc.settimeout(int(self.config['Event_Receiver']['PCAP']['timeout']))
-        client_info = self.sensors.find_one( { "SERVER": options['sensor'] })
+        db = self.core.get_db()
+        sensors = db.sensors
+        client_info = sensors.find_one( { "SERVER": options['sensor'] })
         client_cert = client_info['cert']
         cert_tmp = NamedTemporaryFile(mode='w+b', suffix='.pem')
         cert_tmp.write(client_cert)
@@ -206,7 +212,9 @@ class PCAPprocessor(object):
         return encrypted_request 
 
     def decrypt_options(self, encrypted_options):
-        web_cert = M2Crypto.X509.load_cert_string(str(self.web_cert))
+        db = self.core.get_db()
+        web_cert = db.certs.find_one({"type": "webserver"})['cert']
+        web_cert = M2Crypto.X509.load_cert_string(str(web_cert))
         pub_key = web_cert.get_pubkey()
         rsa_key = pub_key.get_rsa()
         try:

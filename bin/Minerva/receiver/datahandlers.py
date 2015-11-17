@@ -27,13 +27,17 @@ from pytz import timezone
 from dateutil.parser import parse
 
 class MongoInserter(object):
-    def __init__(self, config, log_queue):
-        self.config = config
-        client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
-        self.alert = client.minerva.alerts
-        self.flow = client.minerva.flow
+    def __init__(self, minerva_core, log_queue):
+        self.config = minerva_core.conf
+        self.core = minerva_core
+        #client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
+        #self.alert = client.minerva.alerts
+        #self.flow = client.minerva.flow
         self.log_queue = log_queue
     def insert_data(self):
+        db = self.core.get_db()
+        alert = db.alerts
+        flow = db.flow
         alert_events = []
         flow_events = []
         wait_time = time.time()
@@ -62,10 +66,10 @@ class MongoInserter(object):
             tdiff = time.time() - wait_time
             if count >= count_max or tdiff >= wait_max:
                 if len(alert_events) > 0:
-                    self.alert.insert(alert_events)
+                    alert.insert(alert_events)
                     alert_events = []
                 if len(flow_events) > 0:
-                    self.flow.insert(flow_events)
+                    flow.insert(flow_events)
                     flow_events = []
                 count = 0
                 wait_time = time.time()

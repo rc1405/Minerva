@@ -37,26 +37,26 @@ from dateutil.parser import parse
 from Minerva import core
 from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, EventListener
 
-def insert_data(config, log_queue):
+def insert_data(minerva_core, log_queue):
     try:
-        inserter = MongoInserter(config, log_queue)
+        inserter = MongoInserter(minerva_core, log_queue)
         inserter.insert_data()
     except:
         return
 
-def receiver(cur_config, pname, log_queue):
+def receiver(minerva_core, pname, log_queue):
     try:
         ip, port = pname.split('-')
-        listener = EventListener(cur_config, int(cur_config['Event_Receiver']['listen_ip'][ip]['receive_threads']))
-        proc = AlertProcessor(cur_config, log_queue)
+        listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['listen_ip'][ip]['receive_threads']))
+        proc = AlertProcessor(minerva_core, log_queue)
         listener.listener(pname, proc.process)
     except:
         return
 
-def pcap_receiver(cur_config, pname):
+def pcap_receiver(minerva_core, pname):
     try:
-        listener = EventListener(cur_config, int(cur_config['Event_Receiver']['PCAP']['threads']))
-        proc = PCAPprocessor(cur_config)
+        listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['PCAP']['threads']))
+        proc = PCAPprocessor(minerva_core)
         listener.listener(pname, proc.process)
     except:
         return
@@ -88,35 +88,35 @@ def main():
     log_queue = Queue()
     log_procs = []
     pcap_name = "%s-%s" % (cur_config['PCAP']['ip'], str(cur_config['PCAP']['port']))
-    pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(config, pcap_name))
+    pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
     pcap_listener.start()
     for lp in range(0,int(cur_config['insertion_threads'])):
-        log_proc = Process(name='logger' + str(lp), target=insert_data, args=(config, log_queue))
+        log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core, log_queue))
         log_proc.start()
         log_procs.append(log_proc)
     try:
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]['ports']:
                 name = "%s-%s" % (i,p)
-    	        pr = Process(name=name, target=receiver, args=((config, name, log_queue)))
+    	        pr = Process(name=name, target=receiver, args=((minerva_core, name, log_queue)))
                 pr.start()
                 active_processes.append(pr)
         while True:
             for p in active_processes:
                 if not p in active_children():
                     active_processes.remove(p)
-                    pr = Process(name=p.name, target=receiver, args=((config, p.name, log_queue)))
+                    pr = Process(name=p.name, target=receiver, args=((minerva_core, p.name, log_queue)))
                     pr.start()
                     active_processes.append(pr)
             for lp in log_procs:
                 if not lp in active_children():
                     log_procs.remove(lp)
-                    log_proc = Process(name=lp.name, target=insert_data, args=(config, log_queue))
+                    log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core, log_queue))
                     log_proc.start()
                     log_procs.append(log_proc)
             if not pcap_listener in active_children():
                 pcap_listener.join()
-                pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(config, pcap_name))
+                pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
                 pcap_listener.start()
             time.sleep(10)
     except:

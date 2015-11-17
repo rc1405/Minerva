@@ -512,8 +512,9 @@ class Minerva(object):
                 server_config = core.MinervaConfigs()
                 new_config = server_config.parse_web_configs(request)
                 out_tmp = env.get_template('minerva.yaml')
-                shutil.copy(os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml'),os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml.bkup'))
-                out_yaml = open(os.path.join(os.path.dirname(sys.argv[0]),'etc','minerva.yaml'), 'w')
+                base_dir = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), os.pardir)
+                shutil.copy(os.path.join(base_dir,'etc','minerva.yaml'),os.path.join(base_dir,'etc','minerva.yaml.bkup'))
+                out_yaml = open(os.path.join(base_dir,'etc','minerva.yaml'), 'w')
                 out_yaml.write(out_tmp.render({"config": new_config}))
                 out_yaml.close()
                 return_msg =  'Changes Saved.  A restart is required to take full effect'
