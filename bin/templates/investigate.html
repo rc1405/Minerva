@@ -196,11 +196,19 @@
                   <td>{{ sn.dest_port }}</td>
                   <td>{{ sn.netflow.pkts}}</td>
                   <td>{{ sn.netflow.bytes }}</td>
+                  {% if 'tcp' in sn %}
                   <td>{{ sn.tcp.tcp_flags }}</td>
                   <td>{% if sn.tcp.ack %}ACK{% endif %}</td>
                   <td>{% if sn.tcp.psh %}PSH{% endif %}</td>
                   <td>{% if sn.tcp.fin %}FIN{% endif %}</td>
                   <td>{% if sn.tcp.syn %}SYN{% endif %}</td>
+                  {% else %}
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  {% endif %}
                 </tr>
               {% endfor %}
               {# endautoescape #}
