@@ -955,6 +955,20 @@ def setup_receiver():
                 pass
     logger.info("Setting max seconds before inserting to %i seconds" % int(ins_wait))
 
+    while True:
+        filter_wait = raw_input("Enter number of seconds before reloading event filters: [60] ")
+        if len(filter_wait) == 0:
+            filter_wait = 60
+            break
+        else:
+            try:
+                filter_wait = int(filter_wait)
+                break
+            except:
+                print('Invalid time')
+                pass
+    logger.info("Setting filter reload time to %i seconds" % int(filter_wait))
+
     rec_cert = raw_input("Enter full path of certificate to use (will create in this lcoation if it doenst exist): [/var/lib/minerva/receiver/server.pem] ")
     if len(rec_cert) == 0:
         rec_cert = '/var/lib/minerva/receiver/server.pem'
@@ -1025,6 +1039,7 @@ def setup_receiver():
     config['Event_Receiver']['insertion_threads'] = int(ins_threads)
     config['Event_Receiver']['insertion_batch'] = int(ins_batch)
     config['Event_Receiver']['insertion_wait'] = int(ins_wait)
+    config['Event_Receiver']['filter_wait'] = int(filter_wait)
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key
