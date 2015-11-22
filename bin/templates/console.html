@@ -116,7 +116,7 @@
             </colgroup>
             <tbody>
             {# autoescape off #}
-            {% set severity_class = ["", "minerva-success", "minerva-warning", "minerva-alert", "minerva-danger"] %}
+            {% set severity_class = ["", "minerva-success", "minerva-warning", "minerva-alert", "minerva-danger", "minerva-danger"] %}
             {% for item in items_found %}
               <tr class="{{severity_class[item.document.alert.severity]}}" data-id="{{item.ID}}">
                 <td class="minerva-investigate">

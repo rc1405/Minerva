@@ -44,7 +44,8 @@
         </div>
       </div>
     </nav>
-    {% set severity_class = ["active", "success", "warning", "minerva-alert", "danger"] %}
+    {#{% set severity_class = ["active", "success", "warning", "minerva-alert", "danger"] %}#}
+    {% set severity_class = ["", "minerva-success", "minerva-warning", "minerva-alert", "minerva-danger", "minerva-danger"] %}
     <div class="container minerva-container">
       <ul id="tabs" class="nav nav-tabs" role="tablist">
         {% for item in items %}
