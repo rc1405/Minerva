@@ -82,7 +82,11 @@ minerva.console = {};
             csrfmiddlewaretoken: app.csrf_token
           },
           success: function () {
-            location='/';
+            if (app.form_type == 'console') {
+              location='/';
+            } else {
+              location='/responder';
+            },
           },
           /*success: function (data) {
               document.open();
@@ -112,7 +116,11 @@ minerva.console = {};
           csrfmiddlewaretoken: app.csrf_token
         },
         success: function () {
-          location='/';
+          if (app.form_type == 'console') {
+            location='/';
+          } else {
+            location='/responder';
+          },
         },
         /*success: function (data) {
             document.open();
