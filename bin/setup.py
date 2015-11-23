@@ -479,6 +479,10 @@ def setup_db():
         db.create_collection('alerts')
     else:
         db.alerts.drop_indexes()
+    if not 'filters' in collections:
+        db.create_collection('filters')
+    else:
+        db.filters.drop_indexes()
     if not 'flow' in collections:
         db.create_collection('flow')
     else:
@@ -524,6 +528,23 @@ def setup_db():
     logger.info("Days to keep flow data %i" % expiredflowDays)
     flowexpiredSeconds = int(expiredflowDays) * 86400
     db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
+
+    while True:
+        expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
+        if len(expiredTempHours) == 0:
+            expiredTempHours = 24
+            break
+        else:
+            try:
+                expiredTempHours = int(expiredTempHours)
+                break
+            except:
+                print('Invalid Day option')
+                pass
+
+    logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
+    expiredTempSeconds = expiredTempHours * 3600
+    db.filters.ensure_index("temp_timestamp", expireAfterSeconds=expiredTempSeconds)
 
     while True:
         sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
@@ -613,6 +634,7 @@ def setup_db():
     config['Webserver']['events'] = {}
     config['Webserver']['events']['max_age'] = expiredDays
     config['Webserver']['events']['flow_max_age'] = expiredflowDays
+    config['Webserver']['events']['temp_filter_age'] = expiredTempHours
  
 def setup_core():
     if os.path.exists('/usr/lib/python2.7/Minerva'):

@@ -357,6 +357,17 @@
                   *Number of Days to retain Netflow data in the database
                 </div>
               </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
+                  <label>Temporary Event Filter Expiration</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=temp_filter_age value="{{config.events.temp_filter_age}}" class="form-control input-sm">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Hours a Temporary Event Filter will last until it expires
+                </div>
+              </div>
               <div class="row"></div>
             </div>
           </form>

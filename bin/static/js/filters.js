@@ -177,7 +177,6 @@ minerva.filters = {};
       data['type'] = $('#filter_select').val();
       data['req_type'] = 'new_filter';
       data = app.getAction(data);
-      alert(JSON.stringify(data));
       if ('action_type' in data) {
           data['application'] = $('#apply_select').val();
           data['formType'] = app.form_type;

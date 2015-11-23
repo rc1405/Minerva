@@ -61,7 +61,6 @@ class event_filters(object):
                 request['action_value'] = int(request['action_value'])
             elif request['priority_op'] == 'decrease':
                 request['action_value'] = 0 - int(request['action_value'])
-        print(request['action_value'])
         self.filters.insert({
                "type": request['type'],
                "sig_id": request['sig_id'],
@@ -75,6 +74,7 @@ class event_filters(object):
                "action_value": request['action_value'],
                "STATUS": 'temporary',
                "creation_time": datetime.datetime.utcnow(),
+               "temp_timestamp": datetime.datetime.utcnow(),
         })
 
     '''Function to keep or delete an event filter'''
@@ -83,7 +83,7 @@ class event_filters(object):
             if action == 'delete':
                 self.filters.remove({"_id": bson.objectid.ObjectId(event)})
             elif action == 'keep':
-                self.filters.update({"_id": bson.objectid.ObjectId(event) }, { "$set": { "STATUS": "permanent" }})
+                self.filters.update({"_id": bson.objectid.ObjectId(event) }, { "$set": { "STATUS": "permanent" },"$unset": { "temp_timestamp": ""}})
         return
 
     '''Function to mass change alerts'''
@@ -96,7 +96,6 @@ class event_filters(object):
                 delta = int(request['action_value'])
             else:
                 delta = 0 - int(request['action_value'])
-            print(delta)
             change = { "$inc": { "alert.severity": delta },"$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': 'Mass Change.  Priority changed by %i' % delta, 'COMMENT_TIME': datetime.datetime.utcnow() }}}
         if 'ApplyTo' in request.keys():
             if request['ApplyTo'] == 'OPEN':
