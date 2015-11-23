@@ -20,12 +20,16 @@ This menu provides the final layer of analysis on the events. The look is the sa
 
 
 
- 
-
 ###Investigate:
 
 Additional information may be pivoted from the event consoles.  Such information includes the original event, ASCII payload if available, previous comments and any netflow associated with the session.  From this menu, the analyst has the same options as the console pages; they can comment, close, escalate or request PCAP for a given event.
 
+
+
+###Event Filters:
+This menu provides the ability to implement a mass categorization of alerts.  Categorizations can be accomplished by the signature ID, individual IP Address, IP address pairs, or by an signature classification.  Changes can be a change in state from Open to escalated or closed.  It can also increase or decrease the priority of a alerts that meet a given criteria.
+
+Mass categorizations can be a one time event to classify all alerts that meet a given criteria, or submitted to be a temporary filter for incoming events.  Temporary filters can be then made permanent should you decide to keep them.  The expiration for temporary filters is 24 hours by default and can be increased or decreased at any time through the config page.
 
 
 ###Search Flow:
