@@ -81,13 +81,11 @@ class AlertProcessor(object):
             s.send('reject')
             s.close()
             return
-        ##################NEED TO FIX################################################
-        #elif result[0]['receiver'] != self.config['Event_Receiver']['PCAP']['ip']:
-            #collection.update({ "SERVER": CN }, { "$set": { "STATUS": "RECEIVER_CHANGED"}})
-            #s.send('reject')
-            #s.close()
-            #return
-        ##############################################################################
+        elif result[0]['receiver'] != self.config['Event_Receiver']['PCAP']['ip']:
+            collection.update({ "SERVER": CN }, { "$set": { "STATUS": "RECEIVER_CHANGED", 'receiver': self.config['Event_Receiver']['PCAP']['ip'], 'receiver_port': self.config['Event_Receiver']['PCAP']['port']}})
+            s.send('reject')
+            s.close()
+            return
         elif result[0]['IP'] != host and result[0]['STATUS'] == '_DENIED':
             collection.update({ "SERVER": CN }, { "$set": { "IP": host, "receiver": self.config['Event_Receiver']['PCAP']['ip'], "cert": cert, "STATUS": "IP_CHANGED", "last_modified": time.time() }})
             s.send('reject')
