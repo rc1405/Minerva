@@ -37,9 +37,6 @@ class event_filters(object):
 
 
     def map_filters(self, item):
-        item['sig_id'] = int(item['sig_id'])
-        item['rev'] = int(item['rev'])
-        item['gid'] = int(item['gid'])
         if item['action_type'] == 'priority':
             item['action_value'] = int(item['action_value'])
         return item

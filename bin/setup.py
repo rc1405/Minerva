@@ -291,6 +291,7 @@ def setup_db_lite():
                     "date_modified" : datetime.datetime.utcnow(),
                     "sensor_admin" : "true",
                     "responder" : "true",
+                    "event_filters": "true",
                     "server_admin" : "true",
                     "date_created" : datetime.datetime.utcnow(),
                     "PASSWORD_CHANGED": datetime.datetime.utcnow(),
@@ -491,6 +492,8 @@ def setup_db():
         db.create_collection('sessions')
     else:
         db.sessions.drop_indexes()
+    if not 'sensors' in collections:
+        db.create_collection('sensors')
     if not 'users' in collections:
         db.create_collection('users')
    
@@ -608,6 +611,7 @@ def setup_db():
                 "date_modified" : datetime.datetime.utcnow(),
                 "sensor_admin" : "true",
                 "responder" : "true",
+                "event_filters": "true",
                 "server_admin" : "true",
                 "date_created" : datetime.datetime.utcnow(),
                 "PASSWORD_CHANGED": datetime.datetime.utcnow(),

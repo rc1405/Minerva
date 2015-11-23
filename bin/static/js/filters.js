@@ -70,7 +70,7 @@ minerva.filters = {};
         return data;
       };
     } else if ( filter_type == 'category') {
-      data['category'] = $('#category').val();
+      data['category'] = $('#classification').val();
       return data;
     } else if ( filter_type == 'address' ) {
       if ($('#ip_address').val().length == 0) {
