@@ -70,6 +70,7 @@ minerva.users = {};
       password: '',
       console: 'false',
       responder: 'false',
+      event_filters: 'false',
       sensor_admin: 'false',
       user_admin: 'false',
       server_admin: 'false',
@@ -110,6 +111,7 @@ minerva.users = {};
     $("#password").val('');
     $("#console").prop('checked', true);
     $("#responder").prop('checked', false);
+    $("#event_filters").prop('checked', false);
     $("#sensor_admin").prop('checked', false);
     $("#user_admin").prop('checked', false);
     $("#server_admin").prop('checked', false);
@@ -124,6 +126,7 @@ minerva.users = {};
     $("#username").prop('disabled', true);
     $("#console").prop('checked', $("#console" + id).prop('checked'));
     $("#responder").prop('checked', $("#responder" + id).prop('checked'));
+    $("#event_filters").prop('checked', $("#event_filters" + id).prop('checked'));
     $("#sensor_admin").prop('checked', $("#sensor_admin" + id).prop('checked'));
     $("#user_admin").prop('checked', $("#user_admin" + id).prop('checked'));
     $("#server_admin").prop('checked', $("#server_admin" + id).prop('checked'));

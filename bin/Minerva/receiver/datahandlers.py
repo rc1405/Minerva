@@ -83,7 +83,7 @@ class MongoInserter(object):
             else:
                 time.sleep(1)
     def get_sids(self, item):
-        return '%i-%i-%i' % ( item['sig_id'], item['rev'], item['gid'] )
+        return '%i-%i-%i' % ( int(item['sig_id']), int(item['rev']), int(item['gid'] ))
 
     def get_cat(self, item):
         return item['category']
@@ -94,15 +94,26 @@ class MongoInserter(object):
     def get_sessions(self, item):
         return '%s-%s' % ( item['src_ip'], item['dest_ip'] )
 
+    def get_sigAddress(self, item):
+        return '%i-%i-%i-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['ip_address'])
+
+    def get_sigSession(self, item):
+        return '%i-%i-%i-%s-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['src_ip'], item['dest_ip'])
+
     def map_actions(self, item):
         if item['type'] == 'category':
             return item['category_name'], item['action_type'], item['action_value']
         if item['type'] == 'signature':
-            return '%i-%i-%i' % (item['sig_id'],item['rev'],item['gid']), item['action_type'], item['action_value']
+            return '%i-%i-%i' % (int(item['sig_id']), int(item['rev']), int(item['gid'])), item['action_type'], item['action_value']
         if item['type'] == 'address':
             return item['ip_address'], item['action_type'], item['action_value']
         if item['type'] == 'session':
             return '%s-%s' % (item['src_ip'],item['dest_ip']), item['action_type'], item['action_value']
+        if item['type'] == 'sig_address':
+            return '%i-%i-%i-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['ip_address'])
+        if item['type'] == 'sig_session':
+            return '%i-%i-%i-%s-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['src_ip'], item['dest_ip'])
+         
         return output
 
     def get_actions(self, items):
@@ -119,6 +130,8 @@ class MongoInserter(object):
         all_filters['categories'] = map(self.get_cat, list(filters.aggregate([{ "$match": { "type": "categories" }}, { "$project": { "category": "$category"}}])))
         all_filters['addresses'] = map(self.get_addresses, list(filters.aggregate([{ "$match": { "type": "address" }}, { "$project": { "ip_address": "$ip_address"}}])))
         all_filters['session'] = map(self.get_sessions, list(filters.aggregate([{ "$match": { "type": "session" }}, { "$project": { "src_ip": "$src_ip", "dest_ip": "$dest_ip"}}])))
+        all_filters['sigAddress'] = map(self.get_sigAddress, list(filters.aggregate([{ "$match": { "type": "sig_address"}}, { "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "ip_address": "$ip_address"}}])))
+        all_filters['sigSession'] = map(self.get_sigSession, list(filters.aggregate([{ "$match": { "type": "sig_session"}}, { "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "src_ip": "$src_ip", "dest_ip": "$dest_ip"}}])))
         all_filters['actions'] = self.get_actions(map(self.map_actions, list(filters.find())))
         return all_filters
 
@@ -156,5 +169,20 @@ class MongoInserter(object):
                 event = self.do_action(filters, event, '%s-%s' % ( event['src_ip'], event['dest-ip'] ))
             elif '%s-%s' ( event['dest_ip'], event['src_ip'] ) in filters['session']:
                 event = self.do_action(filters, event, '%s-%s' ( event['dest_ip'], event['src_ip'] ))
+
+        if len(filters['sigAddress']) > 0:
+            if '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip']):
+                event = self.do_action(filters, event, '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip']))
+
+            elif '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip']):
+                event = self.do_action(filters, event, '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip']))
+
+        if len(filters['sigSession']) > 0:
+            if '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip'], event['dest_ip']):
+                event = self.do_action(filters, event, '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip'], event['dest_ip']))
+
+            elif '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip'], event['src_ip']):
+                event = self.do_action(filters, event, '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip'], event['src_ip']))
+
   
         return event 

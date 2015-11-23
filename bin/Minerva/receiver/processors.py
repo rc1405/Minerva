@@ -34,8 +34,6 @@ class AlertProcessor(object):
     def __init__(self, minerva_core, log_queue):
         self.config = minerva_core.conf
         self.core = minerva_core
-        #client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
-        #self.collection = client.minerva.sensors
         self.log_queue = log_queue
     def process(self, host, s):
         header = s.read()
@@ -83,11 +81,13 @@ class AlertProcessor(object):
             s.send('reject')
             s.close()
             return
-        elif result[0]['receiver'] != self.config['Event_Receiver']['PCAP']['ip']:
-            collection.update({ "SERVER": CN }, { "$set": { "STATUS": "RECEIVER_CHANGED"}})
-            s.send('reject')
-            s.close()
-            return
+        ##################NEED TO FIX################################################
+        #elif result[0]['receiver'] != self.config['Event_Receiver']['PCAP']['ip']:
+            #collection.update({ "SERVER": CN }, { "$set": { "STATUS": "RECEIVER_CHANGED"}})
+            #s.send('reject')
+            #s.close()
+            #return
+        ##############################################################################
         elif result[0]['IP'] != host and result[0]['STATUS'] == '_DENIED':
             collection.update({ "SERVER": CN }, { "$set": { "IP": host, "receiver": self.config['Event_Receiver']['PCAP']['ip'], "cert": cert, "STATUS": "IP_CHANGED", "last_modified": time.time() }})
             s.send('reject')
@@ -133,10 +133,6 @@ class PCAPprocessor(object):
     def __init__(self, minerva_core):
         self.config = minerva_core.conf
         self.core = minerva_core
-        #client = pymongo.MongoClient(config['Webserver']['db']['url'],int(config['Webserver']['db']['port']))
-        #cert = client.minerva.certs
-        #self.web_cert = cert.find_one({"type": "webserver"})['cert']
-        #self.sensors = client.minerva.sensors
 
     def process(self, host, s):
         #print('starting processing')
@@ -163,7 +159,6 @@ class PCAPprocessor(object):
         cert_tmp = NamedTemporaryFile(mode='w+b', suffix='.pem')
         cert_tmp.write(client_cert)
         cert_tmp.flush()
-        #soc_ssl = ssl.wrap_socket(soc, ca_certs=client_cert, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         soc_ssl = ssl.wrap_socket(soc, ca_certs=cert_tmp.name, cert_reqs=ssl.CERT_REQUIRED, ssl_version=ssl.PROTOCOL_SSLv3)
         encrypted_options = self.encrypt_requests(self.config, options)
         try:

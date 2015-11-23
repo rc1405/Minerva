@@ -1,0 +1,315 @@
+<!--
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Minerva Event Filters</title>
+    <link rel="icon" type="image/png" href="/images/favicon.ico">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/css/alerts.css">
+    <script type="text/javascript" src="/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.js"></script>
+  </head>
+	<body>
+    <nav class="navbar nav-pills navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Minerva</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          {% include 'menu.html' %}
+          <ul class="nav navbar-nav navbar-right nav-pills">
+            <li><a href="#" class="minerva-filters" data-action="keep">Make Permanent</a></li>
+            <li><a href="#" class="minerva-filters" data-action="delete">Delete</a></li>
+            <li><a href="/event_filters" class="submenu_right">Reset</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container minerva-container">
+      <div id="search" class="panel panel-default">
+        <div class="panel-heading">
+          <h4 class="panel-title">Add Event Filter</h4>
+        </div>
+        <div class="panel-body">
+          <form>
+            <div id="filter_type" class="form-inline">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Categorization Type</label>
+                </div>
+                <div class="col-xs-2">
+                  <select name="filter_select" id="filter_select" class="form-control input-sm" >
+                    <option value="signature" selected>By Signature</option>
+                    <option value="category">By Category</option>
+                    <option value="address" >By Single Address</option>
+                    <option value="session">By Address Pair</option>
+                    <option value="sig_address">By Signature and Single Address</option>
+                    <option value="sig_session">By Signature and Address Pair</option>
+                  </select>
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+            </div>
+            <hr>
+            <div id="signature" class="form-inline">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Signature ID</label>
+                </div>
+                <div class="col-xs-2">
+                  <input id="sig_id" type="text" class="form-control input-sm"/>
+                </div>          
+                <div class="col-xs-1">
+                  <label>Revision</label>
+                </div>
+                <div class="col-xs-1">
+                  <input id="rev" type="text" class="form-control input-sm"/>
+                </div>
+                <div class="col-xs-4"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-4"></div>
+                <div class="col-xs-1">
+                  <label>GID</label>
+                </div>
+                <div class="col-xs-1">
+                  <input id="gid" type="text" class="form-control input-sm"/>
+                </div>
+                <div class="col-xs-4"></div>
+              </div>
+            </div>
+            <div id="category" class="form-inline hidden">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Category</label>
+                </div>
+                <div class="col-xs-2">
+                  <input id="classification" type="text" class="form-control input-sm"/>
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+            </div>
+            <div id="address" class="form-inline hidden">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>IP Address</label>
+                </div>
+                <div class="col-xs-1">
+                  <input id="ip_address" type="text" class="form-control input-sm"/>
+                </div>
+                <div class="col-xs-7"></div>
+              </div>
+            </div>
+            <div id="session" class="form-inline hidden">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Source Address</label>
+                </div>
+                <div class="col-xs-2">
+                  <input id="src_ip" type="text" class="form-control input-sm"/>
+                </div>
+                <div class="col-xs-2">
+                  <label>Destination Address</label>
+                </div>
+                <div class="col-xs-2">
+                  <input id="dest_ip" type="text" class="form-control input-sm"/>
+                </div>
+                <div class="col-xs-2"></div>
+              </div>
+            </div>
+            <hr>
+            <div id="actions" class="form-inline">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Action Type</label>
+                </div>
+                <div class="col-xs-2">
+                  <select id="action_select" name="action_select" class="form-control input-sm" >
+                    <option value="" selected></option>
+                    <option value="STATUS">Change Status</option>
+                    <option value="priority" >Change Priority</option>
+                  </select>
+                </div>
+                <div class="col-xs-2">
+                  <label>Apply to:</label>
+                </div>
+                <div class="col-xs-1">
+                  <select id="apply_select" name="apply_select" class="form-control input-sm" >
+                    <option value="existing" selected>Existing Events</option>
+                    <option value="incoming">Incoming Events</option>
+                    <option value="both" >Existing and Incoming Events</option>
+                  </select>
+                </div>
+                <div class="col-xs-3"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-4"></div>
+                <div class="col-xs-2">
+                  <label id="current_status_label">Current Status:</label>
+                </div>
+                <div class="col-xs-1">
+                  <select id="current_status" name="current_status" class="form-control input-sm">
+                    <option value="OPEN" selected>Console Events Only</option>
+                    <option value="ESCALATED">Escalated Events Only</option>
+                    <option value="NOT_CLOSED">Open and Escalated Eventss</option>
+                    <option value="CLOSED">Closed Events Only</option>
+                    <option value="ALL">All events</option>
+                  </select>
+                </div>
+                <div class="col-xs-3"></div>
+              </div>
+            </div>
+            <div id="change_status" class="form-inline hidden">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Output Status</label>
+                </div>
+                <div class="col-xs-2">
+                  <select id="STATUS" name="STATUS" class="form-control input-sm" >
+                    <option value="OPEN" selected>Open</option>
+                    <option value="CLOSED" selected>Closed</option>
+                    <option value="ESCALATED">Escalated</option>
+                  </select>
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
+            </div>
+            <div id="change_priority" class="form-inline hidden">
+              <div class="row">
+                <div class="col-xs-2">
+                  <label>Priority Change Type</label>
+                </div>
+                <div class="col-xs-2">
+                  <select id="priority_op" class="form-control input-sm" >
+                    <option value="increase" selected>Increase</option>
+                    <option value="decrease">Decrease</option>
+                  </select>
+                </div>
+                <div class="col-xs-1">
+                  <label>Amount</label>
+                </div>
+                <div class="col-xs-2">
+                  <select id="priority" class="form-control input-sm" >
+                    <option value="1" selected>1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                </div>
+                <div class="col-xs-3"></div>
+              </div>
+            </div>
+            <hr>
+            <a href="#" class="btn btn-default" id="minerva-applyFilter">Apply</a>
+          </form>
+        </div>
+      </div>
+      <div id="HdrDiv">
+        <table id="event_header" class="table table-condensed">
+          <colgroup>
+            <col width="13%"/>
+            <col width="8%"/>
+            <col width="5%"/>
+            <col width="5%"/>
+            <col width="12%"/>
+            <col width="10%"/>
+            <col width="10%"/>
+            <col width="8%"/>
+            <col width="11%"/>
+            <col width="10%"/>
+            <col width="8%"/>
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>SID</th>
+              <th>Rev</th>
+              <th>GID</th>
+              <th>Category</th>
+              <th>Src IP</th>
+              <th>Dest IP</th>
+              <th>Action Type</th>
+              <th>New Status</th>
+              <th>Priority Change</th>
+              <th>Filter Status</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <div id="TblDiv">
+        <table id="event_table" class="table table-striped table-condensed table-hover">
+          <colgroup>
+            <col width="13%"/>
+            <col width="8%"/>
+            <col width="5%"/>
+            <col width="5%"/>
+            <col width="12%"/>
+            <col width="10%"/>
+            <col width="10%"/>
+            <col width="8%"/>
+            <col width="11%"/>
+            <col width="10%"/>
+            <col width="8%"/>
+          </colgroup>
+          <tbody>
+          {% for item in items_found %}
+            <tr data-id="{{item.ID}}">
+              <td>{{ item.type }}</td>
+              <td>{{ item.sig_id}}</td>
+              <td>{{ item.rev }}</td>
+              <td>{{ item.gid }}</td>
+              <td>{{ item.category }}</td>
+              {% if 'ip_address' in item and item.ip_address|length > 0 %}
+              <td>{{ item.ip_address }}</td>
+              <td></td>
+              {% else %}
+              <td>{{ item.src_ip }}</td>
+              <td>{{ item.dest_ip }}</td>
+              {% endif %}
+              <td>{{ item.action_type }}</td>
+              {% if item.action_type == 'STATUS' %}
+              <td>{{ item.action_value }}</td>
+              <td></td>
+              {% else %}
+              <td></td>
+              <td>{{ item.action_value }}</td>
+              {% endif %}
+              <td> {{ item.STATUS }}</td>
+            </tr>
+          {% endfor %}
+          <tbody>
+        </table>
+        {% if numFound == 0 %}<strong>No Results Found</strong>{% endif %}
+      </div>
+      <div id="NfDiv">
+        {% if numFound > 0 %}
+          <b>{{ numFound }} </b> Items found{% if numFound > sizeLimit %}. Showing <b>{{ sizeLimit }}</b>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <!-- tokens -->
+    <input type="hidden" id="form_type" value="{{form}}"></input>
+    <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
+    <!-- include deferred scripts here -->
+    <script src="/js/filters.js"></script>
+    </body>
+</html>

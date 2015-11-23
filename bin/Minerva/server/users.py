@@ -116,12 +116,13 @@ class Users(object):
                 return ['PasswordReset']
 
             if len(perm_results) > 0:
-                perms = ['console', 'responder', 'sensor_admin', 'user_admin', 'server_admin']
+                perms = ['console', 'responder', 'event_filters', 'sensor_admin', 'user_admin', 'server_admin']
                 results = []
 
                 for p in perms:
-                    if perm_results[0][p] == 'true':
-                        results.append(p)
+                    if p in perm_results[0].keys():
+                        if perm_results[0][p] == 'true':
+                            results.append(p)
 
                 self.sessions.update({"session_id": session_id},{"$set": {"last_accessed": datetime.datetime.utcnow()}})
                 return results
@@ -145,7 +146,7 @@ class Users(object):
         return True
 
 
-    def create_user(self, username, password, console, responder, sensor_admin, user_admin, server_admin, enabled):
+    def create_user(self, username, password, console, responder, event_filters, sensor_admin, user_admin, server_admin, enabled):
         user_results = list(self.users.find({ "USERNAME": username}))
 
         if len(user_results) > 0:
@@ -167,6 +168,7 @@ class Users(object):
              "PASSWORD": hashed, 
              "console": console, 
              "responder": responder, 
+             "event_filters": event_filters,
              "sensor_admin": sensor_admin, 
              "user_admin": user_admin, 
              "server_admin": server_admin, 
@@ -177,7 +179,7 @@ class Users(object):
         return "Success"
 
 
-    def modify_user(self, username, password, console, responder, sensor_admin, user_admin, server_admin, enabled):
+    def modify_user(self, username, password, console, responder, event_filters, sensor_admin, user_admin, server_admin, enabled):
         pw_check = self.new_pw_checker(password)
 
         if len(pw_check) > 0:
@@ -198,6 +200,7 @@ class Users(object):
                  "PASSWORD": hashed, 
                  "console": console, 
                  "responder": responder, 
+                 "event_filters": event_filters,
                  "sensor_admin": sensor_admin, 
                  "user_admin": user_admin, 
                  "server_admin": server_admin, 
@@ -214,16 +217,16 @@ class Users(object):
         return
 
 
-    def changePerms(self, username, console, responder, sensor_admin, user_admin, server_admin, enabled):
-        self.users.update({"USERNAME": username}, {"$set": { "console": console, "responder": responder, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "date_modified": datetime.datetime.utcnow() }})
+    def changePerms(self, username, console, responder, event_filters, sensor_admin, user_admin, server_admin, enabled):
+        self.users.update({"USERNAME": username}, {"$set": { "console": console, "responder": responder, "event_filters": event_filters, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "date_modified": datetime.datetime.utcnow() }})
 
         return 'Success'
 
 
     def getAllUsers(self):
-        active_users = list(self.users.aggregate([{"$match": { "ENABLED": "true"}}, { "$project": { "ID": "$_id", "USERNAME": "$USERNAME", "console": "$console", "responder": "$responder", "sensor_admin": "$sensor_admin", "user_admin": "$user_admin", "server_admin": "$server_admin", "date_created": "$date_created", "date_modified": "$date_modified", "last_login": "$last_login", "ENABLED": "$ENABLED" }}]))
+        active_users = list(self.users.aggregate([{"$match": { "ENABLED": "true"}}, { "$project": { "ID": "$_id", "USERNAME": "$USERNAME", "console": "$console", "responder": "$responder", "event_filters": "$event_filters", "sensor_admin": "$sensor_admin", "user_admin": "$user_admin", "server_admin": "$server_admin", "date_created": "$date_created", "date_modified": "$date_modified", "last_login": "$last_login", "ENABLED": "$ENABLED" }}]))
 
-        disabled_users = list(self.users.aggregate([{"$match": { "ENABLED": "false"}}, { "$project": { "ID": "$_id", "USERNAME": "$USERNAME", "responder": "$responder", "sensor_admin": "$sensor_admin", "user_admin": "$user_admin", "server_admin": "$server_admin", "date_created": "$date_created", "date_modified": "$date_modified", "last_login": "$last_login", "ENABLED": "$ENABLED" }}]))
+        disabled_users = list(self.users.aggregate([{"$match": { "ENABLED": "false"}}, { "$project": { "ID": "$_id", "USERNAME": "$USERNAME", "responder": "$responder", "event_filters": "$event_filters", "sensor_admin": "$sensor_admin", "user_admin": "$user_admin", "server_admin": "$server_admin", "date_created": "$date_created", "date_modified": "$date_modified", "last_login": "$last_login", "ENABLED": "$ENABLED" }}]))
 
         users = active_users + disabled_users
 

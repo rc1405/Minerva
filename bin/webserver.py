@@ -30,7 +30,7 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters
 
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
@@ -233,6 +233,79 @@ class Minerva(object):
         else:
             raise cherrypy.HTTPError(404)
 
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def event_filters(self, **kwargs):
+
+        user = Users(self.minerva_core)
+        cherrypy.session['prev_page'] = '/event_filters'
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+
+        elif 'event_filters' in perm_return:
+            filters = event_filters(self.minerva_core)
+            context_dict = {}
+
+            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()):
+                if 'post_request' in cherrypy.session.keys():
+                    request = cherrypy.session['post_request']
+                    del cherrypy.session['post_request']
+                else:
+                    request = cherrypy.request.json
+
+                username = user.get_username(cherrypy.session.get('SESSION_KEY'))
+
+                if request['req_type'] == 'keep':
+                    filters.change_filter(request['events'], 'keep')
+
+                    raise cherrypy.HTTPRedirect('/event_filters')
+
+                elif request['req_type'] == 'delete':
+                    filters.change_filter(request['events'], 'delete')
+
+                    raise cherrypy.HTTPRedirect('/event_filters')
+
+                elif request['req_type'] == 'new_filter':
+                    if request['application'] == 'incoming' or request['application'] == 'both':
+                        filters.add_filter(request)
+
+                    if request['application'] == 'existing' or request['application'] == 'both':
+                        filters.change_alerts(request, username)
+
+                    raise cherrypy.HTTPRedirect('/event_filters')
+
+                else:
+                    context_dict['new_filter'] = filters.get_alert_data(request['event'])
+
+            numFound, items_found = filters.get_filters()
+            context_dict['numFound'] = numFound
+            context_dict['items_found'] = items_found
+            context_dict['form'] = 'filters'
+            context_dict['permissions'] = perm_return
+            context_dict['sizeLimit'] = self.sizeLimit
+            tmp = env.get_template('filters.html')
+            return tmp.render(context_dict)
+
+        elif 'newLogin' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+        else:
+
+            raise cherrypy.HTTPError(403)
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -446,13 +519,13 @@ class Minerva(object):
                    request = cherrypy.request.json
 
                if request['updateType'] == 'new_user':
-                   retstatus = users.create_user(request['username'], request['password'], request['console'], request['responder'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
+                   retstatus = users.create_user(request['username'], request['password'], request['console'], request['responder'], request['event_filters'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
 
                elif request['updateType'] == 'editUser':
-                   retstatus = users.modify_user(request['username'], request['password'], request['console'], request['responder'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
+                   retstatus = users.modify_user(request['username'], request['password'], request['console'], request['responder'], request['event_filters'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
 
                elif request['updateType'] == 'updatePerms':
-                   retstatus = users.changePerms(request['username'], request['console'], request['responder'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
+                   retstatus = users.changePerms(request['username'], request['console'], request['responder'], request['event_filters'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
 
             if retstatus == "Password Check Failed":
                 ret_string = '"New Password does not meet strength Requirements: %s lowercase, %s uppercase, %s numbers, %s special characters"' % ( self.configs['web']['password_requirements']['lower_count'], self.configs['web']['password_requirements']['upper_count'], self.configs['web']['password_requirements']['digit_count'], self.configs['web']['password_requirements']['special_count'] )

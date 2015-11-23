@@ -1,0 +1,65 @@
+2015-11-21 15:03:51,054: ********************************************************************************************************
+2015-11-21 15:03:51,054: Starting Minerva Setup
+2015-11-21 15:03:55,765: Choosing install option 2
+2015-11-21 15:03:56,689: Installation Directory is /opt/minerva
+2015-11-21 15:03:56,690: Installing in to /opt/minerva
+2015-11-21 15:03:56,755: pymongo is installed
+2015-11-21 15:03:56,783: M2Crypto is installed
+2015-11-21 15:03:56,846: cherrypy is installed
+2015-11-21 15:03:56,880: jinja2 is installed
+2015-11-21 15:03:56,920: pyyaml is installed
+2015-11-21 15:03:56,921: dateutil is installed
+2015-11-21 15:03:56,966: pytz is installed
+2015-11-21 15:03:56,966: pyyaml is installed
+2015-11-21 15:03:56,966: M2Crypto is installed
+2015-11-21 15:03:56,966: pymongo is installed
+2015-11-21 15:03:56,966: pytz is installed
+2015-11-21 15:03:58,865: Setting up the Database
+2015-11-21 15:03:59,729: Database IP is 127.0.0.1
+2015-11-21 15:04:00,329: Database Port is 27017
+2015-11-21 15:04:01,889: Use DB Auth is set to 
+2015-11-21 15:04:01,890: No DB Auth Chosen
+2015-11-21 15:04:01,900: DB exists
+2015-11-21 15:04:03,269: Dropping Current DB
+2015-11-21 15:04:04,811: Creating collections if they do not exist
+2015-11-21 15:04:05,546: Alert search index created is: ([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
+2015-11-21 15:04:07,709: Days to keep alerts 120
+2015-11-21 15:04:07,813: Flow search index created is: ([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch", pymongo.ASCENDING),("netflow.stop_epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)]) 
+2015-11-21 15:04:09,321: Days to keep flow data 120
+2015-11-21 15:04:11,969: Session timeout 60 minutes
+2015-11-21 15:04:20,587: Creating admin user admin
+2015-11-21 15:04:20,592: Setting up the web server
+2015-11-21 15:04:23,399: Webserver hostname set to minerva-ids
+2015-11-21 15:04:30,047: Webserver IP set to 192.168.218.49
+2015-11-21 15:04:36,542: Webserver port set to 443
+2015-11-21 15:04:38,034: Webserver threads set to 8
+2015-11-21 15:04:39,162: Web server cert set to /var/lib/minerva/webserver/server.pem
+2015-11-21 15:04:39,163: Web server private key set to /var/lib/minerva/webserver/private.pem
+2015-11-21 15:04:41,076: Password failures set to 3
+2015-11-21 15:04:41,812: Min password length is set to 8
+2015-11-21 15:04:42,844: Max password age set to 90
+2015-11-21 15:04:43,442: Pcap request timeout set to 300
+2015-11-21 15:04:43,960: Max events set to 5000
+2015-11-21 15:04:44,524: Min password lower case set to 2
+2015-11-21 15:04:45,128: Min password upper case set to 2
+2015-11-21 15:04:45,708: Min numbers in a password set to 2
+2015-11-21 15:04:46,612: Min numbers of special characters in password is 2
+2015-11-21 15:04:46,612: Copying over templates and static content
+2015-11-21 15:04:47,897: Old Minerva python modules are removed
+2015-11-21 15:04:47,908: Minerva python modules are installed
+2015-11-21 15:04:47,908: Setting up the event receiver
+2015-11-21 15:04:55,064: Adding listener ip 192.168.218.49
+2015-11-21 15:04:58,924: Adding listener port 10008
+2015-11-21 15:05:01,863: Setting receive threads at 4
+2015-11-21 15:05:05,357: Setting listener timeout at 20 seconds
+2015-11-21 15:05:06,077: Setting inserter threads to 4
+2015-11-21 15:05:06,665: Setting max events to insert to 500
+2015-11-21 15:05:07,207: Setting max seconds before inserting to 20 seconds
+2015-11-21 15:05:08,249: Certificate path set to /var/lib/minerva/receiver/server.pem
+2015-11-21 15:05:08,250: Private key path set to /var/lib/minerva/receiver/private.pem
+2015-11-21 15:05:15,237: PCAP listening IP set to 127.0.0.1
+2015-11-21 15:05:16,381: PCAP listening port set to 10009
+2015-11-21 15:05:17,353: Threads processing PCAP requests set to 4
+2015-11-21 15:05:18,225: PCAP Request timeout set to 300 seconds
+2015-11-21 15:05:18,226: Writing Config to disk
+2015-11-21 15:05:18,319: ********************************************************************************************************
