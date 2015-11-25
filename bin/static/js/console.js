@@ -86,7 +86,7 @@ minerva.console = {};
               location='/';
             } else {
               location='/responder';
-            },
+            };
           },
           /*success: function (data) {
               document.open();
@@ -120,7 +120,7 @@ minerva.console = {};
             location='/';
           } else {
             location='/responder';
-          },
+          };
         },
         /*success: function (data) {
             document.open();
