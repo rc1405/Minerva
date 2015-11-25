@@ -92,7 +92,10 @@ class event_filters(object):
             if request['priority_op'] == 'increase':
                 delta = int(request['action_value'])
             else:
-                delta = 0 - int(request['action_value'])
+                if int(request['action_value']) < 0:
+                    delta = request['action_value']
+                else:
+                    delta = 0 - int(request['action_value'])
             change = { "$inc": { "alert.severity": delta },"$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': 'Mass Change.  Priority changed by %i' % delta, 'COMMENT_TIME': datetime.datetime.utcnow() }}}
         if 'ApplyTo' in request.keys():
             if request['ApplyTo'] == 'OPEN':
