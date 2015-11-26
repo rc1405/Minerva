@@ -34,34 +34,27 @@ class alert_console(object):
         self.flow = db.flow
         self.sessions = db.sessions
 
+    def map_alerts(self, item):
+        ret_dict = {}
+        ret_dict['ID'] = item.pop('_id')
+        ret_dict['epoch'] = item.pop('epoch')
+        ret_dict['document'] = item
+        return ret_dict
 
     '''Function to gather alerts to present to console'''
     def get_alerts(self):
-        #items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit } ] )
-
-        ##items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } },{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}} ] )
-        items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "OPEN" } },{ "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1}},{ "$limit": self.sizeLimit } ] )
-
-        results = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS": "OPEN" }},{ "$group": { "_id": "$null", "count": { "$sum": 1 }}}] )
-
-        numFound = 0
-
-        for i in results:
-            numFound = i['count']
+        results = self.alerts.find({"MINERVA_STATUS": "OPEN"}).sort([("alert.severity", pymongo.DESCENDING),("timestamp", pymongo.ASCENDING)]).limit(self.sizeLimit)
+        numFound = results.count()
+        items_found = map(self.map_alerts, results)
 
         return numFound, items_found
 
     '''Function to gather alerts to present to the escalation view'''
     def get_escalated_alerts(self):
 
-        items_found = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS":  "ESCALATED" } }, { "$project": { "ID": "$_id", "severity": "$alert.severity", "epoch": "$epoch", "document": {"timestamp": "$timestamp", "src_ip": "$src_ip", "src_port": "$src_port", "proto": "$proto", "alert": { "signature": "$alert.signature", "category": "$alert.category", "severity": "$alert.severity", "signature_id": "$alert.signature_id", "rev": "$alert.rev", "gid": "$alert.gid"}, "sensor": "$sensor", "dest_ip": "$dest_ip", "dest_port": "$dest_port" }}},{ "$sort": { "severity": -1, "epoch": 1 }},{ "$limit": self.sizeLimit } ] )
-
-        results = self.alerts.aggregate([{ "$match": { "MINERVA_STATUS": "ESCALATED" }},{ "$group": { "_id": "$null", "count": { "$sum": 1 }}}] )
-
-        numFound = 0
-
-        for i in results:
-            numFound = i['count']
+        results = self.alerts.find({"MINERVA_STATUS": "ESCALATED"}).sort([("alert.severity", pymongo.DESCENDING),("timestamp", pymongo.ASCENDING)]).limit(self.sizeLimit)
+        numFound = results.count()
+        items_found = map(self.map_alerts, results)
 
         return numFound, items_found
 
@@ -69,17 +62,17 @@ class alert_console(object):
     def close_alert_nc(self, events):
 
         for event in events:
-            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": "NONE" }})
+            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }})
 
         return
 
     '''Function to close alert with comments'''
-    def close_alert(self, events, comments):
+    def close_alert(self, events, comments, username):
         if comments == '':
             comments = 'NONE'
 
         for event in events:
-            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": comments }})
+            self.alerts.update( { "_id": bson.objectid.ObjectId(event) }, { "$set": { "MINERVA_STATUS": "CLOSED" }, "$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': comments, 'COMMENT_TIME': datetime.datetime.utcnow() } }})
 
         return
 
