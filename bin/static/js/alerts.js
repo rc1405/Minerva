@@ -24,7 +24,8 @@ minerva.alerts = {};
 (function ($, app) {
   // declare module properties
   app.csrf_token = $('#csrf_token').val();
-  app.formType = $('#form_type').val();
+  app.form_type = $('#form_type').val();
+  app.table = $('#event_table tbody');
 
   app.search_alerts = function() {
     //var data = $('form').serializeArray();
@@ -32,7 +33,7 @@ minerva.alerts = {};
     $.each($('form').serializeArray(), function(i, item) { 
       data[item.name] = item.value; 
     });
-    data['formType'] = app.formType;
+    data['formType'] = app.form_type;
     $.ajax({
       method: 'POST',
       url: '/alerts',
@@ -56,5 +57,6 @@ minerva.alerts = {};
   // bind events
   //
   $("#minerva-searchAlerts").click(app.search_alerts);
+  //app.table.on('click', '.minerva-investigate', app.investigateOne);
 
 })(jQuery, minerva.alerts);

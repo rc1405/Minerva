@@ -732,7 +732,8 @@ class Minerva(object):
                 else:
                     request = cherrypy.request.json
                 alerts = alert_console(self.minerva_core)
-                alerts.close_alert(request['events'], request['comments'])
+                username = user.get_username(cherrypy.session.get('SESSION_KEY'))
+                alerts.close_alert(request['events'], request['comments'], username)
                 
                 if request['formType'] == "investigate":
                     return '<script type="text/javascript">window.close()</script>'
