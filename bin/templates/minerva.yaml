@@ -70,6 +70,11 @@ Event_Receiver:
   insertion_batch: {{config.Event_Receiver.insertion_batch}}
   insertion_wait: {{config.Event_Receiver.insertion_wait}}
   filter_wait: {{config.Event_Receiver.filter_wait}}
+  redis:
+    enabled: {{config.Event_Receiver.redis.enabled}}
+    key: {{config.Event_Receiver.redis.key}}
+    server: {{config.Event_Receiver.redis.server}}
+    port: {{config.Event_Receiver.redis.port}}
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
     private_key: {{config.Event_Receiver.certs.private_key}}
@@ -83,13 +88,24 @@ Event_Receiver:
 Agent_forwarder:
   sensor_name: {{config.Agent_forwarder.sensor_name}}
   client_cert: {{config.Agent_forwarder.client_cert}}
-  {#client_public: {{config.Agent_forwarder.client_public}}#}
   client_private: {{config.Agent_forwarder.client_private}}
+  redis:
+    enabled: {{config.Agent_forwarder.redis.enabled}}
+    key: {{config.Agent_forwarder.redis.key}}
+    server: {{config.Agent_forwarder.redis.server}}
+    port: {{config.Agent_forwarder.redis.port}}
   logfiles:
     {%- for lf in config.Agent_forwarder.logfiles %}
     {{lf}}:
-      type: {{config.Agent_forwarder.logfiles[lf]['type']}}
+      {% for i in config.Agent_forwarder.logfiles[lf].keys() %}
+      {{i}}: {{config.Agent_forwarder.logfiles[lf][i]}}
+      {% endfor %}
+      {#type: {{config.Agent_forwarder.logfiles[lf]['type']}}
+      {% if config.Agent_forwarder.logfiles[lf]['type'] in ['suricata-redis-channel','suricata-redis-list'] %}
+      channel: {{config.Agent_forwarder.logfiles[lf]['channel']}}
+      {% else %}
       position_file: {{config.Agent_forwarder.logfiles[lf]['position_file']}}
+      {% endif %}#}
     {%- endfor %}
   target_addr:
     server_cert: {{config.Agent_forwarder.target_addr.server_cert}}

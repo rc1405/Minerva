@@ -31,10 +31,11 @@ import M2Crypto
 import pymongo
 
 class AlertProcessor(object):
-    def __init__(self, minerva_core, log_queue):
+    def __init__(self, minerva_core, event_method):
         self.config = minerva_core.conf
         self.core = minerva_core
-        self.log_queue = log_queue
+        self.event_method = event_method
+
     def process(self, host, s):
         header = s.read()
         if header == 'GET_CERT':
@@ -119,7 +120,7 @@ class AlertProcessor(object):
         while True:
             data = s.recv(8192)
             if data == b'END_EVENT':
-                self.log_queue.put(json_data)
+                self.event_method.putter(json_data)
                 json_data = ''
             elif data == b'END':
                 break

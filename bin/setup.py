@@ -925,6 +925,39 @@ def setup_receiver():
                 print('Invalid option')
         if resp == 'n' or resp == 'N':
             break
+
+    while True:
+        use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
+        if use_redis == 'y':
+            use_redis = 'yes'
+            while True:
+                redis_key = raw_input("What Redis key do you want to use? [minerva-receiver] ")
+                if len(redis_key) == 0:
+                    redis_key = 'minerva-receiver'
+                break
+            while True:
+                redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
+                if len(redis_server) == 0:
+                    redis_server = '127.0.0.1'
+                break
+            while True:
+                redis_port = raw_input("Enter redis port: [6379] ")
+                if len(redis_port) == 0:
+                    redis_port = 6379
+                    break
+                else:
+                    try:
+                        redis_port = int(redis_port)
+                        break
+                    except:
+                        print('Bad Redis Port Number')
+            break
+        else:
+            use_redis = 'no'
+            redis_key = ''
+            redis_server = ''
+            redis_port = ''
+
     while True:
         listener_timeout = raw_input("Enter number of seconds to timeout on a single receive thread: [20] ")
         if len(listener_timeout) == 0:
@@ -1066,6 +1099,11 @@ def setup_receiver():
     config['Event_Receiver']['insertion_batch'] = int(ins_batch)
     config['Event_Receiver']['insertion_wait'] = int(ins_wait)
     config['Event_Receiver']['filter_wait'] = int(filter_wait)
+    config['Event_Receiver']['redis'] = {}
+    config['Event_Receiver']['redis']['enabled'] = use_redis
+    config['Event_Receiver']['redis']['key'] = redis_key
+    config['Event_Receiver']['redis']['server'] = redis_server
+    config['Event_Receiver']['redis']['port'] = redis_port
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key
@@ -1099,42 +1137,121 @@ def setup_agent():
     logger.info("Client certificate path set to %s" % client_cert)
     logger.info("Client private key path set to %s" % client_key)
 
+    while True:
+        use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
+        if use_redis == 'y':
+            use_redis = 'yes'
+            while True:
+                redis_key = raw_input("What Redis key do you want to use? [minerva-agent] ")
+                if len(redis_key) == 0:
+                    redis_key = 'minerva-agent'
+                break
+            while True:
+                redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
+                if len(redis_server) == 0:
+                    redis_server = '127.0.0.1'
+                break
+            while True:
+                redis_port = raw_input("Enter redis port: [6379] ")
+                if len(redis_port) == 0:
+                    redis_port = 6379
+                    break
+                else:
+                    try:
+                        redis_port = int(redis_port)
+                        break
+                    except:
+                        print('Bad Redis Port Number')
+            break
+        else:
+            use_redis = 'no'
+            redis_key = ''   
+            redis_server = ''
+            redis_port = ''
+
     logfiles = {}
     while True:
         while True:
-            lfile = raw_input("Enter full pathname of log file to send in: ")
-            if len(lfile) == 0:
-                print('No file entered')
-            elif not os.path.exists(lfile):
-                while True:
-                    resp = raw_input("File %s does not exist, add it anyways? [y/n] " % lfile)
-                    if resp == 'n' or resp == 'N' or resp == 'y' or resp == 'Y':
+            ltype = raw_input("Enter alert type of log file: (suricata_eve, suricata-redis-channel, suricata-redis-list, snort_alert): ")
+            if ltype in ['suricata-redis-channel','suricata-redis-list']:
+                if use_redis == 'yes':
+                    while True:
+                        use_main_redis = raw_input("Same host (%s) and port (%i) information? [yes/no] " % (redis_server, redis_port))
+                        if len(use_main_redis) == 0:
+                            use_main_redis = 'yes'
+                            break
+                        elif use_main_redis in ['y','Y','yes','YES']:
+                            use_main_redis = 'yes'
+                            break
+                        elif use_main_redis in ['n','N','no','NO']:
+                            use_main_redis = 'no'
+                            break
+                        else:
+                            print('Invalid option')
+                else:
+                    use_main_redis = 'no'
+                if use_redis == 'no' or use_main_redis == 'no':
+                    while True:
+                        redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
+                        if len(redis_server) == 0:
+                            redis_server = '127.0.0.1'
                         break
-                if resp == 'Y' or resp == 'y':
-                    break
-            else:
+                    while True:
+                        redis_port = raw_input("Enter redis port: [6379] ")
+                        if len(redis_port) == 0:
+                            redis_port = 6379
+                            break
+                        else:
+                            try:
+                                redis_port = int(redis_port)
+                                break
+                            except:
+                                print('Bad Redis Port Number')
+                while True:
+                    redis_channel = raw_input("Enter Redis Channel or Key for Suricata: ")
+                    if len(redis_channel) > 0:
+                        break
+                    else:
+                        print("No Channel Entered")
                 break
-        logger.info("Log file %s added" % lfile)
-
-        while True:
-            ltype = raw_input("Enter alert type of log file: (suricata_eve,  snort_alert): ")
-            if ltype == 'suricata_eve' or ltype == 'snort_alert':
+            elif ltype in ['suricata_eve', 'snort_alert']:
+                while True:
+                    lfile = raw_input("Enter full pathname of log file to send in: ")
+                    if len(lfile) == 0:
+                        print('No file entered')
+                    elif not os.path.exists(lfile):
+                        while True:
+                            resp = raw_input("File %s does not exist, add it anyways? [y/n] " % lfile)
+                            if resp == 'n' or resp == 'N' or resp == 'y' or resp == 'Y':
+                                break
+                        if resp == 'Y' or resp == 'y':
+                            break
+                    else:
+                        break
+                logger.info("Log file %s added" % lfile)
                 break
             else:
                 print('Invalid log type')
         logger.info("Log file type is %s" % ltype)
-
-        while True:
-            pfile = raw_input("Enter full pathname of position file: ")
-            if len(pfile) > 0:
-                break
-            else:
-                print('No Position file entered')
-        logger.info("Position file is set to %s" % pfile)
-
         logfiles[lfile] = {}
         logfiles[lfile]['type'] = ltype
-        logfiles[lfile]['position_file'] = pfile
+        if ltype in ['suricata-redis-channel','suricata-redis-list']:
+            logger.info("Redis channel is %s" % redis_channel)
+            logfiles[lfile]['channel'] = redis_channel
+            logfiles[lfile]['use_main'] = use_main_redis
+            if use_main_redis == 'no':
+                logfiles[lfile]['server'] = redis_server
+                logfiles[lfile]['port'] = redis_port
+        else:
+            while True:
+                pfile = raw_input("Enter full pathname of position file: ")
+                if len(pfile) > 0:
+                    break
+                else:
+                    print('No Position file entered')
+            logger.info("Position file is set to %s" % pfile)
+
+            logfiles[lfile]['position_file'] = pfile
         while True:
             resp = raw_input("Do you want to add more log files? [y/n] ")
             if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N':
@@ -1341,6 +1458,11 @@ def setup_agent():
     config['Agent_forwarder']['sensor_name'] = sensor_name
     config['Agent_forwarder']['client_cert'] = client_cert
     config['Agent_forwarder']['client_private'] = client_key
+    config['Agent_forwarder']['redis'] = {}
+    config['Agent_forwarder']['redis']['enabled'] = use_redis
+    config['Agent_forwarder']['redis']['key'] = redis_key
+    config['Agent_forwarder']['redis']['server'] = redis_server
+    config['Agent_forwarder']['redis']['port'] = redis_port
     config['Agent_forwarder']['logfiles'] = logfiles
     config['Agent_forwarder']['target_addr'] = {}
     config['Agent_forwarder']['target_addr']['server_cert'] = server_cert

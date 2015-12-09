@@ -37,18 +37,40 @@ from dateutil.parser import parse
 from Minerva import core
 from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, EventListener
 
+class putEvent(object):
+    def __init__(self, cur_config):
+        self.cur_config = cur_config
+        if cur_config['redis']['enabled']:
+            import redis
+            self.putter = self.redisEvents
+            self.r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
+            self.key = cur_config['redis']['key']
+        else:
+            self.putter = self.queueEvents
+        self.queue = Queue()
+
+    def redisEvents(self, event):
+        self.r.rpush(self.key, json.dumps(event))
+
+    def queueEvents(self, event):
+        self.queue.put(event)
+
+            
 def insert_data(minerva_core, log_queue):
     try:
         inserter = MongoInserter(minerva_core, log_queue)
-        inserter.insert_data()
+        if minerva_core.conf['Event_Receiver']['redis']['enabled']:
+            inserter.insert_redis()
+        else:
+            inserter.insert_data()
     except:
         return
 
-def receiver(minerva_core, pname, log_queue):
+def receiver(minerva_core, pname, event_method):
     try:
         ip, port = pname.split('-')
         listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['listen_ip'][ip]['receive_threads']))
-        proc = AlertProcessor(minerva_core, log_queue)
+        proc = AlertProcessor(minerva_core, event_method)
         listener.listener(pname, proc.process)
     except:
         return
@@ -76,49 +98,50 @@ def genKey(cur_config, minerva_core):
     else:
         certdb.insert({"type": "receiver", "ip": cur_config['PCAP']['ip'], "cert": open(cur_config['certs']['server_cert'],'r').read() } )
 
-
-
 def main():
     minerva_core = core.MinervaConfigs()
     config = minerva_core.conf
     cur_config = config['Event_Receiver']
     if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
         genKey(cur_config, minerva_core)
+    event_method = putEvent(cur_config)
+    event_push = event_method.putter
     active_processes = []
-    log_queue = Queue()
     log_procs = []
     pcap_name = "%s-%s" % (cur_config['PCAP']['ip'], str(cur_config['PCAP']['port']))
     pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
     pcap_listener.start()
     for lp in range(0,int(cur_config['insertion_threads'])):
-        log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core, log_queue))
+        log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core, event_method.queue))
         log_proc.start()
         log_procs.append(log_proc)
     try:
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]['ports']:
                 name = "%s-%s" % (i,p)
-    	        pr = Process(name=name, target=receiver, args=((minerva_core, name, log_queue)))
+    	        pr = Process(name=name, target=receiver, args=((minerva_core, name, event_method)))
                 pr.start()
                 active_processes.append(pr)
         while True:
             for p in active_processes:
-                if not p in active_children():
+                if not p.is_alive():
                     active_processes.remove(p)
-                    pr = Process(name=p.name, target=receiver, args=((minerva_core, p.name, log_queue)))
+                    pr = Process(name=p.name, target=receiver, args=((minerva_core, p.name, event_method)))
                     pr.start()
                     active_processes.append(pr)
             for lp in log_procs:
-                if not lp in active_children():
+                if not lp.is_alive():
+                    lp.terminate()
                     log_procs.remove(lp)
-                    log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core, log_queue))
+                    log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core, event_method.queue))
                     log_proc.start()
                     log_procs.append(log_proc)
-            if not pcap_listener in active_children():
+            if not pcap_listener.is_alive():
                 pcap_listener.join()
                 pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
                 pcap_listener.start()
-            time.sleep(10)
+            #time.sleep(10)
+            time.sleep(.001)
     except:
         for p in active_processes:
             p.terminate()

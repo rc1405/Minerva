@@ -57,6 +57,5 @@ minerva.alerts = {};
   // bind events
   //
   $("#minerva-searchAlerts").click(app.search_alerts);
-  //app.table.on('click', '.minerva-investigate', app.investigateOne);
 
 })(jQuery, minerva.alerts);

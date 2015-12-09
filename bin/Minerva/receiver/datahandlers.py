@@ -47,7 +47,12 @@ class MongoInserter(object):
         filter_wait = int(self.config['Event_Receiver']['filter_wait'])
         while True:
             if not self.log_queue.empty():
-                event = json.loads(self.log_queue.get())
+                event = self.log_queue.get()
+                if isinstance(event, basestring):
+                    try:
+                        event = json.loads(event)
+                    except:
+                        continue
                 if event['logType'] == 'alert':
                     timestamp = event['timestamp']
                     try:
@@ -82,6 +87,71 @@ class MongoInserter(object):
                 continue
             else:
                 time.sleep(1)
+
+    def redis_data(self, events):
+        alert_events = []
+        flow_events = []
+        for event in events:
+            if isinstance(event, basestring):
+                try:
+                    event = json.loads(event)
+                except:
+                    continue
+                if isinstance(event, basestring):
+                    try:
+                        event = json.loads(event)
+                    except:
+                        continue
+            if event['logType'] == 'alert':
+                timestamp = event['timestamp']
+                try:
+                    ts = parse(timestamp)
+                    tz = timezone('UTC')
+                    event['timestamp'] = ts.astimezone(tz)
+                    event['epoch'] = int(time.mktime(ts.timetuple()))
+                except:
+                    pass
+                event['orig_timestamp'] = timestamp
+                event = self.process_filters(filters, event)
+                alert_events.append(event)
+            elif event['logType'] == 'flow':
+                event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
+                event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
+                flow_events.append(event)
+        return alert_events, flow_events
+    
+
+    def insert_redis(self):
+        import redis
+        db = self.core.get_db()
+        alert = db.alerts
+        flow = db.flow
+        filters = self.get_filters()
+        filter_time = time.time()
+        wait_time = time.time()
+        count_max = int(self.config['Event_Receiver']['insertion_batch'])
+        wait_max = int(self.config['Event_Receiver']['insertion_wait'])
+        filter_wait = int(self.config['Event_Receiver']['filter_wait'])
+        r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
+        key = self.config['Event_Receiver']['redis']['key']
+        while True:
+            pipeline = r.pipeline()
+            pipeline.lrange(key, 0, count_max-1)
+            pipeline.ltrim(key, count_max-1, -1)
+            if r.llen(key) >= count_max or (time.time() - wait_time >= wait_max and r.llen(key) > 0):
+                events = pipeline.execute()[0]
+                alert_events, flow_events = self.redis_data(events)
+                if len(alert_events) > 0:
+                    alert.insert(alert_events)
+                if len(flow_events) > 0:
+                    flow.insert(flow_events)
+                wait_time = time.time()
+            else:
+                time.sleep(1)
+            if time.time() - filter_time >= filter_wait:
+                filters = self.get_filters()
+                filter_time = time.time()
+
     def get_sids(self, item):
         return '%i-%i-%i' % ( int(item['sig_id']), int(item['rev']), int(item['gid'] ))
 
