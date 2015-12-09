@@ -100,4 +100,4 @@ class signatures(object):
 
     def process_files(self, initial_file):
         determine what type and send to other processes
-        return good or bad things
+        return 'good or bad things'
