@@ -30,7 +30,7 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters, MinervaSignatures
 
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
@@ -204,6 +204,7 @@ class Minerva(object):
             elif 'console' in perm_return or 'responder' in perm_return:
                 flow = alert_flow(self.minerva_core)
                 alert = alert_console(self.minerva_core)
+                sigs = MinervaSignatures(self.minerva_core)
 
                 if 'post_request' in cherrypy.session:
                     request = cherrypy.session['post_request']
@@ -218,6 +219,7 @@ class Minerva(object):
                 context_dict['items'] = items
                 context_dict['form'] = request['formType']
                 context_dict['comments'] = alert.get_comments(request['events'])
+                context_dict['signatures'] = sigs.get_signature(request['events'])
 
                 tmp = env.get_template('investigate.html')
                 return tmp.render(context_dict)
@@ -488,17 +490,32 @@ class Minerva(object):
 
     @cherrypy.expose
     def signatures(self, **kwargs):
-        return '''
-        <html><body>
-            <h2>Upload a file</h2>
-            <form action="upload_signatures" method="post" enctype="multipart/form-data">
-            filename: <input type="file" name="myFile" /><br />
-            <input type="submit" />
-            </form>
-            <h2>Download a file</h2>
-            <a href='download'>This one</a>
-        </body></html>
-        '''
+        user = Users(self.minerva_core)
+        cherrypy.session['prev_page'] = "/signatures"
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/profile')
+
+        elif 'sensor_admin' in perm_return:
+            context_dict = {}
+            context_dict['form'] = 'signatures'
+            tmp = env.get_template('signatures.html')
+            return tmp.render(context_dict)
+
+        elif 'newLogin' in perm_return:
+            raise cherrypy.HTTPRedirect('/login')
+
+        else:
+            raise cherrypy.HTTPError(403)
+
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -872,7 +889,13 @@ class Minerva(object):
 
     @cherrypy.expose
     def upload_signatures(self, **kwargs):
-        print(cherrypy.request)
+        lcHDRS = {}
+        for key, val in cherrypy.request.headers.iteritems():
+            lcHDRS[key.lower()] = val
+        incomingBytes = lcHDRS = int(lcHDRS['content-length'])
+        sig = MinervaSignatures(self.minerva_core)
+        ret_val = sig.process_files(kwargs['signature_file'])
+        print(ret_val)
         return
 
     '''Functions for retreiving and downloading PCAP'''
