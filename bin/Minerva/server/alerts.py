@@ -270,6 +270,7 @@ class alert_console(object):
             { "$limit": self.sizeLimit }
             ])
 
+
         event_search['start_epoch'] = start_epoch
         event_search['stop_epoch'] = stop_epoch
 
