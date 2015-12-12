@@ -78,7 +78,7 @@ class EventSender(object):
 
     def sender(self):
         if self.cur_config['redis']['enabled']:
-            r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
+            r = redis.Redis(host=self.cur_config['redis']['server'], port=self.cur_config['redis']['port'])
         else:
             queue = self.event_push.queue
         batchsize = int(self.cur_config['target_addr']['send_batch'])

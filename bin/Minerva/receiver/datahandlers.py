@@ -88,7 +88,7 @@ class MongoInserter(object):
             else:
                 time.sleep(1)
 
-    def redis_data(self, events):
+    def redis_data(self, events, filters):
         alert_events = []
         flow_events = []
         for event in events:
@@ -132,7 +132,7 @@ class MongoInserter(object):
         count_max = int(self.config['Event_Receiver']['insertion_batch'])
         wait_max = int(self.config['Event_Receiver']['insertion_wait'])
         filter_wait = int(self.config['Event_Receiver']['filter_wait'])
-        r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
+        r = redis.Redis(host=self.config['Event_Receiver']['redis']['server'], port=self.config['Event_Receiver']['redis']['port'])
         key = self.config['Event_Receiver']['redis']['key']
         while True:
             pipeline = r.pipeline()
@@ -140,7 +140,7 @@ class MongoInserter(object):
             pipeline.ltrim(key, count_max-1, -1)
             if r.llen(key) >= count_max or (time.time() - wait_time >= wait_max and r.llen(key) > 0):
                 events = pipeline.execute()[0]
-                alert_events, flow_events = self.redis_data(events)
+                alert_events, flow_events = self.redis_data(events, filters)
                 if len(alert_events) > 0:
                     alert.insert(alert_events)
                 if len(flow_events) > 0:
