@@ -146,7 +146,8 @@ class MinervaSignatures(object):
         classification = [] 
         classtypes = list(self.signatures.find({"type": "classtype"}))
         for i in classtypes:
-            classification.append(i['classtype'])
+            if len(i['classtype']) > 0:
+                classification.append(i['classtype'])
         return classification
 
     def get_signature(self, events):

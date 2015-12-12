@@ -359,6 +359,8 @@ class Minerva(object):
                 context_dict['orig_search'] = orig_search
                 cherrypy.session['alert_search'] = orig_search
 
+            sigs = MinervaSignatures(self.minerva_core)
+            context_dict['classtypes'] = sigs.get_classtypes()
             context_dict['form'] = 'alerts'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit

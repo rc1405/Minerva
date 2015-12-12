@@ -148,7 +148,18 @@
                   <label>Category</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="category" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.category']}}"{% endif %}/>
+                  <select name="category" class="form-control input-sm" >
+                    <option value="" >
+                    {% if orig_search %}
+                    {% set classes = orig_search['alert.category'] %}
+                    {% else %}
+                    {% set classes = 'NA' %}
+                    {% endif %}
+                    {% for cat in classtypes %}
+                    <option value="{{cat}}" {% if classes == cat %}selected{%endif%}>{{cat}}</option>
+                    {% endfor %}
+                  </select>
+                  <!--<input name="category" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search['alert.category']}}"{% endif %}/>-->
                 </div>
                 <div class="col-xs-1">
                   <label>Severity</label>
