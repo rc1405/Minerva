@@ -499,16 +499,26 @@ class Minerva(object):
         perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
 
         if 'PasswordReset' in perm_return:
-            if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
-
             raise cherrypy.HTTPRedirect('/profile')
 
         elif 'sensor_admin' in perm_return:
-            context_dict = {}
-            context_dict['form'] = 'signatures'
-            tmp = env.get_template('signatures.html')
-            return tmp.render(context_dict)
+            if cherrypy.request.method == 'GET':
+                context_dict = {}
+                context_dict['form'] = 'signatures'
+                context_dict['permissions'] = perm_return
+                tmp = env.get_template('signatures.html')
+                return tmp.render(context_dict)
+            elif cherrypy.request.method == 'POST':
+                lcHDRS = {}
+                for key, val in cherrypy.request.headers.iteritems():
+                    lcHDRS[key.lower()] = val
+                incomingBytes = lcHDRS = int(lcHDRS['content-length'])
+                sig = MinervaSignatures(self.minerva_core)
+                file_count, good_sigs, bad_sigs = sig.process_files(kwargs['signature_file'])
+                if isinstance(file_count, basestring):
+                    return '<script type="text/javascript">window.alert("%s");location="/signatures";</script>' % ret_val
+                else:
+                    return '<script type="text/javascript">window.alert("%i Files Checked. %i Signatures Processed.  %i Signatures Failed");location="/signatures";</script>' % (file_count, good_sigs, bad_sigs)
 
         elif 'newLogin' in perm_return:
             raise cherrypy.HTTPRedirect('/login')
@@ -886,17 +896,6 @@ class Minerva(object):
 
         else:
             raise cherrypy.HTTPError(404)
-
-    @cherrypy.expose
-    def upload_signatures(self, **kwargs):
-        lcHDRS = {}
-        for key, val in cherrypy.request.headers.iteritems():
-            lcHDRS[key.lower()] = val
-        incomingBytes = lcHDRS = int(lcHDRS['content-length'])
-        sig = MinervaSignatures(self.minerva_core)
-        ret_val = sig.process_files(kwargs['signature_file'])
-        print(ret_val)
-        return
 
     '''Functions for retreiving and downloading PCAP'''
     def download_complete(self):

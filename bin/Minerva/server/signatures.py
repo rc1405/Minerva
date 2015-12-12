@@ -44,16 +44,20 @@ class MinervaSignatures(object):
         rev_regex = re.compile(r'rev: *(?P<rev>\d+) *;')
         gid_regex = re.compile(r'gid: *(?P<gid>\d+) *;')
         classtype_regex = re.compile(r'classtype: *(?P<classtype>\S+) *;')
-        classtypes = []
+        #classtypes = []
+        bad_sigs = 0
+        good_sigs = 0
       
         for row in rule_file:
             if row[:1] == '#' or row == '\n':
                 continue
             sid = sid_regex.findall(row)
             if len(sid) == 0:
+                bad_sigs += 1
                 continue
             else:
                 sid = int(sid[0])
+                good_sigs += 1
             rev = rev_regex.findall(row)
             if len(rev) == 0:
                 rev = 1
@@ -69,9 +73,10 @@ class MinervaSignatures(object):
                 classtype = ''
             else:
                 classtype = classtype[0]
-            if not classtype in classtypes:
-                classtypes.append(classtype)
+            if not classtype in self.classtypes:
+                self.classtypes.append(classtype)
             self.signatures.update({"sig_id": sid, "gen_id": gid, "rev": rev}, { "$set": {"sig_id": sid, "gen_id": gid, "rev": rev, "classtype": classtype, "signature": row.strip(), "type": "signature" }}, upsert=True )
+        return good_sigs, bad_sigs
 
     def update_classtypes(self):
         cur_types = []
@@ -88,38 +93,54 @@ class MinervaSignatures(object):
             self.signatures.update({"type": "classtype", "classtype": n },{ "$set": { "classtype": n }}, upsert=True)
 
     def unzip_signatures(self, rule_file):
-        bad_files = []
         file_count = 0
+        good_sigs = 0
+        bad_sigs = 0
         try:
-            zip_file = zipfile.ZipFilel(fileobj=StringIO(rule_file.read()))
+            zip_file = zipfile.ZipFile(StringIO(rule_file.read()))
         except:
             return 'Unable to open zip file'
         contents = zip_file.namelist()
         for filename in contents:
             if filename.endswith('.rules'):
-                self.parse_signatures(zip_file.read(filename).split('\n'))
-        return 'success'
+                file_count += 1
+                good, bad = self.parse_signatures(zip_file.read(filename).split('\n'))
+                good_sigs = good_sigs + good
+                bad_sigs = bad_sigs + bad
+        return file_count, good_sigs, bad_sigs
 
     def untar_signatures(self, tar_file):
+        file_count = 0
+        good_sigs = 0
+        bad_sigs = 0
         try:
             tar = tarfile.open(fileobj=StringIO(tar_file.read()))
         except:
             return 'Unable to open tar file'
         for member in tar.getmembers():
             if member.name.endswith('.rules'):
-                print(member.name)
-                self.parse_signatures(tar.extractfile(member).readlines())
-        return 'success'
+                file_count += 1
+                good, bad = self.parse_signatures(tar.extractfile(member).readlines())
+                good_sigs = good_sigs + good
+                bad_sigs = bad_sigs + bad
+        return file_count, good_sigs, bad_sigs
 
     def process_files(self, initial_file):
         file_name = initial_file.filename
+        file_count = 0
+        good_sigs = 0
+        bad_sigs = 0
         if '.' in file_name:
             file_name_tmp = file_name.split('.')
             if file_name_tmp[-2] == 'tar' or file_name_tmp[-1] == 'tar':
-                ret_status = self.untar_signatures(initial_file.file)
+                file_count, good_sigs, bad_sigs = self.untar_signatures(initial_file.file)
             elif file_name_tmp[-1] in ['gz', 'gzip', 'zip']:
-                ret_status = self.unzip_signatures(initial_file.file)
-        return 'good or bad things'
+                file_count, good_sigs, bad_sigs = self.unzip_signatures(initial_file.file)
+            elif file_name_tmp[-1] == 'rules':
+                file_count = 1
+                good_sigs, bad_sigs = self.parse_signatures(initial_file.file.readlines())
+            self.update_classtypes()
+        return file_count, good_sigs, bad_sigs
 
     def get_classtypes(self):
         classification = [] 
