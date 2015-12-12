@@ -113,6 +113,7 @@ Agent_forwarder:
     port: {{config.Agent_forwarder.target_addr.port}}
     send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
     send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
+    fail_wait: {{config.Agent_forwarder.target_addr.fail_wait}}
   pcap:
     max_packets: {{config.Agent_forwarder.pcap.max_packets}}
     max_size: {{config.Agent_forwarder.pcap.max_size}}

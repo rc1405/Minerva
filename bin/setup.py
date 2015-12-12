@@ -1314,6 +1314,24 @@ def setup_agent():
                 pass
     logger.info("Max wait time between sending events is set to %i" % int(send_wait))
 
+    while True:
+        fail_wait = raw_input("Enter max # of seconds to wait to send events after a failure: [10] ")
+        if len(fail_wait) == 0:
+            fail_wait = 10
+            break
+        else:
+            try:
+                fail_wait = int(fail_wait)
+                break
+            except:
+                print('Invalid fail time')
+                pass
+    logger.info("Max fail time between sending events after a failure is set to %i" % int(fail_wait))
+
+
+
+
+
     print("**********************************************************")
     print("*          Configuring Agent PCAP Requests               *")
     print("**********************************************************")
@@ -1470,6 +1488,7 @@ def setup_agent():
     config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
     config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
     config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
+    config['Agent_forwarder']['target_addr']['fail_wait'] = int(fail_wait)
     config['Agent_forwarder']['pcap'] = {}
     config['Agent_forwarder']['pcap']['max_packets'] = max_packets
     config['Agent_forwarder']['pcap']['max_size'] = max_size
