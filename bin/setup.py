@@ -929,6 +929,12 @@ def setup_receiver():
     while True:
         use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
         if use_redis == 'y':
+            try:
+                import redis
+            except:
+                print("Redis Chosen but missing python-redis module")
+                logger.info("Redis Chosen but missing redis module")
+                sys.exit()
             use_redis = 'yes'
             while True:
                 redis_key = raw_input("What Redis key do you want to use? [minerva-receiver] ")
@@ -1139,7 +1145,15 @@ def setup_agent():
 
     while True:
         use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
+        redis_mod = False
         if use_redis == 'y':
+            try:
+                import redis
+                redis_mod = True
+            except:
+                print("Redis Chosen but missing python-redis module")
+                logger.info("Redis Chosen but missing redis module")
+                sys.exit()
             use_redis = 'yes'
             while True:
                 redis_key = raw_input("What Redis key do you want to use? [minerva-agent] ")
@@ -1190,6 +1204,13 @@ def setup_agent():
                             print('Invalid option')
                 else:
                     use_main_redis = 'no'
+                    try:
+                        import redis
+                    except:
+                        print("Redis Chosen but missing python-redis module")
+                        logger.info("Redis Chosen but missing redis module")
+                        sys.exit()
+
                 if use_redis == 'no' or use_main_redis == 'no':
                     while True:
                         redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
