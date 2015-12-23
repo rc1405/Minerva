@@ -90,13 +90,20 @@ def genKey(cur_config, minerva_core):
         os.makedirs(os.path.dirname(cur_config['certs']['private_key']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % platform.node() ]
     subprocess.call(cmd)
+
+def checkCert(cur_config, minerva_core):
     db = minerva_core.get_db()
     certdb = db.certs
     results = list(certdb.find({"type": "receiver", "ip": cur_config['PCAP']['ip'] }))
-    if len(results) > 0:
-        certdb.update({"type": "receiver", "ip": cur_config['PCAP']['ip'] },{ "$set": { "cert": open(cur_config['certs']['server_cert'],'r').read() }})
-    else:
+    if len(results) == 0:
         certdb.insert({"type": "receiver", "ip": cur_config['PCAP']['ip'], "cert": open(cur_config['certs']['server_cert'],'r').read() } )
+    else:
+        cert = results[0]['cert']
+        if cert != open(cur_config['certs']['server_cert'],'r').read():
+            print('Cert Changed')
+            certdb.update({"type": "receiver", "ip": cur_config['PCAP']['ip'] },{ "$set": { "cert": open(cur_config['certs']['server_cert'],'r').read() }})
+    return
+
 
 def main():
     minerva_core = core.MinervaConfigs()
@@ -104,6 +111,7 @@ def main():
     cur_config = config['Event_Receiver']
     if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
         genKey(cur_config, minerva_core)
+    checkCert(cur_config, minerva_core)
     event_method = putEvent(cur_config)
     event_push = event_method.putter
     active_processes = []

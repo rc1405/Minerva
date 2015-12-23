@@ -982,13 +982,20 @@ def genKey(cur_config, minerva_core):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_key']))
     cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['hostname']]
     subprocess.call(cmd)
+
+def checkCert(cur_config, minerva_core):
     db = minerva_core.get_db()
     certdb = db.certs
     results = list(certdb.find({"type": "webserver"}))
-    if len(results) > 0:
-        certdb.update({"type": "webserver"},{ "$set": { "cert": open(cur_config['certs']['webserver_cert'],'r').read() }})
-    else:
+    if len(results) == 0:
         certdb.insert({"type": "webserver", "cert": open(cur_config['certs']['webserver_cert'],'r').read() } )
+    else:
+        cert = results[0]['cert']
+        if cert != open(cur_config['certs']['webserver_cert'],'r').read():
+            print('Cert Changed')
+            certdb.update({"type": "webserver"},{ "$set": { "cert": open(cur_config['certs']['webserver_cert'],'r').read() }})
+    return
+
 
 def secureheaders():
     headers = cherrypy.response.headers
@@ -1007,6 +1014,7 @@ if __name__ == '__main__':
     server_config = minerva_core.conf['Webserver']['web']
     if not os.path.exists(server_config['certs']['webserver_cert']) or not os.path.exists(server_config['certs']['webserver_cert']):
         genKey(server_config, minerva_core)
+    checkCert(server_config, minerva_core)
     if 'port' not in server_config:
         port = 443
     else:
