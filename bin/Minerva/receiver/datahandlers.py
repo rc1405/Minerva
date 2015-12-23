@@ -21,9 +21,9 @@
 
 import time
 import json
-import numpy
 
 import pymongo
+import numpy
 from pytz import timezone
 from dateutil.parser import parse
 
@@ -32,14 +32,13 @@ class MongoInserter(object):
         self.config = minerva_core.conf
         self.core = minerva_core
         self.log_queue = log_queue
-        self.filters = self.reset_filters()
-        self.filter_checks = self.reset_checks()
+        self.filters = EventFilters(minerva_core)
 
     def insert_data(self):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
-        filters, checks = self.get_filters()
+        filters, checks = self.filters.get_filters()
         filter_time = time.time()
         alert_events = []
         flow_events = []
@@ -66,7 +65,7 @@ class MongoInserter(object):
                     except:
                         pass
                     event['orig_timestamp'] = timestamp
-                    event = self.process_filters(filters, checks, event)
+                    event = self.filters.process_filters(filters, checks, event)
                     alert_events.append(event)
                 elif event['logType'] == 'flow':
                     event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
@@ -84,7 +83,7 @@ class MongoInserter(object):
                 count = 0
                 wait_time = time.time()
             if time.time() - filter_time >= filter_wait:
-                filters, checks = self.get_filters()
+                filters, checks = self.filters.get_filters()
                 filter_time = time.time()
             if not self.log_queue.empty():
                 continue
@@ -115,7 +114,7 @@ class MongoInserter(object):
                 except:
                     pass
                 event['orig_timestamp'] = timestamp
-                event = self.process_filters(filters, checks, event)
+                event = self.filters.process_filters(filters, checks, event)
                 alert_events.append(event)
             elif event['logType'] == 'flow':
                 event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
@@ -129,7 +128,7 @@ class MongoInserter(object):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
-        filters, checks = self.get_filters()
+        filters, checks = self.filters.get_filters()
         filter_time = time.time()
         wait_time = time.time()
         count_max = int(self.config['Event_Receiver']['insertion_batch'])
@@ -152,8 +151,15 @@ class MongoInserter(object):
             else:
                 time.sleep(1)
             if time.time() - filter_time >= filter_wait:
-                filters, checks = self.get_filters()
+                filters, checks = self.filters.get_filters()
                 filter_time = time.time()
+
+class EventFilters(object):
+    def __init__(self, minerva_core):
+        self.config = minerva_core.conf
+        self.core = minerva_core
+        self.filters = self.reset_filters()
+        self.filter_checks = self.reset_checks()
 
     def reset_filters(self):
         self.filters = {
