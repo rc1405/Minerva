@@ -9,3 +9,4 @@ hashlib
 markupsafe
 dpkt
 pypcap
+numpy

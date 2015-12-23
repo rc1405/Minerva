@@ -21,6 +21,7 @@
 
 import time
 import json
+import numpy
 
 import pymongo
 from pytz import timezone
@@ -31,12 +32,14 @@ class MongoInserter(object):
         self.config = minerva_core.conf
         self.core = minerva_core
         self.log_queue = log_queue
+        self.filters = self.reset_filters()
+        self.filter_checks = self.reset_checks()
 
     def insert_data(self):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
-        filters = self.get_filters()
+        filters, checks = self.get_filters()
         filter_time = time.time()
         alert_events = []
         flow_events = []
@@ -63,7 +66,7 @@ class MongoInserter(object):
                     except:
                         pass
                     event['orig_timestamp'] = timestamp
-                    event = self.process_filters(filters, event)
+                    event = self.process_filters(filters, checks, event)
                     alert_events.append(event)
                 elif event['logType'] == 'flow':
                     event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
@@ -81,14 +84,14 @@ class MongoInserter(object):
                 count = 0
                 wait_time = time.time()
             if time.time() - filter_time >= filter_wait:
-                filters = self.get_filters()
+                filters, checks = self.get_filters()
                 filter_time = time.time()
             if not self.log_queue.empty():
                 continue
             else:
                 time.sleep(1)
 
-    def redis_data(self, events, filters):
+    def redis_data(self, events, filters, checks):
         alert_events = []
         flow_events = []
         for event in events:
@@ -112,7 +115,7 @@ class MongoInserter(object):
                 except:
                     pass
                 event['orig_timestamp'] = timestamp
-                event = self.process_filters(filters, event)
+                event = self.process_filters(filters, checks, event)
                 alert_events.append(event)
             elif event['logType'] == 'flow':
                 event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
@@ -126,7 +129,7 @@ class MongoInserter(object):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
-        filters = self.get_filters()
+        filters, checks = self.get_filters()
         filter_time = time.time()
         wait_time = time.time()
         count_max = int(self.config['Event_Receiver']['insertion_batch'])
@@ -140,7 +143,7 @@ class MongoInserter(object):
             pipeline.ltrim(key, count_max-1, -1)
             if r.llen(key) >= count_max or (time.time() - wait_time >= wait_max and r.llen(key) > 0):
                 events = pipeline.execute()[0]
-                alert_events, flow_events = self.redis_data(events, filters)
+                alert_events, flow_events = self.redis_data(events, filters, checks)
                 if len(alert_events) > 0:
                     alert.insert(alert_events)
                 if len(flow_events) > 0:
@@ -149,110 +152,148 @@ class MongoInserter(object):
             else:
                 time.sleep(1)
             if time.time() - filter_time >= filter_wait:
-                filters = self.get_filters()
+                filters, checks = self.get_filters()
                 filter_time = time.time()
 
+    def reset_filters(self):
+        self.filters = {
+            'status_CLOSED': [],
+            'status_ESCALATED': [],
+            'priority_1': [],
+            'priority_-1': [],
+            'priority_2': [],
+            'priority_-2': [],
+            'priority_3': [],
+            'priority_-3': [],
+            'priority_4': [],
+            'priority_-4': [],
+        }
+
+    def reset_checks(self):
+        self.filter_checks = {
+            'signature': False,
+            'category': False,
+            'address': False,
+            'session': False,
+            'sig_address': False,
+            'sig_session': False,
+        }
+
     def get_sids(self, item):
-        return '%i-%i-%i' % ( int(item['sig_id']), int(item['rev']), int(item['gid'] ))
+        item_value =  '%i-%i-%i' % ( int(item['sig_id']), int(item['rev']), int(item['gid'] ))
+        self.add_filter(item_value, item)
+        self.filter_checks['signature'] = True
+
+    def add_filter(self, item_value, item):
+        if str(item['action_type']) == 'priority':
+            self.filters['priority_%i' % int(item['action_value'])].append(item_value)
+        elif str(item['action_type']) == 'STATUS':
+            self.filters['status_%s' % str(item['action_value'])].append(item_value)
 
     def get_cat(self, item):
-        return item['category']
+        item_value = item['category']
+        self.add_filter(item_value, item)
+        self.filter_checks['category'] = True
 
     def get_addresses(self, item):
-        return item['ip_address']
+        item_value = item['ip_address']
+        self.add_filter(item_value, item)
+        self.filter_checks['address'] = True
 
     def get_sessions(self, item):
-        return '%s-%s' % ( item['src_ip'], item['dest_ip'] )
+        item_value = '%s-%s' % ( item['src_ip'], item['dest_ip'] )
+        self.add_filter(item_value, item)
+        self.filter_checks['session'] = True
 
     def get_sigAddress(self, item):
-        return '%i-%i-%i-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['ip_address'])
+        item_value = '%i-%i-%i-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['ip_address'])
+        self.add_filter(item_value, item)
+        self.filter_checks['sig_address'] = True
 
     def get_sigSession(self, item):
-        return '%i-%i-%i-%s-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['src_ip'], item['dest_ip'])
-
-    def map_actions(self, item):
-        if item['type'] == 'category':
-            return item['category_name'], item['action_type'], item['action_value']
-        if item['type'] == 'signature':
-            return '%i-%i-%i' % (int(item['sig_id']), int(item['rev']), int(item['gid'])), item['action_type'], item['action_value']
-        if item['type'] == 'address':
-            return item['ip_address'], item['action_type'], item['action_value']
-        if item['type'] == 'session':
-            return '%s-%s' % (item['src_ip'],item['dest_ip']), item['action_type'], item['action_value']
-        if item['type'] == 'sig_address':
-            return '%i-%i-%i-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['ip_address'])
-        if item['type'] == 'sig_session':
-            return '%i-%i-%i-%s-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['src_ip'], item['dest_ip'])
-         
-        return output
-
-    def get_actions(self, items):
-        ret_actions = {}
-        for a in items:
-            ret_actions[a[0]] = [a[1], a[2]]
-        return ret_actions
+        item_value = '%i-%i-%i-%s-%s' % (int(item['sig_id']), int(item['rev']), int(item['gid']), item['src_ip'], item['dest_ip'])
+        self.add_filter(item_value, item)
+        self.filter_checks['sig_session'] = True
 
     def get_filters(self):
         db = self.core.get_db()
         filters = db.filters
-        all_filters = {}
-        all_filters['signatures'] = map(self.get_sids, list(filters.aggregate([{ "$match": { "type": "signature" }},{ "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid" }}])))
-        all_filters['categories'] = map(self.get_cat, list(filters.aggregate([{ "$match": { "type": "categories" }}, { "$project": { "category": "$category"}}])))
-        all_filters['addresses'] = map(self.get_addresses, list(filters.aggregate([{ "$match": { "type": "address" }}, { "$project": { "ip_address": "$ip_address"}}])))
-        all_filters['session'] = map(self.get_sessions, list(filters.aggregate([{ "$match": { "type": "session" }}, { "$project": { "src_ip": "$src_ip", "dest_ip": "$dest_ip"}}])))
-        all_filters['sigAddress'] = map(self.get_sigAddress, list(filters.aggregate([{ "$match": { "type": "sig_address"}}, { "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "ip_address": "$ip_address"}}])))
-        all_filters['sigSession'] = map(self.get_sigSession, list(filters.aggregate([{ "$match": { "type": "sig_session"}}, { "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "src_ip": "$src_ip", "dest_ip": "$dest_ip"}}])))
-        all_filters['actions'] = self.get_actions(map(self.map_actions, list(filters.find())))
-        return all_filters
+        self.reset_filters()
+        self.reset_checks()
+
+        map(self.get_sids, list(filters.aggregate([{ "$match": { "type": "signature" }},{ "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "action_type": "$action_type", "action_value": "$action_value" }}])))
+
+        map(self.get_cat, list(filters.aggregate([{ "$match": { "type": "categories" }}, { "$project": { "category": "$category", "action_type": "$action_type", "action_value": "$action_value" }}])))
+
+        map(self.get_addresses, list(filters.aggregate([{ "$match": { "type": "address" }}, { "$project": { "ip_address": "$ip_address", "action_type": "$action_type", "action_value": "$action_value"}}])))
+
+        map(self.get_sessions, list(filters.aggregate([{ "$match": { "type": "session" }}, { "$project": { "src_ip": "$src_ip", "dest_ip": "$dest_ip", "action_type": "$action_type", "action_value": "$action_value" }}])))
+
+        map(self.get_sigAddress, list(filters.aggregate([{ "$match": { "type": "sig_address"}}, { "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "ip_address": "$ip_address", "action_type": "$action_type", "action_value": "$action_value" }}])))
+
+        map(self.get_sigSession, list(filters.aggregate([{ "$match": { "type": "sig_session"}}, { "$project": { "sig_id": "$sig_id", "rev": "$rev", "gid": "$gid", "src_ip": "$src_ip", "dest_ip": "$dest_ip", "action_type": "$action_type", "action_value": "$action_value" }}])))
+
+        ret_filters = {}
+        for f in self.filters.keys():
+            if len(self.filters[f]) > 0:
+                ret_filters[f] = numpy.array(self.filters[f])
+            else:
+                ret_filters[f] = []
+        return ret_filters, self.filter_checks
+
 
     def do_action(self, filters, event, key):
-        action = filters['actions'][key]
-        if str(action[0]) == 'priority':
-            sev = int(event['alert']['severity']) + int(action[1])
+        def return_sev(sev, priority):
+            sev = int(sev) + priority
             if sev > 5:
-                sev = 5
-            if sev < 1:
-                sev = 1
-            event['alert']['severity'] = sev
-            return event
-        if str(action[0]) == 'STATUS':
-            event['MINERVA_STATUS'] = action[1]
-            return event
+                return 5
+            elif sev < 1:
+                return 1
+            else:
+                return sev
+        if key in filters['priority_1']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], 1)
+        elif key in filters['priority_-1']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], -1)
+        elif key in filters['priority_2']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], 2)
+        elif key in filters['priority_-2']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], -2)
+        elif key in filters['priority_3']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], 3)
+        elif key in filters['priority_-3']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], -3)
+        elif key in filters['priority_4']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], 4)
+        elif key in filters['priority_-4']:
+            event['alert']['severity'] = return_sev(event['alert']['severity'], -4)
+        elif key in filters['status_CLOSED']:
+            event['MINERVA_STATUS'] = 'ClOSED'
+        elif key in filters['status_ESCALATED']:
+            event['MINERVA_STATUS'] = 'ESCALATED'
+        return event
  
-    def process_filters(self, filters, event):
-        if len(filters['categories']) > 0:
-            if event['alert']['category'] in filters['categories']:
-                event = self.do_action(filters, event, event['alert']['category'])
+    def process_filters(self, filters, checks, event):
+        if checks['category']:
+            event = self.do_action(filters, event, event['alert']['category'])
 
-        if len(filters['signatures']) > 0:
-            if '%i-%i-%i' % ( event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'] ) in filters['signatures']:
-                event = self.do_action(filters, event, '%i-%i-%i' % ( event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'] ))
+        if checks['signature']:
+            event = self.do_action(filters, event, '%i-%i-%i' % ( event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'] ))
 
-        if len(filters['addresses']) > 0:
-            if event['src_ip'] in filters['addresses']:
-                event = self.do_action(filters, event, event['src_ip'])
-            if event['dest_ip'] in filters['addresses']:
-                event = self.do_action(filters, event, event['dest_ip'])
+        if checks['address']:
+            event = self.do_action(filters, event, event['src_ip'])
+            event = self.do_action(filters, event, event['dest_ip'])
 
-        if len(filters['session']) > 0:
-            if '%s-%s' % ( event['src_ip'], event['dest-ip'] ) in filters['session']:
-                event = self.do_action(filters, event, '%s-%s' % ( event['src_ip'], event['dest-ip'] ))
-            elif '%s-%s' ( event['dest_ip'], event['src_ip'] ) in filters['session']:
-                event = self.do_action(filters, event, '%s-%s' ( event['dest_ip'], event['src_ip'] ))
+        if checks['session']:
+            event = self.do_action(filters, event, '%s-%s' % ( event['src_ip'], event['dest_ip'] ))
+            event = self.do_action(filters, event, '%s-%s' % ( event['dest_ip'], event['src_ip'] ))
 
-        if len(filters['sigAddress']) > 0:
-            if '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip']):
-                event = self.do_action(filters, event, '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip']))
+        if checks['sig_address']:
+            event = self.do_action(filters, event, '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip']))
+            event = self.do_action(filters, event, '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip']))
 
-            elif '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip']):
-                event = self.do_action(filters, event, '%i-%i-%i-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip']))
-
-        if len(filters['sigSession']) > 0:
-            if '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip'], event['dest_ip']):
-                event = self.do_action(filters, event, '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip'], event['dest_ip']))
-
-            elif '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip'], event['src_ip']):
-                event = self.do_action(filters, event, '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip'], event['src_ip']))
-
+        if checks['sig_session']:
+            event = self.do_action(filters, event, '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['src_ip'], event['dest_ip']))
+            event = self.do_action(filters, event, '%i-%i-%i-%s-%s' % (event['alert']['signature_id'], event['alert']['rev'], event['alert']['gid'], event['dest_ip'], event['src_ip']))
   
         return event 

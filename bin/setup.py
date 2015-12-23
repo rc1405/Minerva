@@ -112,6 +112,13 @@ def check_receiver():
     except:
         print('pytz not installed')
         logger.error('pytz not installed')
+    try:
+        import numpy
+        logger.info('%s is installed' % 'numpy')
+    except:
+        print('numpy not installed')
+        logger.error('numpy not installed')
+        sys.exit()
 
 def validate_ip(ipaddress):
     if len(re.findall(r'\d+.\d+.\d+.\d+', ipaddress)) == 1:

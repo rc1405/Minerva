@@ -3,3 +3,4 @@ pymongo
 python-dateutil
 M2Crypto
 pytz
+numpy
