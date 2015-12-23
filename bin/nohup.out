@@ -1,0 +1,522 @@
+[22/Dec/2015:03:04:23] ENGINE Listening for SIGHUP.
+[22/Dec/2015:03:04:23] ENGINE Listening for SIGTERM.
+[22/Dec/2015:03:04:23] ENGINE Listening for SIGUSR1.
+[22/Dec/2015:03:04:23] ENGINE Bus STARTING
+[22/Dec/2015:03:04:23] ENGINE Started monitor thread 'Autoreloader'.
+[22/Dec/2015:03:04:23] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Dec/2015:03:04:23] ENGINE Serving on https://192.168.218.49:9443
+[22/Dec/2015:03:04:23] ENGINE Bus STARTED
+[22/Dec/2015:03:05:32] ENGINE Started monitor thread 'Session cleanup'.
+192.168.218.9 - - [22/Dec/2015:03:05:32] "GET / HTTP/1.1" 303 112 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:33] "GET /login HTTP/1.1" 200 1183 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:33] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:33] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:33] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:33] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:33] "GET /images/favicon.ico HTTP/1.1" 200 99678 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:37] "POST /login HTTP/1.1" 303 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:38] "GET / HTTP/1.1" 200 118665 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:38] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:38] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:39] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:39] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:53] "POST /close_nc HTTP/1.1" 303 102 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:54] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:54] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:57] "GET /alerts HTTP/1.1" 200 14548 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:57] "GET /css/DateTimePicker.min.css HTTP/1.1" 200 3244 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:57] "GET /css/alerts.css HTTP/1.1" 200 1357 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:57] "GET /js/DateTimePicker.min.js HTTP/1.1" 200 46358 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:05:57] "GET /js/alerts.js HTTP/1.1" 200 1877 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:07] "GET /js/bootstrap.js HTTP/1.1" 200 68890 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:07] "GET /js/DateTimePicker.min.js HTTP/1.1" 200 46358 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:10] "GET /sensors HTTP/1.1" 200 4725 "https://192.168.218.49:9443/alerts" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:10] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:10] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:10] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:10] "GET /js/sensors.js HTTP/1.1" 200 2286 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:13] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:13] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:13] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:06:16] "GET /responder HTTP/1.1" 200 6183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:07:21] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/responder" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:07:24] "GET /responder HTTP/1.1" 200 6183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:07:25] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/responder" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:09:34] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:09:37] "GET /responder HTTP/1.1" 200 6183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:09:39] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/responder" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:12:27] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:13:21] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:16:09] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:47] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:51] "GET /signatures HTTP/1.1" 200 4284 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:51] "GET /css/DateTimePicker.min.css HTTP/1.1" 200 3244 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:51] "GET /js/bootstrap.js HTTP/1.1" 200 68890 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:51] "GET /js/DateTimePicker.min.js HTTP/1.1" 200 46358 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:54] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:59] "GET /event_filters HTTP/1.1" 200 12842 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:59] "GET /css/alerts.css HTTP/1.1" 200 1357 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:30:59] "GET /js/filters.js HTTP/1.1" 200 9012 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:03:31:00] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:04:04:55] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:04:07:36] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:04:07:39] "GET /responder HTTP/1.1" 200 6183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:04:07:42] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/responder" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:04:10:25] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:04:13:42] "GET / HTTP/1.1" 200 6255 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:04:19:28] ENGINE Caught signal SIGHUP.
+[22/Dec/2015:04:19:28] ENGINE SIGHUP caught while daemonized. Restarting.
+[22/Dec/2015:04:19:28] ENGINE Bus STOPPING
+[22/Dec/2015:04:19:28] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('192.168.218.49', 9443)) shut down
+[22/Dec/2015:04:19:28] ENGINE Stopped thread 'Autoreloader'.
+[22/Dec/2015:04:19:28] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Dec/2015:04:19:28] ENGINE Stopped thread 'Session cleanup'.
+[22/Dec/2015:04:19:28] ENGINE Bus STOPPED
+[22/Dec/2015:04:19:28] ENGINE Bus EXITING
+[22/Dec/2015:04:19:28] ENGINE Bus EXITED
+[22/Dec/2015:04:19:28] ENGINE Waiting for child threads to terminate...
+[22/Dec/2015:04:19:28] ENGINE Re-spawning webserver.py
+[22/Dec/2015:04:19:29] ENGINE Listening for SIGHUP.
+[22/Dec/2015:04:19:29] ENGINE Listening for SIGTERM.
+[22/Dec/2015:04:19:29] ENGINE Listening for SIGUSR1.
+[22/Dec/2015:04:19:29] ENGINE Bus STARTING
+[22/Dec/2015:04:19:29] ENGINE Started monitor thread 'Autoreloader'.
+[22/Dec/2015:04:19:29] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Dec/2015:04:19:29] ENGINE Serving on https://192.168.218.49:9443
+[22/Dec/2015:04:19:29] ENGINE Bus STARTED
+[22/Dec/2015:13:37:23] ENGINE Started monitor thread 'Session cleanup'.
+192.168.218.9 - - [22/Dec/2015:13:37:23] "GET / HTTP/1.1" 303 112 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:23] "GET /login HTTP/1.1" 200 1183 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:23] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:23] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:23] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:23] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:27] "POST /login HTTP/1.1" 303 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:30] "GET / HTTP/1.1" 200 26021 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:30] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:30] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:30] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:37:49] "POST /investigate HTTP/1.1" 200 10138 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:06] "POST /investigate HTTP/1.1" 200 10138 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:06] "GET /css/investigate.css HTTP/1.1" 200 636 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:06] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:37] "POST /close HTTP/1.1" 200 54 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:37] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:37] "GET /css/console.css HTTP/1.1" 304 - "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:38] "GET /js/console.js HTTP/1.1" 304 - "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:38] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 304 - "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:40] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:38:58] "POST /investigate HTTP/1.1" 200 8021 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:13:39:29] HTTP 
+Request Headers:
+  COOKIE: session_id=ec64121680c9a9ad2bf44d1be44c2f1e7f6d9777
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 64
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:13:39:29] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:13:39:30] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:13:40:11] HTTP 
+Request Headers:
+  COOKIE: session_id=ec64121680c9a9ad2bf44d1be44c2f1e7f6d9777
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 64
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:13:40:11] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:13:40:11] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:13:40:19] HTTP 
+Request Headers:
+  COOKIE: session_id=ec64121680c9a9ad2bf44d1be44c2f1e7f6d9777
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 60
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:13:40:19] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:13:40:19] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+Generating a 2048 bit RSA private key
+..............................................+++
+.............+++
+writing new private key to '/var/lib/minerva/webserver/private.pem'
+-----
+[22/Dec/2015:13:46:43] ENGINE Listening for SIGHUP.
+[22/Dec/2015:13:46:43] ENGINE Listening for SIGTERM.
+[22/Dec/2015:13:46:43] ENGINE Listening for SIGUSR1.
+[22/Dec/2015:13:46:43] ENGINE Bus STARTING
+[22/Dec/2015:13:46:43] ENGINE Started monitor thread 'Autoreloader'.
+[22/Dec/2015:13:46:43] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Dec/2015:13:46:43] ENGINE Serving on https://192.168.218.49:9443
+[22/Dec/2015:13:46:43] ENGINE Bus STARTED
+[22/Dec/2015:13:46:56] ENGINE Started monitor thread 'Session cleanup'.
+192.168.218.9 - - [22/Dec/2015:13:46:56] "GET / HTTP/1.1" 303 112 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:46:56] "GET /login HTTP/1.1" 200 1183 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:47:03] "POST /login HTTP/1.1" 303 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:47:03] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:13:47:09] HTTP 
+Request Headers:
+  COOKIE: session_id=f516135c4d701a38d4edffaa1a6e5073d7e0c43a
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 60
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:13:47:09] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:13:47:09] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:13:54:31] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:13:54:36] HTTP 
+Request Headers:
+  COOKIE: session_id=f516135c4d701a38d4edffaa1a6e5073d7e0c43a
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 60
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:13:54:36] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:13:54:36] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:12:46] "GET / HTTP/1.1" 303 112 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:12:46] "GET /login HTTP/1.1" 200 1183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:12:56] "POST /login HTTP/1.1" 200 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:12:57] "GET /login HTTP/1.1" 200 1183 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:13:02] "POST /login HTTP/1.1" 303 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:13:03] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:13:13] "POST /investigate HTTP/1.1" 200 7889 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:23:13:17] HTTP 
+Request Headers:
+  COOKIE: session_id=d5e413f837796dd53830cafab87184ecac602c7b
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 64
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:23:13:17] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:23:13:17] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:13:50] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[22/Dec/2015:23:13:54] HTTP 
+Request Headers:
+  COOKIE: session_id=d5e413f837796dd53830cafab87184ecac602c7b
+  ORIGIN: https://192.168.218.49:9443
+  Remote-Addr: 192.168.218.9
+  Content-Length: 60
+  USER-AGENT: Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36
+  CONNECTION: keep-alive
+  REFERER: https://192.168.218.49:9443/
+  X-REQUESTED-WITH: XMLHttpRequest
+  HOST: 192.168.218.49:9443
+  ACCEPT: */*
+  ACCEPT-LANGUAGE: en-US,en;q=0.8
+  CSRFMIDDLEWARETOKEN: 
+  Content-Type: application/json
+  ACCEPT-ENCODING: gzip, deflate
+[22/Dec/2015:23:13:54] HTTP 
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cprequest.py", line 670, in respond
+    response.body = self.handler()
+  File "/usr/lib/python2.7/site-packages/cherrypy/lib/encoding.py", line 217, in __call__
+    self.body = self.oldhandler(*args, **kwargs)
+  File "/usr/lib/python2.7/site-packages/cherrypy/_cpdispatch.py", line 61, in __call__
+    return self.callable(*self.args, **self.kwargs)
+  File "webserver.py", line 953, in get_pcap
+    pcap = pcaps.alertPCAP(request['events'])
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 146, in alertPCAP
+    ip, port, cert = self.get_receiver(sensor)
+  File "/root/minerva-ids/bin/Minerva/server/requests.py", line 56, in get_receiver
+    cert = list(self.certs.aggregate([ { "$match": { "type": "receiver", "ip": ip }}, { "$project": { "cert": "$cert" }}]))[0]['cert']
+IndexError: list index out of range
+192.168.218.9 - - [22/Dec/2015:23:13:54] "POST /get_pcap HTTP/1.1" 500 1866 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+Traceback (most recent call last):
+  File "receiver.py", line 152, in <module>
+    main()
+  File "receiver.py", line 147, in main
+    p.terminate()
+  File "/usr/lib64/python2.7/multiprocessing/process.py", line 137, in terminate
+    self._popen.terminate()
+  File "/usr/lib64/python2.7/multiprocessing/forking.py", line 171, in terminate
+    os.kill(self.pid, signal.SIGTERM)
+OSError: [Errno 3] No such process
+[22/Dec/2015:23:14:45] ENGINE Keyboard Interrupt: shutting down bus
+[22/Dec/2015:23:14:45] ENGINE Bus STOPPING
+[22/Dec/2015:23:14:45] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('192.168.218.49', 9443)) shut down
+[22/Dec/2015:23:14:45] ENGINE Stopped thread 'Autoreloader'.
+[22/Dec/2015:23:14:45] ENGINE Stopped thread '_TimeoutMonitor'.
+[22/Dec/2015:23:14:45] ENGINE Stopped thread 'Session cleanup'.
+[22/Dec/2015:23:14:45] ENGINE Bus STOPPED
+[22/Dec/2015:23:14:45] ENGINE Bus EXITING
+[22/Dec/2015:23:14:45] ENGINE Bus EXITED
+[22/Dec/2015:23:14:45] ENGINE Waiting for child threads to terminate...
+Generating a 2048 bit RSA private key
+...................+++
+............................+++
+writing new private key to '/var/lib/minerva/receiver/private.pem'
+-----
+Generating a 2048 bit RSA private key
+....+++
+....................+++
+writing new private key to '/var/lib/minerva/webserver/private.pem'
+-----
+[22/Dec/2015:23:15:14] ENGINE Listening for SIGHUP.
+[22/Dec/2015:23:15:14] ENGINE Listening for SIGTERM.
+[22/Dec/2015:23:15:14] ENGINE Listening for SIGUSR1.
+[22/Dec/2015:23:15:14] ENGINE Bus STARTING
+[22/Dec/2015:23:15:14] ENGINE Started monitor thread 'Autoreloader'.
+[22/Dec/2015:23:15:14] ENGINE Started monitor thread '_TimeoutMonitor'.
+[22/Dec/2015:23:15:14] ENGINE Serving on https://192.168.218.49:9443
+[22/Dec/2015:23:15:14] ENGINE Bus STARTED
+[22/Dec/2015:23:16:00] ENGINE Started monitor thread 'Session cleanup'.
+192.168.218.9 - - [22/Dec/2015:23:16:00] "GET / HTTP/1.1" 303 112 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:00] "GET /login HTTP/1.1" 200 1183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:04] "POST /login HTTP/1.1" 303 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:05] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:08] "GET /event_filters HTTP/1.1" 200 12842 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:08] "GET /css/alerts.css HTTP/1.1" 200 1357 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:08] "GET /js/bootstrap.js HTTP/1.1" 200 68890 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:08] "GET /js/filters.js HTTP/1.1" 200 9012 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:11] "GET /sensors HTTP/1.1" 200 4725 "https://192.168.218.49:9443/event_filters" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:11] "GET /js/sensors.js HTTP/1.1" 200 2286 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:15] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:22] "GET /sensors HTTP/1.1" 200 4725 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:27] "GET /sensors HTTP/1.1" 200 4725 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:30] "GET /sensors HTTP/1.1" 200 4725 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+SSLError: [Errno 1] _ssl.c:504: error:14094412:SSL routines:SSL3_READ_BYTES:sslv3 alert bad certificate
+192.168.218.9 - - [22/Dec/2015:23:16:33] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:36] "GET /responder HTTP/1.1" 200 6183 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:37] "GET /sensors HTTP/1.1" 200 4729 "https://192.168.218.49:9443/responder" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:41] "POST /sensors HTTP/1.1" 200 4725 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:50] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:16:55] "POST /get_pcap HTTP/1.1" 200 96 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:04] "POST /get_pcap HTTP/1.1" 200 96 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:09] "GET /config HTTP/1.1" 200 16074 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:09] "GET /js/config.js HTTP/1.1" 200 1560 "https://192.168.218.49:9443/config" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:26] "GET /signatures HTTP/1.1" 200 4284 "https://192.168.218.49:9443/config" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:26] "GET /css/DateTimePicker.min.css HTTP/1.1" 200 3244 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:26] "GET /js/DateTimePicker.min.js HTTP/1.1" 200 46358 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:17:28] "GET /sensors HTTP/1.1" 200 4725 "https://192.168.218.49:9443/signatures" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:18:06] "GET /sensors HTTP/1.1" 200 4725 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:18:10] "GET /responder HTTP/1.1" 200 6183 "https://192.168.218.49:9443/sensors" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:18:11] "GET / HTTP/1.1" 200 25187 "https://192.168.218.49:9443/responder" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:18:15] "POST /get_pcap HTTP/1.1" 200 88 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:18:20] "POST /get_pcap HTTP/1.1" 200 88 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:18:24] "POST /get_pcap HTTP/1.1" 200 88 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:19:07] "POST /investigate HTTP/1.1" 200 7895 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:19:54] "POST /investigate HTTP/1.1" 200 9153 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:23:19] "POST /investigate HTTP/1.1" 200 7906 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:23:26] "POST /investigate HTTP/1.1" 200 10149 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [22/Dec/2015:23:24:22] "POST /investigate HTTP/1.1" 200 10153 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:10] "GET / HTTP/1.1" 303 112 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:10] "GET /login HTTP/1.1" 200 1183 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:10] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:10] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:10] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:10] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:14] "POST /login HTTP/1.1" 303 102 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:15] "GET / HTTP/1.1" 200 26019 "https://192.168.218.49:9443/login" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:15] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:15] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:15] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:18] "POST /investigate HTTP/1.1" 200 10138 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:18] "GET /css/investigate.css HTTP/1.1" 200 645 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:18] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET / HTTP/1.1" 200 26019 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:38] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:41] "POST /investigate HTTP/1.1" 200 10138 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:41] "GET /css/investigate.css HTTP/1.1" 200 641 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:03:41] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET / HTTP/1.1" 200 26019 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:11] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:13] "POST /investigate HTTP/1.1" 200 12580 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:13] "GET /css/investigate.css HTTP/1.1" 200 641 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:13] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET / HTTP/1.1" 200 26019 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:54] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:58] "POST /investigate HTTP/1.1" 200 10157 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:58] "GET /css/investigate.css HTTP/1.1" 200 658 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:04:58] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET / HTTP/1.1" 200 26019 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:11] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:13] "POST /investigate HTTP/1.1" 200 10176 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:13] "GET /css/investigate.css HTTP/1.1" 200 658 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:06:13] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET / HTTP/1.1" 200 26019 "" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /css/bootstrap.min.css HTTP/1.1" 200 122540 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /css/console.css HTTP/1.1" 200 1304 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /jquery.min.js HTTP/1.1" 200 84345 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /css/bootstrap-theme.min.css HTTP/1.1" 200 23357 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /js/bootstrap.min.js HTTP/1.1" 200 36816 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /js/console.js HTTP/1.1" 200 6177 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:25] "GET /fonts/glyphicons-halflings-regular.woff2 HTTP/1.1" 200 18028 "https://192.168.218.49:9443/css/bootstrap.min.css" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:28] "POST /investigate HTTP/1.1" 200 10229 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:28] "GET /css/investigate.css HTTP/1.1" 200 658 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+192.168.218.9 - - [23/Dec/2015:02:08:28] "GET /js/investigate.js HTTP/1.1" 200 3293 "https://192.168.218.49:9443/" "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36"
+[23/Dec/2015:02:14:44] ENGINE Restarting because /root/minerva-ids/bin/webserver.py changed.
+[23/Dec/2015:02:14:44] ENGINE Stopped thread 'Autoreloader'.
+[23/Dec/2015:02:14:44] ENGINE Bus STOPPING
+[23/Dec/2015:02:14:44] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('192.168.218.49', 9443)) shut down
+[23/Dec/2015:02:14:44] ENGINE Stopped thread '_TimeoutMonitor'.
+[23/Dec/2015:02:14:44] ENGINE Stopped thread 'Session cleanup'.
+[23/Dec/2015:02:14:44] ENGINE Bus STOPPED
+[23/Dec/2015:02:14:44] ENGINE Bus EXITING
+[23/Dec/2015:02:14:44] ENGINE Bus EXITED
+[23/Dec/2015:02:14:44] ENGINE Waiting for child threads to terminate...
+[23/Dec/2015:02:14:44] ENGINE Re-spawning webserver.py
+  File "webserver.py", line 1001
+    if cert != open(cur_config['certs']['webserver_cert'],'r').read()):
+                                                                     ^
+SyntaxError: invalid syntax

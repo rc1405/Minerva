@@ -122,4 +122,30 @@ class EventSender(object):
                         time.sleep(1)
             except:
                 sys.exit()
+
+    def emergency_sender(self):
+        if self.cur_config['redis']['enabled']:
+            r = redis.Redis(host=self.cur_config['redis']['server'], port=self.cur_config['redis']['port'])
+        else:
+            queue = self.event_push.queue
+        while True:
+            try:
+                if self.cur_config['redis']['enabled']:
+                    events = r.lrange(key, 0, -1)
+                    event_ct = len(events)
+                    batch = batch + events
+                    retval = 'reject'
+                    retval = self.send_events(batch)
+                    if retval == 'accept':
+                        r.ltrim(key, event_ct-1, -1)
+                    sys.exit()
+                else:
+                    while not queue.empty():
+                        batch.append(json.dumps(queue.get()))
+                    retval = 'reject'
+                    retval = self.send_events(batch)
+                    if retval == 'accept':
+                        sys.exit()
+            except:
+                sys.exit()
     
