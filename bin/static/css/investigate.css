@@ -17,7 +17,7 @@ body {
   background-color: #ebe4cc;
 }
 
-.table th, .table td {
+.minerva-break-word, .table th, .table td {
   word-wrap: break-word;
 }
 
