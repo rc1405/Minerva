@@ -119,6 +119,13 @@ def check_receiver():
         print('numpy not installed')
         logger.error('numpy not installed')
         sys.exit()
+    try:
+        import netaddr
+        logger.info('%s is installed' % 'netaddr')
+    except:
+        print('netaddr not installed')
+        logger.error('netaddr not installed')
+        sys.exit()
 
 def validate_ip(ipaddress):
     if len(re.findall(r'\d+.\d+.\d+.\d+', ipaddress)) == 1:

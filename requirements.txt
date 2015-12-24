@@ -10,3 +10,4 @@ markupsafe
 dpkt
 pypcap
 numpy
+netaddr
