@@ -230,7 +230,7 @@ class alert_console(object):
             stop_epoch = event_search.pop('stop_epoch')
             start_epoch = event_search.pop('start_epoch')
 
-        results_found = self.alerts.aggregate([ { "$match":
+        '''results_found = self.alerts.aggregate([ { "$match":
             { "$and": [
                 event_search,
                     { "$and": [
@@ -268,10 +268,22 @@ class alert_console(object):
                 }
             }, 
             { "$limit": self.sizeLimit }
-            ])
+            ])'''
 
+        results = self.alerts.find(
+            { "$and": [
+                event_search,
+                { "$and": [
+                    { "epoch": { "$gt": start_epoch }},
+                    { "epoch": { "$lt": stop_epoch }},
+                ]},
+              ]}
+            ).sort([("_id", pymongo.ASCENDING)]).limit(self.sizeLimit)
+
+        numFound = results.count()
+        results_found = map(self.map_alerts, results)
 
         event_search['start_epoch'] = start_epoch
         event_search['stop_epoch'] = stop_epoch
 
-        return results_found, event_search
+        return numFound, results_found, event_search

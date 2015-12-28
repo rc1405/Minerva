@@ -32,8 +32,6 @@ class event_filters(object):
         db = minerva_core.get_db()
         self.filters = db.filters
         self.alerts = db.alerts
-        self.flow = db.flow
-        self.sessions = db.sessions
 
 
     def map_filters(self, item):

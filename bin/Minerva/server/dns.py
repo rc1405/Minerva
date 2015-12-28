@@ -23,7 +23,7 @@ import time
 
 import pymongo
 
-class alert_flow(object):
+class dns(object):
 
     '''Initialize Class'''
     def __init__(self, minerva_core):
@@ -168,38 +168,32 @@ class alert_flow(object):
             stop_epoch = event_search.pop('stop_epoch')
             start_epoch = event_search.pop('start_epoch')
                      
-        results = self.flow.find(
-          { '$and': [
-             event_search,
-             { '$or': [
+        results_found = self.flow.aggregate([
+          { '$match': 
+            { '$and': [ 
+              event_search, 
+              { '$or': [
                 { '$and': [
-                  { 'netflow.start_epoch': { '$gt': start_epoch }},
+                  { 'netflow.start_epoch': { '$gt': start_epoch }}, 
                   { 'netflow.start_epoch': { '$lt': stop_epoch }}
-                ]},
+                ]}, 
                 { '$and': [
-                  { 'netflow.stop_epoch': { '$gt': start_epoch }},
+                  { 'netflow.stop_epoch': { '$gt': start_epoch }}, 
                   { 'netflow.stop_epoch': { '$lt': stop_epoch }}
-                ]},
+                ]}, 
                 { '$and': [
-                  { 'netflow.start_epoch': { '$lt': start_epoch }},
+                  { 'netflow.start_epoch': { '$lt': start_epoch }}, 
                   { 'netflow.stop_epoch': { '$gt': stop_epoch }}
                 ]}
+              ]}
             ]}
-          ]}).sort([("_id", pymongo.ASCENDING)]).limit(self.sizeLimit)
-        
-        numFound = results.count()
-        results_found = map(self.map_flow, results)
+          }, 
+          { '$project': { 'ID': '$_id', 'document': '$$ROOT' }}, 
+          { '$sort': { 'ID': 1 }}, 
+          { '$limit': self.sizeLimit }
+        ])
         
         event_search['start_epoch'] = start_epoch
         event_search['stop_epoch'] = stop_epoch
         
-        return numFound, results_found, event_search
-
-    def map_flow(self, item):
-        ret_dict = {}
-        ret_dict['ID'] = item.pop('_id')
-        ret_dict['document'] = item
-        return ret_dict
-
-
-
+        return results_found, event_search

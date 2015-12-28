@@ -51,6 +51,9 @@ class ConvertEve():
         elif new_entry['event_type'] == 'netflow':
             new_entry['logType'] = 'flow'
 
+        elif new_entry['event_type'] == 'dns':
+            new_entry['logType'] = 'dns'
+
         else:
             return False
 

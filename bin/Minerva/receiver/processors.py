@@ -128,13 +128,13 @@ class AlertProcessor(object):
                 json_data = json_data + data
         s.send('accept')
         s.close()
+
 class PCAPprocessor(object):
     def __init__(self, minerva_core):
         self.config = minerva_core.conf
         self.core = minerva_core
 
     def process(self, host, s):
-        #print('starting processing')
         encrypted_options = ''
         while True:
             data = s.recv(8192)
@@ -147,7 +147,6 @@ class PCAPprocessor(object):
         except:
             s.close()
             return
-        #print('requesting pcap from sensor %s' % options['sensor'])
         soc = socket(AF_INET, SOCK_STREAM)
         soc.setblocking(0)
         soc.settimeout(int(self.config['Event_Receiver']['PCAP']['timeout']))
@@ -173,7 +172,6 @@ class PCAPprocessor(object):
             try:
                 data = soc_ssl.recv(8192)
             except ssl.SSLError:
-                #print('Timed Out')
                 s.send('Request Timed Out')
                 s.close()
                 return

@@ -73,10 +73,13 @@ class MongoInserter(object):
                     event = self.filters.process_filters(filters, checks, event)
                     alert_events.append(event)
                 elif event['logType'] == 'flow':
-                    event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
-                    event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
-                    flow_events.append(event)
-                    watcher.process_watches(watchlist, watch_check, event)
+                    try:
+                        event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
+                        event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
+                        flow_events.append(event)
+                        watcher.process_watches(watchlist, watch_check, event)
+                    except:
+                        pass
                 elif event['logType'] == 'dns':
                     timestamp = event['timestamp']
                     try:
@@ -140,10 +143,13 @@ class MongoInserter(object):
                 event = self.filters.process_filters(filters, checks, event)
                 alert_events.append(event)
             elif event['logType'] == 'flow':
-                event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
-                event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
-                flow_events.append(event)
-                watcher.process_watches(watchlist, watch_check, event)
+                try:
+                    event['netflow']['start_epoch'] = time.mktime(parse(event['netflow']['start']).timetuple())
+                    event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
+                    flow_events.append(event)
+                    watcher.process_watches(watchlist, watch_check, event)
+                except:
+                    pass
             elif event['logType'] == 'dns':
                 timestamp = event['timestamp']
                 try:
@@ -168,7 +174,6 @@ class MongoInserter(object):
         dns = db.dns
         filters, checks = self.filters.get_filters()
         filter_time = time.time()
-        watchlist, watch_check = watcher.get_watches()
         wait_time = time.time()
         count_max = int(self.config['Event_Receiver']['insertion_batch'])
         wait_max = int(self.config['Event_Receiver']['insertion_wait'])
@@ -401,7 +406,7 @@ class MinervaWatchlist(object):
             ipaddress = netaddr.IPNetwork(item['address'])
         except:
             return
-        if ip.size > 1:
+        if ipaddress.size > 1:
             ip_addresses = map(self.ip_to_str, list(ipaddress.iter_hosts()))
             for i in ip_addresses:
                 self.add_ip_watch(i, int(item['priority']))
@@ -415,7 +420,7 @@ class MinervaWatchlist(object):
         self.reset_watches()
         self.reset_checks()
 
-        map(self.get_ips, list(watches.aggregate([{ "$match": { "type": "address", "STATUS": "ENABLED" }},{ "$project": { "address": "$criteria", "priority": "$priority" }}])))
+        map(self.get_ips, list(watches.aggregate([{ "$match": { "type": "ip_address", "STATUS": "ENABLED" }},{ "$project": { "address": "$criteria", "priority": "$priority" }}])))
 
         map(self.get_domains, list(watches.aggregate([{ "$match": { "type": "domain", "STATUS": "ENABLED" }}, { "$project": { "domain": "$criteria", "priority": "$priority" }}])))
 
@@ -435,7 +440,7 @@ class MinervaWatchlist(object):
                 "src_port" : event['src_port'],
                 "event_type" : "alert",
                 "proto" : event['proto'],
-                "timestamp" : event['timestamp'],
+                #"timestamp" : event['timestamp'],
                 "alert" : {
                         "category" : "minerva-watchlist",
                         "severity" : priority,
@@ -453,6 +458,11 @@ class MinervaWatchlist(object):
                 "payload" : "",
                 "MINERVA_STATUS" : "OPEN",
         }
+        if 'orig_timestamp' in event:
+            new_event['timestamp'] = event['orig_timestamp']
+        else:
+            new_event['timestamp'] = event['timestamp']
+
         if self.method == 'QUEUE':
             self.log_queue.put(new_event)
         elif self.method == 'REDIS':
@@ -460,53 +470,59 @@ class MinervaWatchlist(object):
 
     def check_ip(self, watches, event):
         if event['src_ip'] in watches['IP_5']:
-            self.fire_alert(event['src_ip'], 'IP', 5)
+            self.fire_alert(event, event['src_ip'], 'IP', 5)
         elif event['src_ip'] in watches['IP_4']:
-            self.fire_alert(event['src_ip'], 'IP', 4)
+            self.fire_alert(event, event['src_ip'], 'IP', 4)
         elif event['src_ip'] in watches['IP_3']:
-            self.fire_alert(event['src_ip'], 'IP', 3)
+            self.fire_alert(event, event['src_ip'], 'IP', 3)
         elif event['src_ip'] in watches['IP_2']:
-            self.fire_alert(event['src_ip'], 'IP', 2)
+            self.fire_alert(event, event['src_ip'], 'IP', 2)
         elif event['src_ip'] in watches['IP_1']:
-            self.fire_alert(event['src_ip'], 'IP', 1)
+            self.fire_alert(event, event['src_ip'], 'IP', 1)
 
         if event['dest_ip'] in watches['IP_5']:
-            self.fire_alert(event['dest_ip'], 'IP', 5)
+            self.fire_alert(event, event['dest_ip'], 'IP', 5)
         elif event['dest_ip'] in watches['IP_4']:
-            self.fire_alert(event['dest_ip'], 'IP', 4)
+            self.fire_alert(event, event['dest_ip'], 'IP', 4)
         elif event['dest_ip'] in watches['IP_3']:
-            self.fire_alert(event['dest_ip'], 'IP', 3)
+            self.fire_alert(event, event['dest_ip'], 'IP', 3)
         elif event['dest_ip'] in watches['IP_2']:
-            self.fire_alert(event['dest_ip'], 'IP', 2)
+            self.fire_alert(event, event['dest_ip'], 'IP', 2)
         elif event['dest_ip'] in watches['IP_1']:
-            self.fire_alert(event['dest_ip'], 'IP', 1)
+            self.fire_alert(event, event['dest_ip'], 'IP', 1)
 
     def check_domain(self, watches, event):
         if 'rdata' in event['dns']:
             if event['dns']['rdata'] in watches['domain_5']:
-                self.fire_alert(event['dns']['rdata'], 'Domain', 5)
+                self.fire_alert(event, event['dns']['rdata'], 'Domain', 5)
+                return
             elif event['dns']['rdata'] in watches['domain_4']:
-                self.fire_alert(event['dns']['rdata'], 'Domain', 4)
+                self.fire_alert(event, event['dns']['rdata'], 'Domain', 4)
+                return
             elif event['dns']['rdata'] in watches['domain_3']:
-                self.fire_alert(event['dns']['rdata'], 'Domain', 3)
+                self.fire_alert(event, event['dns']['rdata'], 'Domain', 3)
+                return
             elif event['dns']['rdata'] in watches['domain_2']:
-                self.fire_alert(event['dns']['rdata'], 'Domain', 2)
+                self.fire_alert(event, event['dns']['rdata'], 'Domain', 2)
+                return
             elif event['dns']['rdata'] in watches['domain_1']:
-                self.fire_alert(event['dns']['rdata'], 'Domain', 1)
+                self.fire_alert(event, event['dns']['rdata'], 'Domain', 1)
+                return
 
-        if event['dns']['rrname'] in watches['domain_5']:
-            self.fire_alert(event['dns']['rrname'], 'Domain', 5)
-        elif event['dns']['rrname'] in watches['domain_4']:
-            self.fire_alert(event['dns']['rrname'], 'Domain', 4)
-        elif event['dns']['rrname'] in watches['domain_3']:
-            self.fire_alert(event['dns']['rrname'], 'Domain', 3)
-        elif event['dns']['rrname'] in watches['domain_2']:
-            self.fire_alert(event['dns']['rrname'], 'Domain', 2)
-        elif event['dns']['rrname'] in watches['domain_1']:
-            self.fire_alert(event['dns']['rrname'], 'Domain', 1)
+        if 'rrname' in event['dns']:
+            if event['dns']['rrname'] in watches['domain_5']:
+                self.fire_alert(event, event['dns']['rrname'], 'Domain', 5)
+            elif event['dns']['rrname'] in watches['domain_4']:
+                self.fire_alert(event, event['dns']['rrname'], 'Domain', 4)
+            elif event['dns']['rrname'] in watches['domain_3']:
+                self.fire_alert(event, event['dns']['rrname'], 'Domain', 3)
+            elif event['dns']['rrname'] in watches['domain_2']:
+                self.fire_alert(event, event['dns']['rrname'], 'Domain', 2)
+            elif event['dns']['rrname'] in watches['domain_1']:
+                self.fire_alert(event, event['dns']['rrname'], 'Domain', 1)
 
     def process_watches(self, watches, checks, event):
-        if checks['IP']:
+        if checks['IP'] and event['logType'] == 'flow':
             self.check_ip(watches, event)
-        if checks['domain']:
+        if checks['domain'] and event['logType'] == 'dns':
             self.check_domain(watches, event)

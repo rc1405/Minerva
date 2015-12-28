@@ -1542,7 +1542,7 @@ def setup_agent():
 def write_config():
     from jinja2 import Environment, FileSystemLoader
     env = Environment(loader=FileSystemLoader('templates'))
-    tmp = env.get_template('minerva.yaml')
+    tmp = env.get_template('minerva.jinja')
     conf_file = open(os.path.join(install_path,'etc/minerva.yaml'),'w')
     conf_write = tmp.render(config)
     conf_file.writelines(tmp.render({ "config": config }))

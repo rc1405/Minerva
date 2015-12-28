@@ -72,7 +72,7 @@ class Minerva(object):
             else:
                 return '<script type="text/javascript">window.alert("Invalid Username or Pasword");location="/login";</script>'
         else:
-            tmp = env.get_template('login.html')
+            tmp = env.get_template('login.jinja')
             return tmp.render()
     
     @cherrypy.expose
@@ -107,7 +107,7 @@ class Minerva(object):
             context_dict['form'] = 'console'
             context_dict['title'] = 'Alert'
             context_dict['permissions'] = perm_return
-            tmp = env.get_template('console.html')
+            tmp = env.get_template('console.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -143,7 +143,7 @@ class Minerva(object):
             context_dict['form'] = 'responder'
             context_dict['title'] = 'Escalation'
             context_dict['permissions'] = perm_return
-            tmp = env.get_template('console.html')
+            tmp = env.get_template('console.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -176,7 +176,7 @@ class Minerva(object):
             context_dict = {}
             context_dict['permissions'] = perm_return
             context_dict['form'] = 'about'
-            tmp = env.get_template('about.html')
+            tmp = env.get_template('about.jinja')
             return tmp.render(context_dict)
 
 
@@ -221,7 +221,7 @@ class Minerva(object):
                 context_dict['comments'] = alert.get_comments(request['events'])
                 context_dict['signatures'] = sigs.get_signature(request['events'])
 
-                tmp = env.get_template('investigate.html')
+                tmp = env.get_template('investigate.jinja')
                 return tmp.render(context_dict)
 
             elif 'newLogin' in perm_return:
@@ -297,7 +297,7 @@ class Minerva(object):
             context_dict['form'] = 'filters'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
-            tmp = env.get_template('filters.html')
+            tmp = env.get_template('filters.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -342,7 +342,7 @@ class Minerva(object):
                 if 'alert_search' in cherrypy.session:
                     request = cherrypy.session['alert_search']
                     del cherrypy.session['alert_search']
-                    items_found, orig_search = alert.search_alerts(request, orig_search=True)
+                    numFound, items_found, orig_search = alert.search_alerts(request, orig_search=True)
 
                 else:
                     if 'get_request' in cherrypy.session.keys():
@@ -352,10 +352,10 @@ class Minerva(object):
                     else:
                         request = cherrypy.request.json
 
-                    items_found, orig_search = alert.search_alerts(request)
+                    numFound, items_found, orig_search = alert.search_alerts(request)
 
-                context_dict['items_found'] = list(items_found)
-                context_dict['numFound'] = len(context_dict['items_found'])
+                context_dict['items_found'] = items_found
+                context_dict['numFound'] = numFound
                 context_dict['orig_search'] = orig_search
                 cherrypy.session['alert_search'] = orig_search
 
@@ -364,7 +364,7 @@ class Minerva(object):
             context_dict['form'] = 'alerts'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
-            tmp = env.get_template('alerts.html')
+            tmp = env.get_template('alerts.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -410,7 +410,7 @@ class Minerva(object):
                 if 'flow_search' in cherrypy.session:
                     request = cherrypy.session['flow_search']
                     del cherrypy.session['flow_search']
-                    items_found, orig_search = flow.search_flow(request, orig_search=True)
+                    numFound, items_found, orig_search = flow.search_flow(request, orig_search=True)
 
                 else:
                     if 'post_request' in cherrypy.session.keys():
@@ -420,17 +420,17 @@ class Minerva(object):
                     else:
                         request = cherrypy.request.json
 
-                    items_found, orig_search = flow.search_flow(request)
+                    numFound, items_found, orig_search = flow.search_flow(request)
 
-                context_dict['items_found'] = list(items_found)
-                context_dict['numFount'] = len(context_dict['items_found'])
+                context_dict['items_found'] = items_found
+                context_dict['numFound'] = numFound
                 context_dict['orig_search'] = orig_search
                 cherrypy.session['flow_search'] = orig_search
 
             context_dict['form'] = 'flow'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
-            tmp = env.get_template('flow.html')
+            tmp = env.get_template('flow.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -481,7 +481,7 @@ class Minerva(object):
             context_dict['items_found'] = items_found
             context_dict['form'] = 'sensors'
             context_dict['permissions'] = perm_return
-            tmp = env.get_template('sensors.html')
+            tmp = env.get_template('sensors.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -508,7 +508,7 @@ class Minerva(object):
                 context_dict = {}
                 context_dict['form'] = 'signatures'
                 context_dict['permissions'] = perm_return
-                tmp = env.get_template('signatures.html')
+                tmp = env.get_template('signatures.jinja')
                 return tmp.render(context_dict)
             elif cherrypy.request.method == 'POST':
                 lcHDRS = {}
@@ -582,7 +582,7 @@ class Minerva(object):
             context_dict['form'] = 'usermanagement'
             context_dict['ReturnStatus'] = retstatus 
             context_dict['permissions'] = perm_return
-            tmp = env.get_template('users.html')
+            tmp = env.get_template('users.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -626,7 +626,7 @@ class Minerva(object):
 
                 server_config = core.MinervaConfigs()
                 new_config = server_config.parse_web_configs(request)
-                out_tmp = env.get_template('minerva.yaml')
+                out_tmp = env.get_template('minerva.jinja')
                 base_dir = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), os.pardir)
                 shutil.copy(os.path.join(base_dir,'etc','minerva.yaml'),os.path.join(base_dir,'etc','minerva.yaml.bkup'))
                 out_yaml = open(os.path.join(base_dir,'etc','minerva.yaml'), 'w')
@@ -640,7 +640,7 @@ class Minerva(object):
                 context_dict['config'] = self.configs
                 context_dict['form'] = 'server_admin'
                 context_dict['permissions'] = perm_return
-                tmp = env.get_template('config.html')
+                tmp = env.get_template('config.jinja')
                 return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
@@ -692,7 +692,7 @@ class Minerva(object):
                 context_dict = {}
                 context_dict['form'] = 'profile'
                 context_dict['permissions'] = perm_return
-                tmp = env.get_template('profile.html')
+                tmp = env.get_template('profile.jinja')
                 return tmp.render(context_dict)
 
 
@@ -740,7 +740,7 @@ class Minerva(object):
                 context_dict['numFound'] = numFound
                 context_dict['items_found'] = items_found
                 context_dict['permissions'] = perm_return
-                tmp = env.get_template('watchlist.html')
+                tmp = env.get_template('watchlist.jinja')
                 return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:
