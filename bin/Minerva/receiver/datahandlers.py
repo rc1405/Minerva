@@ -24,7 +24,7 @@ import json
 
 import pymongo
 import numpy
-import ipaddress
+import netaddr
 from pytz import timezone
 from dateutil.parser import parse
 
@@ -39,12 +39,14 @@ class MongoInserter(object):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
+        dns = db.dns
         filters, checks = self.filters.get_filters()
         filter_time = time.time()
         watcher = MinervaWatchlist(self.core, method='QUEUE', log_queue=self.log_queue)
         watchlist, watch_check = watcher.get_watches()
         alert_events = []
         flow_events = []
+        dns_events = []
         wait_time = time.time()
         count = 0
         count_max = int(self.config['Event_Receiver']['insertion_batch'])
@@ -75,6 +77,18 @@ class MongoInserter(object):
                     event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
                     flow_events.append(event)
                     watcher.process_watches(watchlist, watch_check, event)
+                elif event['logType'] == 'dns':
+                    timestamp = event['timestamp']
+                    try:
+                        ts = parse(timestamp)
+                        tz = timezone('UTC')
+                        event['timestamp'] = ts.astimezone(tz)
+                        event['epoch'] = int(time.mktime(ts.timetuple()))
+                    except:
+                        pass
+                    event['orig_timestamp'] = timestamp
+                    dns_events.append(event)
+                    watcher.process_watches(watchlist, watch_check, event)
                 count += 1
             tdiff = time.time() - wait_time
             if count >= count_max or tdiff >= wait_max:
@@ -84,6 +98,9 @@ class MongoInserter(object):
                 if len(flow_events) > 0:
                     flow.insert(flow_events)
                     flow_events = []
+                if len(dns_events) > 0:
+                    dns.insert(dns_events)
+                    dns_events = []
                 count = 0
                 wait_time = time.time()
             if time.time() - filter_time >= filter_wait:
@@ -98,6 +115,7 @@ class MongoInserter(object):
     def redis_data(self, events, filters, checks, watcher, watchlist, watch_check):
         alert_events = []
         flow_events = []
+        dns_events = []
         for event in events:
             if isinstance(event, basestring):
                 try:
@@ -126,7 +144,20 @@ class MongoInserter(object):
                 event['netflow']['stop_epoch'] = time.mktime(parse(event['netflow']['end']).timetuple())
                 flow_events.append(event)
                 watcher.process_watches(watchlist, watch_check, event)
-        return alert_events, flow_events
+            elif event['logType'] == 'dns':
+                timestamp = event['timestamp']
+                try:
+                    ts = parse(timestamp)
+                    tz = timezone('UTC')
+                    event['timestamp'] = ts.astimezone(tz)
+                    event['epoch'] = int(time.mktime(ts.timetuple()))
+                except:
+                    pass
+                event['orig_timestamp'] = timestamp
+                dns_events.append(event)
+                watcher.process_watches(watchlist, watch_check, event)
+
+        return alert_events, flow_events, dns_events
     
 
     def insert_redis(self):
@@ -134,6 +165,7 @@ class MongoInserter(object):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
+        dns = db.dns
         filters, checks = self.filters.get_filters()
         filter_time = time.time()
         watchlist, watch_check = watcher.get_watches()
@@ -151,11 +183,13 @@ class MongoInserter(object):
             pipeline.ltrim(key, count_max-1, -1)
             if r.llen(key) >= count_max or (time.time() - wait_time >= wait_max and r.llen(key) > 0):
                 events = pipeline.execute()[0]
-                alert_events, flow_events = self.redis_data(events, filters, checks, watcher, watchlist, watch_check)
+                alert_events, flow_events, dns_events = self.redis_data(events, filters, checks, watcher, watchlist, watch_check)
                 if len(alert_events) > 0:
                     alert.insert(alert_events)
                 if len(flow_events) > 0:
                     flow.insert(flow_events)
+                if len(dns_events) > 0:
+                    dns.insert(dns_events)
                 wait_time = time.time()
             else:
                 time.sleep(1)
@@ -363,8 +397,12 @@ class MinervaWatchlist(object):
         return str(item)
 
     def get_ips(self, item):
-        if '/' in item['address']:
-            ip_addresses = map(self.ip_to_str, list(netaddr.IPNetwork(item['address']).iter_hosts()))
+        try:
+            ipaddress = netaddr.IPNetwork(item['address'])
+        except:
+            return
+        if ip.size > 1:
+            ip_addresses = map(self.ip_to_str, list(ipaddress.iter_hosts()))
             for i in ip_addresses:
                 self.add_ip_watch(i, int(item['priority']))
         else:
@@ -377,9 +415,9 @@ class MinervaWatchlist(object):
         self.reset_watches()
         self.reset_checks()
 
-        map(self.get_ips, list(watches.aggregate([{ "$match": { "type": "address" }},{ "$project": { "address": "$address", "priority": "$priority" }}])))
+        map(self.get_ips, list(watches.aggregate([{ "$match": { "type": "address", "STATUS": "ENABLED" }},{ "$project": { "address": "$criteria", "priority": "$priority" }}])))
 
-        map(self.get_domains, list(watches.aggregate([{ "$match": { "type": "domain" }}, { "$project": { "domain": "$domain", "priority": "$priority" }}])))
+        map(self.get_domains, list(watches.aggregate([{ "$match": { "type": "domain", "STATUS": "ENABLED" }}, { "$project": { "domain": "$criteria", "priority": "$priority" }}])))
 
 
         ret_watches = {}
@@ -402,9 +440,9 @@ class MinervaWatchlist(object):
                         "category" : "minerva-watchlist",
                         "severity" : priority,
                         "rev" : 1,
-                        "gid" : 1,
+                        "gid" : 999,
                         "signature" : "Minerva Watchlist %s - %s" % (alert_type, match),
-                        "signature_id" : 000000
+                        "signature_id" : 9000000
                 },
                 "src_ip" : "192.168.218.9",
                 "logType" : "alert",
@@ -444,6 +482,18 @@ class MinervaWatchlist(object):
             self.fire_alert(event['dest_ip'], 'IP', 1)
 
     def check_domain(self, watches, event):
+        if 'rdata' in event['dns']:
+            if event['dns']['rdata'] in watches['domain_5']:
+                self.fire_alert(event['dns']['rdata'], 'Domain', 5)
+            elif event['dns']['rdata'] in watches['domain_4']:
+                self.fire_alert(event['dns']['rdata'], 'Domain', 4)
+            elif event['dns']['rdata'] in watches['domain_3']:
+                self.fire_alert(event['dns']['rdata'], 'Domain', 3)
+            elif event['dns']['rdata'] in watches['domain_2']:
+                self.fire_alert(event['dns']['rdata'], 'Domain', 2)
+            elif event['dns']['rdata'] in watches['domain_1']:
+                self.fire_alert(event['dns']['rdata'], 'Domain', 1)
+
         if event['dns']['rrname'] in watches['domain_5']:
             self.fire_alert(event['dns']['rrname'], 'Domain', 5)
         elif event['dns']['rrname'] in watches['domain_4']:

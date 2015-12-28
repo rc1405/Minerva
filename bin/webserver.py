@@ -30,7 +30,7 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters, MinervaSignatures
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters, MinervaSignatures, watchlist
 
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
@@ -694,6 +694,63 @@ class Minerva(object):
                 context_dict['permissions'] = perm_return
                 tmp = env.get_template('profile.html')
                 return tmp.render(context_dict)
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def watchlist(self, **kwargs):
+        user = Users(self.minerva_core)
+        cherrypy.session['prev_page'] = "/watchlist"
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/profile')
+
+        elif 'event_filters' in perm_return:
+            watch = watchlist(self.minerva_core)
+            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+                if 'post_reqeust' in cherrypy.session.keys():
+                    request = cherrypy.session['post_request']
+                    del cherrypy.session['post_request']
+
+                else:
+                    request = cherrypy.request.json
+                
+                if request['req_type'] == 'new':
+                    results = watch.add_watchlist(request)
+                else:
+                    results = watch.change_watchlist(request)
+               
+                return '%s' % results
+
+            else:
+                context_dict = {}
+                context_dict['form'] = 'watchlist'
+                numFound, items_found = watch.get_watchlist()
+                context_dict['numFound'] = numFound
+                context_dict['items_found'] = items_found
+                context_dict['permissions'] = perm_return
+                tmp = env.get_template('watchlist.html')
+                return tmp.render(context_dict)
+
+        elif 'newLogin' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+
+        else:
+            raise cherrypy.HTTPError(403)
                  
 
     '''Start of Post only Functions'''
