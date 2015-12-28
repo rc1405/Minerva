@@ -177,7 +177,7 @@
                <td>{{ item.last_login|e|iso_to_utc }}</td>
                <td><input type="checkbox" id="console{{loop.index}}" disabled {% if item.console == 'true' %}checked{% endif %}></td>
                <td><input id="responder{{loop.index}}" type="checkbox" disabled {% if item.responder == 'true' %}checked{%endif%}></td>
-               <td><input id="event_filter{{loop.index}}" type="checkbox" disabled {% if item.event_filters == 'true' %}checked{%endif%}></td>
+               <td><input id="event_filters{{loop.index}}" type="checkbox" disabled {% if item.event_filters == 'true' %}checked{%endif%}></td>
                <td><input id="sensor_admin{{loop.index}}" type="checkbox" disabled {% if item.sensor_admin == 'true' %}checked{%endif%}></td>
                <td><input type="checkbox" id="user_admin{{loop.index}}" disabled {% if item.user_admin == 'true' %}checked{%endif%}></td>
                <td><input id="server_admin{{loop.index}}" type="checkbox" disabled {% if item.server_admin == 'true' %}checked{%endif%}></td>
