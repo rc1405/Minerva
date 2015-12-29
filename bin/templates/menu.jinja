@@ -29,7 +29,7 @@
                   <li {% if form == "watchlist" %}class="active"{%endif%}><a href="/watchlist" class="submenu_left">Watchlist</a></li>
                   <li class="divider"></li>
                   {% endif %}
-                  {%- if 'console' in permissions or 'responder' in permissions %}
+                  {#{%- if 'console' in permissions or 'responder' in permissions %}
                   <li {% if form == "flow" %}class="active"{% endif %}><a href="/flow">Session Flow</a></li>
                   <li {% if form == "alerts" %}class="active"{% endif %}><a href="/alerts">Search Alerts</a></li>
                   <li {% if form == "dns" %}class="active"{% endif %}><a href="/dns">Session DNS</a></li>
@@ -43,9 +43,37 @@
                   {% if 'user_admin' in permissions %}<li {% if form == "usermanagement" %}class="active"{%endif%}><a href="/users" class="submenu_left">User Management</a></li>{% endif %}
                   {% if 'server_admin' in permissions %}
                   <li {% if form == "server_admin" %}class="active"{%endif%}><a href="/config" class="submenu_left">Server Admin</a></li>
-                  {% endif %}
-                  <li {% if form == "profile" %}class="active"{%endif%}><a href="/profile" class="submenu_left">Change Password</a></li>
+                  {% endif %}#}
                   <li {% if form == "about" %}class="active"{%endif%}><a href="/about" class="submenu_left">About</a></li>
                   <li><a href="/logout" class="submenu_left">Logout</a></li>
                 </ul>
+            </li>
+            </ul>
+            {%- if 'console' in permissions or 'responder' in permissions %}
+            <ul class="nav navbar-nav nav-pills">
+            <li role="presentation" class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expand="true"><span class="glyphicon glyphicon-search"></span></span><span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                  <li {% if form == "flow" %}class="active"{% endif %}><a href="/flow">Session Flow</a></li>
+                  <li {% if form == "alerts" %}class="active"{% endif %}><a href="/alerts">Search Alerts</a></li>
+                  <li {% if form == "dns" %}class="active"{% endif %}><a href="/dns">Search DNS</a></li>
+                </ul>
+            </li>
+            </ul>
+            {%- endif %}
+            <ul class="nav navbar-nav nav-pills">
+            <li role="presentation" class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expand="true"><span class="glyphicon glyphicon-cog"></span></span><span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                  {% if 'sensor_admin' in permissions %}
+                  <li {% if form == "sensors" %}class="active"{%endif%}><a href="/sensors" class="submenu_left">Sensors</a></li>
+                  <li {% if form == "signatures" %}class="active"{%endif%}><a href="/signatures" class="submenu_left">Signatures</a></li>
+                  {%- endif %}
+                  {% if 'user_admin' in permissions %}<li {% if form == "usermanagement" %}class="active"{%endif%}><a href="/users" class="submenu_left">User Management</a></li>{% endif %}
+                  {% if 'server_admin' in permissions %}
+                  <li {% if form == "server_admin" %}class="active"{%endif%}><a href="/config" class="submenu_left">Server Admin</a></li>
+                  {% endif %}
+                  <li {% if form == "profile" %}class="active"{%endif%}><a href="/profile" class="submenu_left">Change Password</a></li>
+                </ul>
+            </li>
             </ul>
