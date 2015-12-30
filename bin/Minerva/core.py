@@ -105,6 +105,12 @@ class MinervaConfigs():
             db.command("collMod", "flow", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': flowTimeout})
         except:
             db.flow.ensure_index("timestamp",expireAfterSeconds=flowTimeout)
+        config['Webserver']['events']['dns_max_age'] = int(new_config['dns_age'])
+        dnsTimeout = int(new_config['dns_age']) * 86400
+        try:
+            db.command("collMod", "dns", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': dnsTimeout})
+        except:
+            db.dns.ensure_index("timestamp",expireAfterSeconds=dnsTimeout)
         config['Webserver']['events']['temp_filter_age'] = int(new_config['temp_filter_age'])
         filterTimeout = int(new_config['temp_filter_age']) * 3600
         try:

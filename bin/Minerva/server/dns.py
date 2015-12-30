@@ -29,11 +29,11 @@ class dns(object):
     def __init__(self, minerva_core):
         db = minerva_core.get_db()
         self.alerts = db.alerts
-        self.flow = db.flow
+        self.dns = db.dns
         self.sizeLimit = minerva_core.conf['Webserver']['events']['maxResults']
 
     '''Function to get the flow records for a given alert'''
-    def get_flow(self, IDs):
+    def get_dns(self, IDs):
         results_found = []
 
         for ID in IDs:
@@ -49,32 +49,28 @@ class dns(object):
                 epoch = orig_alert['document']['epoch']
                 start_epoch = int(epoch) - 300
                 stop_epoch = int(epoch) + 300
-                flow_results = self.flow.aggregate([ { "$match": 
-                        { "$and": [
+                dns_results = self.dns.find( {  
+                        "$and": [
                         { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
-                        { "$or": [
                         { "$and": [
-                        { "netflow.start_epoch": { "$gt": start_epoch }},
-                        { "netflow.start_epoch": { "$lt": stop_epoch }},
+                        { "epoch": { "$gt": start_epoch }},
+                        { "epoch": { "$lt": stop_epoch }},
                         ] },
-                        { "$and": [
-                        {"netflow.stop_epoch": { "$gt": start_epoch }},
-                        {"netflow.stop_epoch": { "$lt": stop_epoch }},
-                        ] },
-                        { "$and": [
-                        {"netflow.start_epoch": { "$lt": start_epoch }},
-                        {"netflow.stop_epoch": { "$gt": stop_epoch }},
-                        ]}
-                        ]}
-                        ]}}, 
-                        { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
-
-                results_found.append({ 'id': ID, 'sessions': flow_results, 'origin': orig_alert })
-
+                        ]}).sort([("_id", pymongo.ASCENDING)]).limit(self.sizeLimit)
+                numFound = dns_results.count()
+                dns_results = map(self.map_dns, dns_results)
+                results_found.append({ 'id': ID, 'sessions': dns_results, 'origin': orig_alert, 'numFound': numFound })
+ 
         return results_found
         
+    def map_dns(self, item):
+        ret_dict = {}
+        ret_dict['ID'] = item.pop('_id')
+        ret_dict['document'] = item
+        return ret_dict
+        
     '''Function to search flow records'''       
-    def search_flow(self, request, orig_search=False):
+    def search_dns(self, request, orig_search=False):
         if not orig_search:
             event_search = {}
         
@@ -99,43 +95,22 @@ class dns(object):
             if len(request['sensor']) > 0:
                 event_search['sensor'] = str(request['sensor'])
             
-            if len(request['proto']) > 0:
-                try:
-                    proto = int(request['proto'])
+            event_search['proto'] = str(request['proto'])
+          
+            if len(request['query_type']) > 0:
+                event_search['dns.type'] = str(request['query_type'])
+          
+            if len(request['rrtype']) > 0:
+                event_search['dns.rrtype'] = str(request['rrtype'])
 
-                    if proto == 1: 
-                        event_search['proto'] = 'ICMP'
-
-                    if proto == 4:
-                        event_search['proto'] = 'IP'
-
-                    if proto == 6:
-                        event_search['proto'] = 'TCP'
-
-                    if proto == 8:
-                        event_search['proto'] = 'EGP'
-
-                    if proto == 9:
-                        event_search['proto'] = 'IGP'
-
-                    if proto == 17:
-                        event_search['proto'] = 'UDP'
-
-                    if proto == 27:
-                        event_search['proto'] = 'RDP'
-
-                    if proto == 41:
-                        event_search['proto'] = 'IPv6'
-
-                    if proto == 51:
-                        event_search['proto'] = 'AH'
-
-                except:
-                    try:
-                        event_search['proto'] = str(request['proto'].upper())
-
-                    except:
-                        return 'Protocol not found', event_search
+            if len(request['rcode']) > 0:
+                event_search['dns.rcode'] = str(request['rcode'])
+ 
+            if len(request['rrname']) > 0:
+                event_search['dns.rrname'] = str(request['rrname'])
+          
+            if len(request['rdata']) > 0:
+                event_search['dns.rdata'] = str(request['rdata'])
 
             if len(request['start']) > 0:
                  start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
@@ -167,33 +142,29 @@ class dns(object):
             event_search = request
             stop_epoch = event_search.pop('stop_epoch')
             start_epoch = event_search.pop('start_epoch')
-                     
-        results_found = self.flow.aggregate([
-          { '$match': 
-            { '$and': [ 
-              event_search, 
-              { '$or': [
-                { '$and': [
-                  { 'netflow.start_epoch': { '$gt': start_epoch }}, 
-                  { 'netflow.start_epoch': { '$lt': stop_epoch }}
-                ]}, 
-                { '$and': [
-                  { 'netflow.stop_epoch': { '$gt': start_epoch }}, 
-                  { 'netflow.stop_epoch': { '$lt': stop_epoch }}
-                ]}, 
-                { '$and': [
-                  { 'netflow.start_epoch': { '$lt': start_epoch }}, 
-                  { 'netflow.stop_epoch': { '$gt': stop_epoch }}
-                ]}
-              ]}
-            ]}
-          }, 
-          { '$project': { 'ID': '$_id', 'document': '$$ROOT' }}, 
-          { '$sort': { 'ID': 1 }}, 
-          { '$limit': self.sizeLimit }
-        ])
+
+        results = self.dns.find(
+          { "$and": [
+             event_search,
+                { "$and": [
+                  { "epoch": { "$gt": start_epoch }},
+                  { "epoch": { "$lt": stop_epoch }}
+                ]},
+          ]}).sort([("_id", pymongo.ASCENDING)]).limit(self.sizeLimit)
+
+        numFound = results.count()
+        results_found = map(self.map_dns, results)
         
         event_search['start_epoch'] = start_epoch
         event_search['stop_epoch'] = stop_epoch
         
-        return results_found, event_search
+        return numFound, results_found, event_search
+
+    def map_dns(self, item):
+        ret_dict = {}
+        ret_dict['ID'] = item.pop('_id')
+        ret_dict['document'] = item
+        return ret_dict
+
+
+

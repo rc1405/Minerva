@@ -441,6 +441,7 @@ class MinervaWatchlist(object):
                 "event_type" : "alert",
                 "proto" : event['proto'],
                 #"timestamp" : event['timestamp'],
+                "sensor": event['sensor'],
                 "alert" : {
                         "category" : "minerva-watchlist",
                         "severity" : priority,
@@ -454,7 +455,7 @@ class MinervaWatchlist(object):
                 "packet" : "",
                 "dest_ip" : event['dest_ip'],
                 "dest_port" : event['dest_port'],
-                "sensor" : "receiver-%s" % self.recv_id,
+                #"sensor" : "receiver-%s" % self.recv_id,
                 "payload" : "",
                 "MINERVA_STATUS" : "OPEN",
         }
@@ -509,20 +510,21 @@ class MinervaWatchlist(object):
                 self.fire_alert(event, event['dns']['rdata'], 'Domain', 1)
                 return
 
-        if 'rrname' in event['dns']:
-            if event['dns']['rrname'] in watches['domain_5']:
-                self.fire_alert(event, event['dns']['rrname'], 'Domain', 5)
-            elif event['dns']['rrname'] in watches['domain_4']:
-                self.fire_alert(event, event['dns']['rrname'], 'Domain', 4)
-            elif event['dns']['rrname'] in watches['domain_3']:
-                self.fire_alert(event, event['dns']['rrname'], 'Domain', 3)
-            elif event['dns']['rrname'] in watches['domain_2']:
-                self.fire_alert(event, event['dns']['rrname'], 'Domain', 2)
-            elif event['dns']['rrname'] in watches['domain_1']:
-                self.fire_alert(event, event['dns']['rrname'], 'Domain', 1)
+        #if 'rrname' in event['dns']:
+            #if event['dns']['rrname'] in watches['domain_5']:
+                #self.fire_alert(event, event['dns']['rrname'], 'Domain', 5)
+            #elif event['dns']['rrname'] in watches['domain_4']:
+                #self.fire_alert(event, event['dns']['rrname'], 'Domain', 4)
+            #elif event['dns']['rrname'] in watches['domain_3']:
+                #self.fire_alert(event, event['dns']['rrname'], 'Domain', 3)
+            #elif event['dns']['rrname'] in watches['domain_2']:
+                #self.fire_alert(event, event['dns']['rrname'], 'Domain', 2)
+            #elif event['dns']['rrname'] in watches['domain_1']:
+                #self.fire_alert(event, event['dns']['rrname'], 'Domain', 1)
 
     def process_watches(self, watches, checks, event):
         if checks['IP'] and event['logType'] == 'flow':
             self.check_ip(watches, event)
         if checks['domain'] and event['logType'] == 'dns':
-            self.check_domain(watches, event)
+            if event['dns']['type'] == 'answer':
+                self.check_domain(watches, event)

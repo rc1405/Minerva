@@ -7,5 +7,5 @@ from .date_filters import epoch_to_datetime
 from .requests import HandleRequests
 from .filters import event_filters
 from .signatures import MinervaSignatures
-#from .dns import dns
+from .dns import dns
 from .watchlist import watchlist

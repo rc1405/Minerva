@@ -30,7 +30,7 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters, MinervaSignatures, watchlist
+from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters, MinervaSignatures, watchlist, dns
 
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
@@ -431,6 +431,74 @@ class Minerva(object):
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
             tmp = env.get_template('flow.jinja')
+            return tmp.render(context_dict)
+
+        elif 'newLogin' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['port_request'] = cherrypy.request.json
+
+            raise cheryypy.HTTPRedirect('/login')
+
+        else:
+            raise cherrypy.HTTPError(403)
+
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def dns(self, **kwargs):
+        user = Users(self.minerva_core)
+
+        if 'prev_page' in cherrypy.session and 'dns_search' in cherrypy.session:
+            if cherrypy.session['prev_page'] == '/dns' and not 'get_request' in cherrypy.session:
+                del cherrypy.session['dns_search']
+
+        cherrypy.session['prev_page'] = "/dns"
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/profile')
+
+        elif 'console' in perm_return or 'responder' in perm_return:
+            context_dict = {'numFound': 0}
+
+            if (cherrypy.request.method == 'GET' and ('dns_search' in cherrypy.session.keys() or 'post_request' in cherrypy.session.keys())) or cherrypy.request.method == 'POST':
+
+                dns_records = dns(self.minerva_core)
+
+                if 'dns_search' in cherrypy.session:
+                    request = cherrypy.session['dns_search']
+                    del cherrypy.session['dns_search']
+                    numFound, items_found, orig_search = dns_records.search_dns(request, orig_search=True)
+
+                else:
+                    if 'post_request' in cherrypy.session.keys():
+                        request = cherrypy.session['post_request']
+                        del cherrypy.session['post_request']
+
+                    else:
+                        request = cherrypy.request.json
+
+                    numFound, items_found, orig_search = dns_records.search_dns(request)
+
+                context_dict['items_found'] = items_found
+                context_dict['numFound'] = numFound
+                context_dict['orig_search'] = orig_search
+                cherrypy.session['dns_search'] = orig_search
+
+            context_dict['form'] = 'dns'
+            context_dict['permissions'] = perm_return
+            context_dict['sizeLimit'] = self.sizeLimit
+            tmp = env.get_template('dns.jinja')
             return tmp.render(context_dict)
 
         elif 'newLogin' in perm_return:

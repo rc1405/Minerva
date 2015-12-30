@@ -359,6 +359,17 @@
               </div>
               <div class="row">
                 <div class="col-xs-2 text-right">
+                  <label>DNS Log Expiration:</label>
+                </div>
+                <div class="col-xs-3">
+                  <input type="text" name=dns_age value="{{config.events.dns_max_age}}" class="form-control input-sm">
+                </div>
+                <div class="col-xs-6">
+                  *Number of Days to retain DNS log data in the database
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-xs-2 text-right">
                   <label>Temporary Event Filter Expiration</label>
                 </div>
                 <div class="col-xs-3">

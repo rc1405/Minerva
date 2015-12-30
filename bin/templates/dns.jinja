@@ -20,7 +20,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Minerva Flow Search</title>
+    <title>Minerva DNS Search</title>
     <link rel="icon" type="image/png" href="/images/favicon.ico">
     <link rel="stylesheet" href="/css/bootstrap.min.css">
     <link rel="stylesheet" href="/css/bootstrap-theme.min.css">
@@ -40,7 +40,7 @@
           {% include 'menu.jinja' %}
           <ul class="nav navbar-nav navbar-right nav-pills">
             <li><a href="#" id="get_pcap">Get PCAP</a></li>
-            <li><a href="/flow" class="submenu_right">Reset</a></li>
+            <li><a href="/dns" class="submenu_right">Reset</a></li>
           </ul>
         </div>
       </div>
@@ -48,7 +48,7 @@
     <div class="container minerva-container">
       <div id="search" class="panel panel-default">
         <div class="panel-heading">
-          <h4 class="panel-title">Search Flow</h4>
+          <h4 class="panel-title">Search DNS</h4>
         </div>
         <div class="panel-body">
           <form>
@@ -72,7 +72,11 @@
                   <label>Proto</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="proto" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.proto}}"{% endif %}/>
+                  {% if orig_search %}{% set proto_value = orig_search.proto %}<!--{{orig_search.proto}}-->{% else %}{% set proto_value='UDP' %}{% endif %}
+                  <select name="proto" id="proto" class="form-control input-sm" >
+                    <option value="UDP" {% if proto_value == 'UDP' %}selected{% endif %}>UDP</option>
+                    <option value="TCP" {% if proto_value == 'TCP' %}selected{% endif %}>TCP</option>
+                  </select>
                 </div>
                 <div class="col-xs-1">
                   <label>Sensor</label>
@@ -108,8 +112,50 @@
                   <input name="dest_port" type="text" class="form-control input-sm" {% if orig_search %}value="{{orig_search.dest_port}}"{% endif %}/>
                 </div>
               </div>
+              {% set dns_data = [] %}
+              {% if orig_search %}{% set dns_data = orig_search %}{% endif %}
+              <div class="row">
+                <div class="col-xs-1">
+                  <label>Type</label>
+                </div>
+                <div class="col-xs-2">
+                  {% if orig_search %}{% set query_type = orig_search['dns.type'] %}{% else %}{% set query_type='' %}{% endif %}
+                  <select name="query_type" id="query_type" class="form-control input-sm" >
+                    <option value="query" {% if query_type == 'query' %}selected{% endif %}>Query</option>
+                    <option value="answer" {% if query_type == 'answer' %}selected{% endif %}>Answer</option>
+                  </select>
+                </div>
+                <div class="col-xs-1">
+                   <label>rrtype</label>
+                </div>
+                <div class="col-xs-2">
+                  <input name="rrtype" type="text" class="form-control input-sm" {% if 'dns.rrtype' in dns_data %}value="{{dns_data['dns.rrtype']}}"{% endif %}/>
+                </div>
+                <div class="col-xs-1">
+                  <label>rcode</label>
+                </div>
+                <div class="col-xs-2">
+                  <input name="rcode" type="text" class="form-control input-sm" {% if 'dns.rcode' in dns_data %}value="{{dns_data['dns.rcode']}}"{% endif %}/>
+                </div>
+                <div class="col-xs-3"></div>
+              </div>
+              <div class="row">
+                <div class="col-xs-1">
+                  <label>rrname</label>
+                </div>
+                <div class="col-xs-2">
+                  <input name="rrname" type="text" class="form-control input-sm" {% if 'dns.rrname' in dns_data%}value="{{dns_data['dns.rrname']}}"{% endif %}/>
+                </div>
+                <div class="col-xs-1">
+                  <label>rdata</label>
+                </div>
+                <div class="col-xs-2">
+                  <input name="rdata" type="text" class="form-control input-sm" {% if 'dns.rdata' in dns_data %}value="{{dns_data['dns.rdata']}}"{% endif %}/>
+                </div>
+                <div class="col-xs-6"></div>
+              </div>
             </div>
-            <a href="#" class="btn btn-default" id="minerva-searchFlows">Search</a>
+            <a href="#" class="btn btn-default" id="minerva-searchDNS">Search</a>
           </form>
         </div>
       </div>
@@ -117,30 +163,37 @@
         <table id="event_header" class="table table-condensed">
           <colspan>
             <col width="13%"/>
-            <col width="13%"/>
-            <col width="8%"/>
+            <col width="7%"/>
             <col width="4%"/>
             <col width="9%"/>
             <col width="6%"/>
             <col width="9%"/>
             <col width="6%"/>
-            <col width="8%"/>
-            <col width="8%"/>
+            <col width="6%"/>
+            <col width="4%"/>
+            <col width="9%"/>
+            <col width="9%"/>
+            <col width="6%"/>
+            <col width="6%"/>
+            <col width="6%"/>
             <col/>
           </colspan>
           <thead>
             <tr>
-              <th>Flow Start</th>
-              <th>Flow Stop</th>
-              <th>Sensor</th>
-              <th>Proto</th>
-              <th>Src IP</th>
-              <th>Src Port</th>
-              <th>Dest IP</th>
-              <th>Dest Port</th>
-              <th>Packets</th>
-              <th>Bytes</th>
-              <th>Flags</th>
+              <th class="text-center">Timestamp</th>
+              <th class="text-center">Sensor</th>
+              <th class="text-center">Proto</th>
+              <th class="text-center">Src IP</th>
+              <th class="text-center">Src Port</th>
+              <th class="text-center">Dest IP</th>
+              <th class="text-center">Dest Port</th>
+              <th class="text-center">Type</th>
+              <th class="text-center">RTYPE</th>
+              <th class="text-center">RRNAME</th>
+              <th class="text-center">RDATA</th>
+              <th class="text-center">TTL</th>
+              <th class="text-center">RCODE</th>
+              <th class="text-center">ID</th>
             </tr>
           </thead>
         </table>
@@ -150,44 +203,39 @@
         <table id="event_table" class="table table-striped table-hover table-condensed">
           <colspan>
             <col width="13%"/>
-            <col width="13%"/>
-            <col width="8%"/>
+            <col width="7%"/>
             <col width="4%"/>
             <col width="9%"/>
             <col width="6%"/>
             <col width="9%"/>
             <col width="6%"/>
-            <col width="8%"/>
-            <col width="8%"/>
-            <col span="5"/>
+            <col width="6%"/>
+            <col width="4%"/>
+            <col width="9%"/>
+            <col width="9%"/>
+            <col width="6%"/>
+            <col width="6%"/>
+            <col width="6%"/>
+            <col/>
           </colspan>
           <tbody>
           {% for item in items_found %}
             {% set sn = item.document %}
             <tr data-id="{{item.ID}}">
-              <td>{{ sn.netflow.start|iso_to_utc }}</td>
-              <td>{{ sn.netflow.end|iso_to_utc }}</td>
-              <td>{{ sn.sensor }}</td>
-              <td>{{ sn.proto }}</td>
-              <td>{{ sn.src_ip }}</td>
-              <td>{{ sn.src_port }}</td>
-              <td>{{ sn.dest_ip }}</td>
-              <td>{{ sn.dest_port }}</td>
-              <td>{{ sn.netflow.pkts}}</td>
-              <td>{{ sn.netflow.bytes }}</td>
-              {% if sn.tcp %}
-              <td>{{ sn.tcp.tcp_flags }}</td>
-              <td>{% if sn.tcp.ack %}ACK{% endif %}</td>
-              <td>{% if sn.tcp.psh %}PSH{% endif %}</td>
-              <td>{% if sn.tcp.fin %}FIN{% endif %}</td>
-              <td>{% if sn.tcp.syn %}SYN{% endif %}</td>
-              {% else %}
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
-              {% endif %}
+              <td class="text-center">{{ sn.timestamp|iso_to_utc }}</td>
+              <td class="text-center">{{ sn.sensor }}</td>
+              <td class="text-center">{{ sn.proto }}</td>
+              <td class="text-center">{{ sn.src_ip }}</td>
+              <td class="text-center">{{ sn.src_port }}</td>
+              <td class="text-center">{{ sn.dest_ip }}</td>
+              <td class="text-center">{{ sn.dest_port }}</td>
+              <td class="text-center">{{ sn.dns.type }}</td>
+              <td class="text-center">{{ sn.dns.rrtype}}</td>
+              <td class="text-center">{{ sn.dns.rrname }}</td>
+              <td class="text-center">{% if 'rdata' in sn.dns %}{{ sn.dns.rdata }}{% endif %}</td>
+              <td class="text-center">{% if 'ttl' in sn.dns %}{{ sn.dns.ttl }}{% endif %}</td>
+              <td class="text-center">{% if 'rcode' in sn.dns %}{{ sn.dns.rcode }}{% endif %}</td>
+              <td class="text-center">{{ sn.dns.id }}</td>
             </tr>
           {% endfor %}
           </tbody>
@@ -203,7 +251,7 @@
     <input type="hidden" id="form_type" value="{{form}}"></input>
     <input type="hidden" id="csrf_token" value="{{csrf_token}}"></input>
     <!-- include deferred scripts here -->
-    <script src="/js/flow.js"></script>
+    <script src="/js/dns.js"></script>
     <script src="/js/console.js"></script>
 	</body>
 </html>

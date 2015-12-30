@@ -502,6 +502,16 @@ def setup_db():
         db.create_collection('flow')
     else:
         db.flow.drop_indexes()
+    if not 'dns' in collections:
+        db.create_collection('dns')
+    else:
+        db.dns.drop_indexes()
+    if not 'certs' in collections:
+        db.create_collection('certs')
+    if not 'watchlist' in collections:
+        db.create_collection('watchlist')
+    if not 'signatures' in collections:
+        db.create_collection('signatures')
     if not 'sessions' in collections:
         db.create_collection('sessions')
     else:
@@ -545,6 +555,23 @@ def setup_db():
     logger.info("Days to keep flow data %i" % expiredflowDays)
     flowexpiredSeconds = int(expiredflowDays) * 86400
     db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
+
+    logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")'
+
+    db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")
+
+    while True:
+        expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
+        try:
+            expireddnsDays = int(expireddnsDays)
+            break
+        except:
+            print('Invalid day option')
+            pass
+
+    logger.info("Days to keep dns logs: %i" % expireddnsDays)
+    dnsexpiredSeconds = int(expireddnsDays) * 86400
+    db.dns.ensure_index("timestamp",expireAfterSeconds=dnsexpiredSeconds)
 
     while True:
         expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
@@ -652,6 +679,7 @@ def setup_db():
     config['Webserver']['events'] = {}
     config['Webserver']['events']['max_age'] = expiredDays
     config['Webserver']['events']['flow_max_age'] = expiredflowDays
+    config['Webserver']['events']['dns_max_age'] = expireddnsDays
     config['Webserver']['events']['temp_filter_age'] = expiredTempHours
  
 def setup_core():

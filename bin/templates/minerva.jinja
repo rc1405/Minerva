@@ -52,6 +52,7 @@ Webserver:
     maxResults: {{config.Webserver.events.maxResults}}
     max_age: {{config.Webserver.events.max_age}}
     flow_max_age: {{config.Webserver.events.flow_max_age}}
+    dns_max_age: {{config.Webserver.events.dns_max_age}}
     temp_filter_age: {{config.Webserver.events.temp_filter_age}}
 {%- endif %}
 {%- if 'Event_Receiver' in config %}
