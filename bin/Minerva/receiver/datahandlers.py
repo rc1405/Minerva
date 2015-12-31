@@ -29,13 +29,14 @@ from pytz import timezone
 from dateutil.parser import parse
 
 class MongoInserter(object):
-    def __init__(self, minerva_core, log_queue):
+    def __init__(self, minerva_core, filter_processor):
         self.config = minerva_core.conf
         self.core = minerva_core
-        self.log_queue = log_queue
+        #self.log_queue = log_queue
         self.filters = EventFilters(minerva_core)
+        self.processor = filter_processor
 
-    def insert_data(self):
+    '''def insert_data(self):
         db = self.core.get_db()
         alert = db.alerts
         flow = db.flow
@@ -113,7 +114,7 @@ class MongoInserter(object):
             if not self.log_queue.empty():
                 continue
             else:
-                time.sleep(1)
+                time.sleep(1)'''
 
     def redis_data(self, events, filters, checks, watcher, watchlist, watch_check):
         alert_events = []

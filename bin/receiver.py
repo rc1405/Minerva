@@ -26,9 +26,10 @@ import ssl
 import platform
 import json
 import subprocess
-from multiprocessing import Process, active_children, Queue
+from multiprocessing import Process, active_children
 from socket import socket, AF_INET, SOCK_STREAM
 
+import redis
 import M2Crypto
 import pymongo
 from pytz import timezone
@@ -40,29 +41,29 @@ from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, Event
 class putEvent(object):
     def __init__(self, cur_config):
         self.cur_config = cur_config
-        if cur_config['redis']['enabled']:
-            import redis
+        #if cur_config['redis']['enabled']:
+            #import redis
             self.putter = self.redisEvents
-            self.r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
-            self.key = cur_config['redis']['key']
-        else:
-            self.putter = self.queueEvents
-        self.queue = Queue()
+            self.r = redis.StrictRedis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
+            self.key = cur_config['redis']['event_key']
+        #else:
+            #self.putter = self.queueEvents
+        #self.queue = Queue()
 
     def redisEvents(self, event):
         self.r.rpush(self.key, json.dumps(event))
 
-    def queueEvents(self, event):
-        self.queue.put(event)
+    #def queueEvents(self, event):
+        #self.queue.put(event)
 
             
-def insert_data(minerva_core, log_queue):
+def insert_data(minerva_core, filter_processor=False):
     try:
-        inserter = MongoInserter(minerva_core, log_queue)
-        if minerva_core.conf['Event_Receiver']['redis']['enabled']:
-            inserter.insert_redis()
-        else:
-            inserter.insert_data()
+        inserter = MongoInserter(minerva_core, filter_processor)
+        #if minerva_core.conf['Event_Receiver']['redis']['enabled']:
+        inserter.insert_redis()
+        #else:
+            #inserter.insert_data()
     except:
         return
 
@@ -119,8 +120,13 @@ def main():
     pcap_name = "%s-%s" % (cur_config['PCAP']['ip'], str(cur_config['PCAP']['port']))
     pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
     pcap_listener.start()
+    filter_processor = False
     for lp in range(0,int(cur_config['insertion_threads'])):
-        log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core, event_method.queue))
+        if not filter_processor:
+            filter_processor = 'logger%s' % str(lp)
+            log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core, filter_processor=True))
+        else:
+            log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core,))
         log_proc.start()
         log_procs.append(log_proc)
     try:
@@ -141,15 +147,18 @@ def main():
                 if not lp.is_alive():
                     lp.terminate()
                     log_procs.remove(lp)
-                    log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core, event_method.queue))
+                    if lp.name == filter_processor:
+                        log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core, filter_processor=True))
+                    else:
+                        log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core,))
                     log_proc.start()
                     log_procs.append(log_proc)
             if not pcap_listener.is_alive():
                 pcap_listener.join()
                 pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
                 pcap_listener.start()
-            #time.sleep(10)
-            time.sleep(.001)
+            time.sleep(1)
+            #time.sleep(.001)
     except:
         for p in active_processes:
             p.terminate()

@@ -22,6 +22,7 @@ import collections
 import time
 import datetime
 import bson
+import re
 
 import pymongo
 import netaddr
@@ -57,12 +58,14 @@ class watchlist(object):
         elif request['type'] == 'domain':
             if len(str(request['criteria'])) == 0:
                 return 'No Domain Entered'
+            
         results = self.watchlist.find({"criteria": request['criteria'], "type": request['type']}).count()
         if results == 0:
             self.watchlist.insert({
                    "type": request['type'],
                    "criteria": request['criteria'],
                    "priority": int(request['priority']),
+                   "tag": request['tag'],
                    "STATUS": 'ENABLED',
                    "date_created": datetime.datetime.utcnow(),
                    "date_changed": datetime.datetime.utcnow(),
@@ -70,6 +73,84 @@ class watchlist(object):
             return 'Success'
         else:
             return 'Watchlist item %s already exists' % request['criteria']
+
+    def add_watchlist_file(self, request):
+        added = 0
+        duplicate = 0
+        failed = 0
+        inactive = re.compile(r'(?P<comment>^\s+#|#)')
+        addr = re.compile(r'(?P<addr>\d+.\d+.\d+.\d+/\d+|\d+.\d+.\d+.\d+)')
+        if request['disable_old'] == 'on':
+            self.watchlist.update({ "type": request['type'], "tag": request['tag']},{ "$set": { "STATUS": "DISABLED"}}, multi=True)
+
+        current_count = self.watchlist.find({ "type": request['type'], "tag": request['tag']}).count()
+        batch = []
+
+        for row in request['watchlist_file'].file.readlines():
+            watch = False
+            comments = inactive.findall(row)
+            if len(comments) > 0:
+                status = 'DISABLED'
+            else:
+                status = 'ENABLED'
+            if request['type'] == 'ip_address':
+                addresses = addr.findall(row)
+                if len(addresses) > 0:
+                    try:
+                        ipaddress = netaddr.IPNetwork(addresses[0])
+                        criteria = addresses[0]
+                        watch = True
+                    except:
+                        failed += 1
+                        continue
+            elif request['type'] == 'domain':
+                if len(row.strip('#').strip()) > 0:
+                    criteria = row.strip()
+                    watch = True
+            if watch:
+                if current_count == 0:
+                    batch.append({
+                           "type": request['type'],
+                           "criteria": criteria,
+                           "priority": int(request['priority']),
+                           "tag": request['tag'],
+                           "STATUS": status,
+                           "date_changed": datetime.datetime.utcnow(),
+                           "date_updated": datetime.datetime.utcnow(),
+                    })
+                    added += 1
+                    if len(batch) >= self.sizeLimit:
+                        self.watchlist.insert(batch)
+                        batch = []
+                else:
+                    results = self.watchlist.find({"criteria": criteria, "type": request['type'], "tag": { "$nin": [request['tag']]}}).count()
+                    if results == 0:
+                        self.watchlist.update(
+                           {
+                               "type": request['type'],
+                               "criteria": criteria,
+                           },
+                           { "$set": { 
+                               "type": request['type'],
+                               "criteria": criteria,
+                               "priority": int(request['priority']),
+                               "tag": request['tag'],
+                               "STATUS": status,
+                               "date_changed": datetime.datetime.utcnow(),
+                        }},upsert=True)
+                        added += 1
+                    else:
+                        duplicate += 1
+
+        if current_count == 0:
+            if len(batch) > 0:
+                self.watchlist.insert(batch)
+        else:
+            self.watchlist.update({ "date_created": { "$exists": False}},{ "$set": { "date_updated": datetime.datetime.utcnow()}}, upsert=True, multi=True)
+
+        return '%i items added, %i items failed, %i were duplicated' % (added, failed, duplicate)
+                
+            
 
     '''Function to Enable/Disable or delete a watchlist item'''
     def change_watchlist(self, request):

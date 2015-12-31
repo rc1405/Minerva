@@ -495,6 +495,30 @@ class Minerva(object):
                 context_dict['orig_search'] = orig_search
                 cherrypy.session['dns_search'] = orig_search
 
+            '''
+            dns_records = dns(self.minerva_core)
+            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+                if 'post_request' in cherrypy.session.keys():
+                    request = cherrypy.session['post_request']
+                    del cherrypy.session['post_request']
+
+                else:
+                    request = cherrypy.request.json
+
+                cherrypy.session['dns_search'] = dns_records.get_orig_search(request)
+                raise cherrypy.HTTPRedirect('/dns')
+
+            if 'dns_search' in cherrypy.session:
+                request = cherrypy.session['dns_search']
+                del cherrypy.session['dns_search']
+                numFound, items_found, orig_search = dns_records.search_dns(request, orig_search=True)
+
+                context_dict['items_found'] = items_found
+                context_dict['numFound'] = numFound
+                context_dict['orig_search'] = orig_search
+                cherrypy.session['dns_search'] = orig_search'''
+
+
             context_dict['form'] = 'dns'
             context_dict['permissions'] = perm_return
             context_dict['sizeLimit'] = self.sizeLimit
@@ -765,14 +789,13 @@ class Minerva(object):
 
 
     @cherrypy.expose
-    @cherrypy.tools.json_in()
     def watchlist(self, **kwargs):
         user = Users(self.minerva_core)
         cherrypy.session['prev_page'] = "/watchlist"
 
         if not 'SESSION_KEY' in cherrypy.session.keys():
             if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
+                cherrypy.session['post_request'] = cherrypy.request.params
 
             raise cherrypy.HTTPRedirect('/login')
 
@@ -780,26 +803,26 @@ class Minerva(object):
 
         if 'PasswordReset' in perm_return:
             if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
+                cherrypy.session['post_request'] = cherrypy.request.params
 
             raise cherrypy.HTTPRedirect('/profile')
 
         elif 'event_filters' in perm_return:
             watch = watchlist(self.minerva_core)
             if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
-                if 'post_reqeust' in cherrypy.session.keys():
+                if 'post_request' in cherrypy.session.keys():
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
 
                 else:
-                    request = cherrypy.request.json
+                    request = cherrypy.request.params
                 
-                if request['req_type'] == 'new':
-                    results = watch.add_watchlist(request)
+                if request['input_type'] == 'file':
+                    results = watch.add_watchlist_file(request)
                 else:
-                    results = watch.change_watchlist(request)
+                    results = watch.add_watchlist(request)
                
-                return '%s' % results
+                return '<script type="text/javascript">window.alert("%s"); location="/watchlist";</script>' % results
 
             else:
                 context_dict = {}
@@ -813,7 +836,7 @@ class Minerva(object):
 
         elif 'newLogin' in perm_return:
             if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
+                cherrypy.session['post_request'] = cherrypy.request.params
 
             raise cherrypy.HTTPRedirect('/login')
 
@@ -1023,6 +1046,49 @@ class Minerva(object):
 
         else:
             raise cherrypy.HTTPError(404)
+
+    @cherrypy.expose
+    @cherrypy.tools.json_in()
+    def watchlist_json(self, **kwargs):
+        user = Users(self.minerva_core)
+        cherrypy.session['prev_page'] = "/watchlist_json"
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/profile')
+
+        elif 'event_filters' in perm_return:
+            watch = watchlist(self.minerva_core)
+            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+                if 'post_request' in cherrypy.session.keys():
+                    request = cherrypy.session['post_request']
+                    del cherrypy.session['post_request']
+
+                else:
+                    request = cherrypy.request.json
+
+                results = watch.change_watchlist(request)
+
+                return '%s' % results
+            else:
+                raise cherrypy.HTTPError(404)
+
+        elif 'newLogin' in perm_return:
+            cherrypy.session['post_request'] = cherrypy.request.json
+            raise cherrypy.HTTPRedirect('/login')
+
+        else:
+            raise cherrypy.HTTPError(403)
 
     '''Functions for retreiving and downloading PCAP'''
     def download_complete(self):

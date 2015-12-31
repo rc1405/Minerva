@@ -166,5 +166,78 @@ class dns(object):
         ret_dict['document'] = item
         return ret_dict
 
+    '''def get_orig_search(self, request):
+        event_search = {}
+
+        if len(request['src_ip']) > 0:
+            event_search['src_ip'] = str(request['src_ip'])
+
+        if len(request['src_port']) > 0:
+            try:
+                event_search['src_port'] = int(request['src_port'])
+            except ValueError:
+                pass
+
+        if len(request['dest_ip']) > 0:
+            event_search['dest_ip'] = str(request['dest_ip'])
+
+        if len(request['dest_port']) > 0:
+            try:
+                event_search['dest_port'] = int(request['dest_port'])
+            except ValueError:
+                pass
+
+        if len(request['sensor']) > 0:
+            event_search['sensor'] = str(request['sensor'])
+
+        event_search['proto'] = str(request['proto'])
+
+        if len(request['query_type']) > 0:
+            event_search['dns.type'] = str(request['query_type'])
+
+        if len(request['rrtype']) > 0:
+            event_search['dns.rrtype'] = str(request['rrtype'])
+
+        if len(request['rcode']) > 0:
+            event_search['dns.rcode'] = str(request['rcode'])
+
+        if len(request['rrname']) > 0:
+            event_search['dns.rrname'] = str(request['rrname'])
+
+        if len(request['rdata']) > 0:
+            event_search['dns.rdata'] = str(request['rdata'])
+
+        if len(request['start']) > 0:
+            start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
+
+        else:
+            start_epoch = 0
+
+        if len(request['stop']) > 0:
+            stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+
+        else:
+            stop_epoch = 0
+
+        if start_epoch == 0 and stop_epoch == 0:
+            start_epoch = time.time() - 600
+            stop_epoch = time.time()
+
+        elif start_epoch == 0 and stop_epoch > 0:
+            start_epoch = stop_epoch - 600
+
+        elif start_epoch > 0 and stop_epoch == 0:
+            if (start_epoch + 600) > time.time():
+                stop_epoch = time.time()
+
+            else:
+                stop_epoch = start_epoch + 600
+
+        event_search['start_epoch'] = start_epoch
+        event_search['stop_epoch'] = stop_epoch
+
+        return event_search'''
+
+
 
 
