@@ -189,7 +189,7 @@
       </div>
       <div id="NfDiv">
         {% if numFound > 0 %}
-          <b>{{ numFound }} </b> Items found
+          <b>{{ numFound }} </b> Items found{% if numFound > sizeLimit %}. Showing <b>{{ sizeLimit }}</b>{% endif %}
         {% endif %}
       </div>
     </div>

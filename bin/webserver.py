@@ -831,6 +831,7 @@ class Minerva(object):
                 context_dict['numFound'] = numFound
                 context_dict['items_found'] = items_found
                 context_dict['permissions'] = perm_return
+                context_dict['sizeLimit'] = self.sizeLimit
                 tmp = env.get_template('watchlist.jinja')
                 return tmp.render(context_dict)
 

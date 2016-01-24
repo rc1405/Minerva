@@ -1063,9 +1063,9 @@ def setup_receiver():
     logger.info("Setting max seconds before inserting to %i seconds" % int(ins_wait))
 
     while True:
-        filter_wait = raw_input("Enter number of seconds before reloading event filters: [60] ")
+        filter_wait = raw_input("Enter number of seconds before reloading event filters: [3600] ")
         if len(filter_wait) == 0:
-            filter_wait = 60
+            filter_wait = 3600
             break
         else:
             try:
