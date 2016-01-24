@@ -556,7 +556,7 @@ def setup_db():
     flowexpiredSeconds = int(expiredflowDays) * 86400
     db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
 
-    logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")'
+    logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")')
 
     db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")
 
@@ -968,43 +968,49 @@ def setup_receiver():
         if resp == 'n' or resp == 'N':
             break
 
+    use_redis = 'yes'
     while True:
-        use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
-        if use_redis == 'y':
-            try:
-                import redis
-            except:
-                print("Redis Chosen but missing python-redis module")
-                logger.info("Redis Chosen but missing redis module")
-                sys.exit()
-            use_redis = 'yes'
-            while True:
-                redis_key = raw_input("What Redis key do you want to use? [minerva-receiver] ")
-                if len(redis_key) == 0:
-                    redis_key = 'minerva-receiver'
-                break
-            while True:
-                redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-                if len(redis_server) == 0:
-                    redis_server = '127.0.0.1'
-                break
-            while True:
-                redis_port = raw_input("Enter redis port: [6379] ")
-                if len(redis_port) == 0:
-                    redis_port = 6379
-                    break
-                else:
-                    try:
-                        redis_port = int(redis_port)
-                        break
-                    except:
-                        print('Bad Redis Port Number')
+        event_key = raw_input("What Redis key do you want to use for events? [minerva-receiver] ")
+        if len(event_key) == 0:
+            event_key = 'minerva-receiver'
+        break
+    while True:
+        filter_key = raw_input("What Redis key do you want to use for filters? [minerva-filters] ")
+        if len(fitler_key) == 0:
+            filter_key = 'minerva-filters'
+        break
+    while True:
+        filtercheck_key = raw_input("What Redis key do you want to use for filter management? [minerva-filters-check] ")
+        if len(filtercheck_key) == 0:
+            filtercheck_key = 'minerva-filters-check'
+        break
+    while True:
+        watchlist_key = raw_input("What Redis key do you want to use for watchlists? [minerva-watchlist] ")
+        if len(watchlist_key) == 0:
+            watchlist_key = 'minerva-watchlist'
+        break
+    while True:
+        watchcheck_key = raw_input("What Redis key do you want to use watchlist management? [minerva-watch-check] ")
+        if len(watchcheck_key) == 0:
+            watchcheck_key = 'minerva-watch-check'
+        break
+
+    while True:
+        redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
+        if len(redis_server) == 0:
+            redis_server = '127.0.0.1'
+        break
+    while True:
+        redis_port = raw_input("Enter redis port: [6379] ")
+        if len(redis_port) == 0:
+            redis_port = 6379
             break
         else:
-            use_redis = 'no'
-            redis_key = ''
-            redis_server = ''
-            redis_port = ''
+            try:
+                redis_port = int(redis_port)
+                break
+            except:
+                print('Bad Redis Port Number')
 
     while True:
         listener_timeout = raw_input("Enter number of seconds to timeout on a single receive thread: [20] ")
@@ -1149,7 +1155,11 @@ def setup_receiver():
     config['Event_Receiver']['filter_wait'] = int(filter_wait)
     config['Event_Receiver']['redis'] = {}
     config['Event_Receiver']['redis']['enabled'] = use_redis
-    config['Event_Receiver']['redis']['key'] = redis_key
+    config['Event_Receiver']['redis']['event_key'] = event_key
+    config['Event_Receiver']['redis']['filter_key'] = filter_key
+    config['Event_Receiver']['redis']['filtercheck_key'] = filtercheck_key
+    config['Event_Receiver']['redis']['watchlist_key'] = watchlist_key
+    config['Event_Receiver']['redis']['watchcheck_key'] = watchcheck_key
     config['Event_Receiver']['redis']['server'] = redis_server
     config['Event_Receiver']['redis']['port'] = redis_port
     config['Event_Receiver']['certs'] = {}

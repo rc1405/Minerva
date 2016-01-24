@@ -73,7 +73,11 @@ Event_Receiver:
   filter_wait: {{config.Event_Receiver.filter_wait}}
   redis:
     enabled: {{config.Event_Receiver.redis.enabled}}
-    key: {{config.Event_Receiver.redis.key}}
+    event_key: {{config.Event_Receiver.redis.event_key}}
+    filter_key: {{config.Event_Receiver.redis.filter_key}}
+    filtercheck_key: {{config.Event_Receiver.redis.filtercheck_key}}
+    watchlist_key: {{config.Event_Receiver.redis.watchlist_key}}
+    watchcheck_key: {{config.Event_Receiver.redis.watchcheck_key}}
     server: {{config.Event_Receiver.redis.server}}
     port: {{config.Event_Receiver.redis.port}}
   certs:
