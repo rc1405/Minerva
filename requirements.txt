@@ -11,3 +11,4 @@ dpkt
 pypcap
 numpy
 netaddr
+redis
