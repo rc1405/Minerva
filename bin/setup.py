@@ -976,7 +976,7 @@ def setup_receiver():
         break
     while True:
         filter_key = raw_input("What Redis key do you want to use for filters? [minerva-filters] ")
-        if len(fitler_key) == 0:
+        if len(filter_key) == 0:
             filter_key = 'minerva-filters'
         break
     while True:
