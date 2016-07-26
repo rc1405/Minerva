@@ -21,62 +21,32 @@
 import os
 import time
 import sys
-import ssl
 import platform
 import json
 import subprocess
 import pprint
+import uuid
+
 from multiprocessing import Process, Lock, active_children, Queue
-from socket import socket, AF_INET, SOCK_STREAM
 
 import M2Crypto
+import zmq
 
 from Minerva import core
-from Minerva.agent import TailLog, get_parser, PCAPprocessor, RequestListener, carvePcap, EventSender
+from Minerva.agent import TailLog, get_parser, AgentSubscriber, AgentPublisher, AgentWorker
 
-class putEvent(object):
-    def __init__(self, cur_config):
-        self.cur_config = cur_config
-        if cur_config['redis']['enabled']:
-            import redis
-            self.putter = self.redisEvents
-            self.r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
-            self.key = cur_config['redis']['key']
-        else:
-            self.putter = self.queueEvents
-            self.queue = Queue()
 
-    def redisEvents(self, event):
-        self.r.rpush(self.key, json.dumps(event))
-
-    def queueEvents(self, event):
-        self.queue.put(event)
-        
-def tailFile(cur_config, fname, event_push):
+def tailFile(cur_config, fname, channels):
     sensor_name = cur_config['sensor_name']
     ftype = cur_config['logfiles'][fname]['type']
     converter = get_parser(ftype, sensor_name)
-    batchsize = int(cur_config['target_addr']['send_batch'])
-    sendwait = int(cur_config['target_addr']['send_wait'])
-    if ftype in ['suricata-redis-channel','suricata-redis-list']:
-        if cur_config['logfiles'][fname]['use_main']:
-            r = redis.Redis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
-        else:
-            r = redis.Redis(host=cur_config['logfiles'][fname]['server'], port=cur_config['logfiles'][fname]['port'])
-    if ftype == 'suricata-redis-channel':
-        pubsub = r.pubsub()
-        pubsub.subscribe(cur_config['logfiles'][fname]['channel'])
-        try:
-            for item in pubsub.listen():
-                new_event = converter.convert(item['data'])
-                if new_event:
-                    #r.rpush(key, json.dumps(new_event))
-                    event_push(new_event)
-                else:
-                    continue
-        except:
-            sys.exit()
-    elif ftype == 'suricata-redis-list':
+    batchsize = int(cur_config['send_batch'])
+    sendwait = int(cur_config['send_wait'])
+
+    if ftype == 'suricata-redis-list':
+        context = zmq.Context.instance()
+        events = context.Socket(zmq.REQ)
+        events.connect(channels['events'])
         channel = cur_config['logfiles'][fname]['channel']
         try:
             while True:
@@ -86,8 +56,8 @@ def tailFile(cur_config, fname, event_push):
                     for event in events:
                         new_event = converter.convert(event)
                         if new_event:
-                            #r.rpush(key, json.dumps(new_event))
-                            event_push(new_event)
+                            events.send_json(new_event)
+                            status = events.recv()
                         else:
                             continue
                     r.ltrim(channel, total_length, -1)
@@ -97,28 +67,18 @@ def tailFile(cur_config, fname, event_push):
             sys.exit()
     else:
         pfile = cur_config['logfiles'][fname]['position_file']
-        ftailer = TailLog(fname, pfile)
-        try:
-            for event in ftailer.tail():
-                new_event = converter.convert(event)
-                if new_event:
-                    #r.rpush(key, json.dumps(new_event))
-                    event_push(new_event)
-                else:
-                    continue
-        except:
-            ftailer.write_pos()
-            sys.exit()
+        ftailer = TailLog(channels, cur_config['send_batch'], converter, fname, pfile)
+        ftailer.tail()
 
-def requestSender(cur_config, event_method):
-    event_sender = EventSender(cur_config, event_method)
-    event_sender.sender()
+#def worker(stuff):
 
-def requestListener(cur_config):
-    listener = RequestListener(cur_config)
-    carver = carvePcap(cur_config)
-    proc = PCAPprocessor(cur_config, carver)
-    listener.listener(proc.process)
+def publisher(cur_config, channels, start_workers):
+    pub = AgentPublisher(cur_config, channels)
+    pub.publish(start_workers)
+
+def subscriber(cur_config, channels):
+    sub = AgentSubscriber(cur_config, channels)
+    sub.listen()
 
 def genKey(cur_config):
     if not os.path.exists(os.path.dirname(cur_config['client_cert'])):
@@ -132,38 +92,68 @@ def main():
     cur_config = core.MinervaConfigs().conf['Agent_forwarder']
     if not os.path.exists(cur_config['client_cert']) or not os.path.exists(cur_config['client_private']):
         genKey(cur_config)
-    event_method = putEvent(cur_config)
-    event_push = event_method.putter
-    active_processes = []
-    send_lock = Lock()
-    listen_proc = Process(name='listen-proc', target=requestListener, args=((cur_config,)))
-    listen_proc.start()
-    sender_proc = Process(name='sender-proc', target=requestSender, args=((cur_config,event_method)))
-    sender_proc.start()
-    try:
+
+    channels = {
+        "pub": "ipc://%s" % str(uuid.uuid4()),
+        "events": "ipc://%s" % str(uuid.uuid4()),
+        "worker": "ipc://%s" % str(uuid.uuid4()),
+    }
+
+    log_procs = []
+    work_procs = []
+
+    sub_proc = Process(name='subscriber', target=subscriber, args=((cur_config,channels)))
+    sub_proc.start()
+
+    start_workers = Lock()
+
+    pub_proc = Process(name='publisher', target=publisher, args=((cur_config, channels, start_workers)))
+    pub_proc.start()
+
+    time.sleep(5)
+
+    if start_workers.acquire() :
+    #try:
+    #if 1 == 1:
         for l in cur_config['logfiles'].keys():
-    	    pr = Process(name=l, target=tailFile, args=((cur_config, l, event_push)))
+    	    pr = Process(name=l, target=tailFile, args=((cur_config, l, channels)))
             pr.start()
-            active_processes.append(pr)
+            log_procs.append(pr)
+
+
+
+
+        #for wp in range(0,int(cur_config['worker_threads'])):
+            #work_proc = Process(name='worker-%i' % wp, target=workers.start)
+            #work_proc.start()
+            #work_procs.append(work_proc)
+
+
+
+
+
+
+
+
         while True:
-            for l in active_processes:
+            for l in log_procs:
                 if not l.is_alive():
-                    active_processes.remove(l)
-                    pr = Process(name=l.name, target=tailFile, args=((cur_config, l.name, event_push)))
+                    pr = Process(name=l.name, target=tailFile, args=((cur_config, l.name, channels)))
                     pr.start()
-                    active_processes.append(pr)
-            if not listen_proc.is_alive():
-                listen_proc = Process(name='listen-proc', target=requestListener, args=((cur_config,)))
-                listen_proc.start()
-            if not sender_proc.is_alive():
-                sender_proc = Process(name='sender-proc', target=requestSender, args=((cur_config, event_method)))
-                sender_proc.start()
+                    log_procs.remove(l)
+                    log_procs.append(pr)
+            if not sub_proc.is_alive():
+                sub_proc = Process(name='subscriber', target=subscriber, args=((cur_config, channels)))
+                sub_proc.start()
+            if not pub_proc.is_alive():
+                pub_proc = Process(name='publisher', target=publisher, args=((cur_config, channels, start_workers)))
+                pub_proc.start()
             time.sleep(10)
-    except:
-        time.sleep(1)
-        for l in active_processes:
-            l.terminate()
-        listen_proc.terminate()
-        sender_proc.terminate()
-        sys.exit()
+    #except:
+        #time.sleep(1)
+        #for l in active_processes:
+            #l.terminate()
+        #listen_proc.terminate()
+        #sender_proc.terminate()
+        #sys.exit()
 main()

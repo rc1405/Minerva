@@ -37,7 +37,7 @@ class alert_console(object):
     def map_alerts(self, item):
         ret_dict = {}
         ret_dict['ID'] = item.pop('_id')
-        ret_dict['epoch'] = item.pop('epoch')
+        #ret_dict['epoch'] = item.pop('epoch')
         ret_dict['document'] = item
         return ret_dict
 

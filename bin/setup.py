@@ -1696,6 +1696,10 @@ def main():
         check_agent()
         setup_core()
         setup_agent()
+    elif int(install_type) == 6:
+        choose_db()
+        setup_server()
+        setup_core()
     logger.info('Writing Config to disk')
     write_config()
     logger.info('********************************************************************************************************')

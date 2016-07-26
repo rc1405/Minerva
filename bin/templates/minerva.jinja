@@ -60,45 +60,24 @@ Event_Receiver:
   listen_ip:
     {%- for ip in config.Event_Receiver.listen_ip.keys() %}
     {{ip}}:
-         ports:
-             {%- for port in config.Event_Receiver.listen_ip[ip]['ports'] %}
+         pub_port: {{config.Event_Receiver[ip]['pub_port']}}
+         rec_ports:
+             {%- for port in config.Event_Receiver.listen_ip[ip]['rec_ports'] %}
              - {{port}}
              {%- endfor %}
-         receive_threads: {{config.Event_Receiver.listen_ip[ip]['receive_threads']}}
          {%- endfor %}
+  worker_threads: {{config.Event_Receiver.worker_threads}}
   listener_timeout: {{config.Event_Receiver.listener_timeout}}
-  insertion_threads: {{config.Event_Receiver.insertion_threads}}
-  insertion_batch: {{config.Event_Receiver.insertion_batch}}
-  insertion_wait: {{config.Event_Receiver.insertion_wait}}
-  filter_wait: {{config.Event_Receiver.filter_wait}}
-  redis:
-    enabled: {{config.Event_Receiver.redis.enabled}}
-    event_key: {{config.Event_Receiver.redis.event_key}}
-    filter_key: {{config.Event_Receiver.redis.filter_key}}
-    filtercheck_key: {{config.Event_Receiver.redis.filtercheck_key}}
-    watchlist_key: {{config.Event_Receiver.redis.watchlist_key}}
-    watchcheck_key: {{config.Event_Receiver.redis.watchcheck_key}}
-    server: {{config.Event_Receiver.redis.server}}
-    port: {{config.Event_Receiver.redis.port}}
+  watchlist_update_sec: {{config.Event_Receiver.watchlist_update}}
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
     private_key: {{config.Event_Receiver.certs.private_key}}
-  PCAP:
-    ip: {{config.Event_Receiver.PCAP.ip}}
-    port: {{ config.Event_Receiver.PCAP.port}}
-    threads: {{ config.Event_Receiver.PCAP.threads}}
-    timeout: {{ config.Event_Receiver.PCAP.timeout}}
 {%- endif %}
 {%- if 'Agent_forwarder' in config %}
 Agent_forwarder:
   sensor_name: {{config.Agent_forwarder.sensor_name}}
   client_cert: {{config.Agent_forwarder.client_cert}}
   client_private: {{config.Agent_forwarder.client_private}}
-  redis:
-    enabled: {{config.Agent_forwarder.redis.enabled}}
-    key: {{config.Agent_forwarder.redis.key}}
-    server: {{config.Agent_forwarder.redis.server}}
-    port: {{config.Agent_forwarder.redis.port}}
   logfiles:
     {%- for lf in config.Agent_forwarder.logfiles %}
     {{lf}}:
@@ -112,13 +91,24 @@ Agent_forwarder:
       position_file: {{config.Agent_forwarder.logfiles[lf]['position_file']}}
       {% endif %}#}
     {%- endfor %}
-  target_addr:
-    server_cert: {{config.Agent_forwarder.target_addr.server_cert}}
-    destination: {{config.Agent_forwarder.target_addr.destination}}
-    port: {{config.Agent_forwarder.target_addr.port}}
-    send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
-    send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
-    fail_wait: {{config.Agent_forwarder.target_addr.fail_wait}}
+  destinations:
+    {% for dest in config.Agent_forwarder.destinations.keys() %}
+    {{dest}}:
+        {% for port in config.Agent_forwarder.destinations[dest]['recv_ports'] %}
+        - {{port}}
+        {%- endfor %}
+    {%- endfor %}
+  listeners:
+    {% for dest in config.Agent_forwarder.destinations.keys() %}
+    {{dest}}:
+        {% for port in config.Agent_forwarder.destinations[dest]['listen_ports'] %}
+        - {{port}}
+        {%- endfor %}
+    {%- endfor %}
+  send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
+  send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
+  fail_wait: {{config.Agent_forwarder.target_addr.fail_wait}}
+  worker_threads: {{ config.Agent_forwarder.worker_threads }}
   pcap:
     max_packets: {{config.Agent_forwarder.pcap.max_packets}}
     max_size: {{config.Agent_forwarder.pcap.max_size}}
@@ -128,8 +118,4 @@ Agent_forwarder:
     suffix: {{ config.Agent_forwarder.pcap.suffix}}
     pcap_directory: {{ config.Agent_forwarder.pcap.pcap_directory }}
     temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
-  listener:
-    ip: {{ config.Agent_forwarder.listener.ip }}
-    port: {{ config.Agent_forwarder.listener.port }}
-    threads: {{ config.Agent_forwarder.listener.threads }}
 {%- endif %}

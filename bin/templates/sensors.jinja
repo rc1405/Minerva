@@ -78,14 +78,14 @@
 	</table><br />
 	<strong>No Results Found</strong>
 	{% else %}
-        {% set status_class = { "_DENIED": "minerva-danger", "IP_CHANGED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGED": "minerva-warning", "RECEIVER_CHANGED": "minerva-warning", "APPROVED": "minerva-success" } %}
+        {% set status_class = { "_DENIED": "minerva-danger", "IP_CHANGED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGED": "minerva-warning", "CERT_COPIED": "minerva-warning", "RECEIVER_CHANGED": "minerva-warning", "APPROVED": "minerva-success" } %}
         <tbody>
 	{% for item in items_found %}
         <tr class={{status_class[item.STATUS]}} data-id="{{item.ID}}">
-        <td>{{ item.document.time_created|iso_to_utc}}</td>
-        <td>{{ item.document.last_modified|iso_to_utc}}</td>
-        <td>{{ item.document.SERVER }}</td>
-        <td>{{ item.document.IP }}</td>
+        <td>{{ item.time_created|iso_to_utc}}</td>
+        <td>{{ item.last_modified|iso_to_utc}}</td>
+        <td>{{ item.SERVER }}</td>
+        <td>{{ item.IP }}</td>
         <td>{{ item.STATUS }}</td></tr>
 	{% endfor %}
         </tbody>

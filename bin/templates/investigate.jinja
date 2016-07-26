@@ -50,7 +50,7 @@
     <div class="container minerva-container">
       <ul id="tabs" class="nav nav-tabs" role="tablist">
         {% for item in items %}
-        <li role="presentation" data-id="{{item.id}}"{% if loop.index == 1 %}class="active"{% endif %}><a href="#{{item.id}}" role="tab" data-toggle="tab">{{item.origin.document.alert.signature}}</a></li>
+        <li role="presentation" data-id="{{item.id}}"{% if loop.index == 1 %}class="active"{% endif %}><a href="#{{item.id}}" role="tab" data-toggle="tab">{{item.origin.alert.signature}}</a></li>
         {% endfor %}
       </ul>
       <div id="tab_content" class="tab-content">
@@ -92,7 +92,7 @@
                 </tr>
               </thead>
               <tbody>
-                {% set oa = item.origin.document %}
+                {% set oa = item.origin %}
                 <tr class="{{severity_class[oa.alert.severity]}}">
                   <td>{{ oa.timestamp}}</td>
                   <td>{{ oa.sensor }}</td>
@@ -120,6 +120,15 @@
           <h4>ASCII Alert Packet View</h4>
           <div>
             <p class="text-info minerva-break-word">{{oa.payload_printable|e}}</p>
+          </div>
+          <hr>
+          <h4>HEX Alert Packet View</h4>
+          <div>
+            <p class="text-info minerva-break-word">
+            <pre>
+            {% for h in oa.hex %}{{h|e}}{% endfor %}
+            </pre>
+            </p>
           </div>
           <hr>
           <h4>Comments</h4>

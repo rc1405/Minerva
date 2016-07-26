@@ -1,3 +1,41 @@
+# Release Notes:
+
+## Version 0.2:
+* Complete overhaul of receiver and transport.  
+    * Eliminated raw sockets and moved to utilizing ZeroMQ
+    * Watchlist loading and execution greatly improved
+    * Clean up of unneeded transformations and additions
+* Redesign of Agent forwarder and log ingestion
+    * Better log collection performance
+    * Faster resumption after stoppage
+* Overhaul of encryption
+    * OpenSSL Certificates still used for authentication and key exchange
+    * Event transport now utilizes AES keys, updated on an hourly basis
+* TODO: Enhanced Logging Support
+* TODO: Event Multihosting available:
+    * Analysts can be granted full access or one to many different alert groups
+    * Sensor administrators can be segmented into the same categories
+* New Watchlist Capability
+    * Upload single entries or text files with IP or domain indicators
+    * Alerts will be generated off of traffic seen and available in the console
+* Added HEX view to investigate pannel
+* Collections Added
+    * certs
+        * Storage of certs and approval for webservers, receivers and sensors
+    * keys
+        * Storage of cycling AES keys
+* Collections Removed
+    * sensors
+        * Data moved to certs collection
+* Dependencies Added
+    * Yara
+    * yara-python
+    * ZeroMQ
+    * pyzmq
+* Dependencies Removed
+    * numpy
+    * redis
+
 #Minerva
 
 Minerva is an IDS event manager based on python and mongodb. Minerva currently supports Suricata EVE logs and Snort Fast log formats as the primary source of data for alert and flow logs. Functionality will be expanded to include Bro ascii and json log inputs, and other netflow sources in the future.
@@ -47,8 +85,6 @@ This menu provides a mechanism to search through alerts and change and/or perfor
 ###Sensors:
 
 This menu provides management type activities for sensors reporting into the Event Receiver. Status options are APPROVED, NOT_APPROVED, CERT_CHANGED, and DENIED. APPROVED is what allows the event receiver to insert events from the given sensor. The remaining three states prevent events from being loaded. NOT_APPROVED is a sensor that has just checked in and waiting for approval to accept events. CERT_CHANGED indicates that a server name and IP are the same but the authenticating certificate differs that that of what was accepted.
-
-
 
  
 

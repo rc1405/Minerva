@@ -9,6 +9,6 @@ hashlib
 markupsafe
 dpkt
 pypcap
-numpy
 netaddr
-redis
+pyzmq
+yara

@@ -22,61 +22,153 @@
 import os
 import time
 import sys
-import ssl
 import platform
-import json
 import subprocess
-from multiprocessing import Process, active_children, Lock
-from socket import socket, AF_INET, SOCK_STREAM
+import uuid
 
-import redis
-import M2Crypto
+from multiprocessing import Process, active_children, Lock
+import threading
+from tempfile import NamedTemporaryFile
+
 import pymongo
-from pytz import timezone
-from dateutil.parser import parse
+import zmq
+import netaddr
 
 from Minerva import core
-from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, EventListener
-
-class putEvent(object):
-    def __init__(self, cur_config):
-        self.cur_config = cur_config
-        self.putter = self.redisEvents
-        self.r = redis.StrictRedis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
-        self.key = cur_config['redis']['event_key']
-
-    def redisEvents(self, event):
-        self.r.rpush(self.key, json.dumps(event))
-
+from Minerva.receiver import EventReceiver, EventPublisher, EventWorker
             
-def insert_data(minerva_core, process_lock, processor=False):
-    try:
-        if not processor:
-            while not process_lock.acquire(block=False):
-                time.sleep(2)
-            process_lock.release()
+def receiver(pname, channels, worker_lock):
+    #try:
+        listener = EventReceiver(worker_lock, channels)
+        listener.listen(pname)
+    #except:
+        #return
+
+def publisher(minerva_core, channels, cur_config):
+    pub = EventPublisher(minerva_core, channels, cur_config)
+    pub.publish()
+
+
+def work_thread(minerva_core, channels, update_lock, action_file, sig_file):
+    workers = EventWorker(minerva_core, channels, update_lock, action_file, sig_file)
+    workers.start()
+
+
+def worker(minerva_core, cur_config, channels):
+    context = zmq.Context.instance()
+    #server = channels['context'].socket(zmq.PULL)
+    server = context.socket(zmq.PULL)
+    server.bind(channels['worker_main'])
+    update_lock = Lock()
+    action_fh, sig_fh = update_yara(minerva_core)
+    #workers = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+    worker_procs = []
+    do_update = False
+    #try:
+    if 1 == 1:
+        for wp in range(0,int(cur_config['worker_threads'])):
+            #workers = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+            print('started %i' % wp)
+            worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+            worker.start()
+            worker_procs.append(worker)
+        while True:
+            for p in worker_procs:
+                if not p.is_alive():
+                    worker_procs.remove(p)
+                    worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+                    worker.start()
+                    p.join()
+                    worker_procs.append(worker)
+            if not do_update:
+                if server.poll(1000):
+                    yara_update.recv()
+                    do_update = True
+            else: 
+                update_lock.acquire()
+                update_yara(minerva_core, action=action_fh, sig=sig_fh)
+                update_lock.release()
+                do_update = False
+            time.sleep(1)
+    #except:
+        #for w in worker_procs:
+            #w.terminate()
+        #action_fh.close()
+        #sig_fh.close()
+        #server.close()
+        #return
+
+def update_yara(minerva_core, action=None, sig=None):
+    if not action:
+        action_fh = NamedTemporaryFile()
+        return_stuff = True
+    else:
+        action_fh.seek(0)
+        return_stuff = False
+    if not sig:
+        sig_fh = NamedTemporaryFile()
+    else:
+        sig_fh.seek(0)
+
+    db = minerva_core.get_db()
+
+    def get_domains(item):
+        watches['domain_%i' % int(item['priority'])].append(item['domain'])
+
+    def ip_to_str(item):
+        return str(item)
+
+    def get_ips(item):
+        try:
+            ipaddress = netaddr.IPNetwork(item['address'])
+        except:
+            return
+        if ipaddress.size > 1:
+            priority = int(item['priority'])
+            for i in map(self.ip_to_str, list(ipaddress.iter_hosts())):
+                watches['IP_%i' % priority].append(i)
         else:
-            process_lock.acquire()
-        inserter = MongoInserter(minerva_core, processor, process_lock)
-        inserter.insert_redis()
-    except:
-        return
+            watches['IP_%i' % int(item['priority'])].append(item['address'])
 
-def receiver(minerva_core, pname, event_method):
-    try:
-        ip, port = pname.split('-')
-        listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['listen_ip'][ip]['receive_threads']))
-        proc = AlertProcessor(minerva_core, event_method)
-        listener.listener(pname, proc.process)
-    except:
-        return
+    watchlist = db.watchlist
 
-def pcap_receiver(minerva_core, pname):
-    try:
-        listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['PCAP']['threads']))
-        proc = PCAPprocessor(minerva_core)
-        listener.listener(pname, proc.process)
-    except:
+    watches = {
+        'IP_5': [],
+        'IP_4': [],
+        'IP_3': [],
+        'IP_2': [],
+        'IP_1': [],
+        'domain_5': [],
+        'domain_4': [],
+        'domain_3': [],
+        'domain_2': [],
+        'domain_1': [],
+    }
+
+    map(get_ips, list(db.watchlist.aggregate([{ "$match": { "type": "ip_address", "STATUS": "ENABLED" }},{ "$project": { "address": "$criteria", "priority": "$priority" }}])))
+
+    map(get_domains, list(db.watchlist.aggregate([{ "$match": { "type": "domain", "STATUS": "ENABLED" }}, { "$project": { "domain": "$criteria", "priority": "$priority" }}])))
+
+    for k in watches.keys():
+        action_string = "rule %s\n{\n\tstrings:\n"
+        rule_count = 1
+        for s in watches[k]:
+            sig_string = "rule %s\n{\n\tstrings:\n\t\t$1 = %s\n\tcondition:\n\t\tall of them\n}\n" % (s.replace('.','_'), s)
+            sig_fh.writelines(sig_string)
+            action_string = action_string + "\t\t$%i = %s\n"
+            rule_count += 1
+        if rule_count > 1:
+            action_string = action_string + "\tcondition:\n\t\tany of them\n}\n"
+            action_fs.writelines(action_string)
+
+    sig_fh.flush()
+    sig_fh.truncate()
+    action_fh.flush()
+    action_fh.truncate()
+
+    if return_stuff:
+        return action_fh, sig_fh
+    else:
         return
 
 def genKey(cur_config, minerva_core):
@@ -90,14 +182,15 @@ def genKey(cur_config, minerva_core):
 def checkCert(cur_config, minerva_core):
     db = minerva_core.get_db()
     certdb = db.certs
-    results = list(certdb.find({"type": "receiver", "ip": cur_config['PCAP']['ip'] }))
+    results = list(certdb.find({"type": "receiver" }))
     if len(results) == 0:
-        certdb.insert({"type": "receiver", "ip": cur_config['PCAP']['ip'], "cert": open(cur_config['certs']['server_cert'],'r').read() } )
-    else:
-        cert = results[0]['cert']
-        if cert != open(cur_config['certs']['server_cert'],'r').read():
-            print('Cert Changed')
-            certdb.update({"type": "receiver", "ip": cur_config['PCAP']['ip'] },{ "$set": { "cert": open(cur_config['certs']['server_cert'],'r').read() }})
+        if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
+            genKey(cur_config, minerva_core)
+        certdb.insert({
+            "type": "receiver", 
+            "cert": open(cur_config['certs']['server_cert'],'r').read(), 
+            "key": open(cur_config['certs']['private_key']).read() 
+        } )
     return
 
 
@@ -105,60 +198,62 @@ def main():
     minerva_core = core.MinervaConfigs()
     config = minerva_core.conf
     cur_config = config['Event_Receiver']
-    if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
-        genKey(cur_config, minerva_core)
+ 
+    base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+    channels = {
+        "worker": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "worker_main": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "pub": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "receiver": {},
+    }
+
+    for i in cur_config['listen_ip']:
+        for p in cur_config['listen_ip'][i]['rec_ports']:
+            name = "%s-%s" % (i,p)
+            channels['receiver']["%s-%s" % (i,p)] = "ipc://%s/%s" % (base_dir, str(uuid.uuid4()))
+
     checkCert(cur_config, minerva_core)
-    event_method = putEvent(cur_config)
-    event_push = event_method.putter
+
     active_processes = []
-    log_procs = []
-    pcap_name = "%s-%s" % (cur_config['PCAP']['ip'], str(cur_config['PCAP']['port']))
-    pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
-    pcap_listener.start()
-    filter_processor = False
-    process_lock = Lock()
-    for lp in range(0,int(cur_config['insertion_threads'])):
-        if not filter_processor:
-            filter_processor = 'logger%s' % str(lp)
-            log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core,process_lock), kwargs=({'processor': True,}))
-        else:
-            log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core,process_lock),)
-        log_proc.start()
-        log_procs.append(log_proc)
-    try:
+
+    pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
+    pub_listener.start()
+
+    worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
+    worker_main.start()
+
+    worker_lock = Lock()
+
+    #try:
+    if 1 == 1:
         for i in cur_config['listen_ip']:
-            for p in cur_config['listen_ip'][i]['ports']:
+            for p in cur_config['listen_ip'][i]['rec_ports']:
                 name = "%s-%s" % (i,p)
-    	        pr = Process(name=name, target=receiver, args=((minerva_core, name, event_method)))
+    	        pr = Process(name=name, target=receiver, args=((name, channels, worker_lock)))
                 pr.start()
                 active_processes.append(pr)
         while True:
             for p in active_processes:
                 if not p.is_alive():
                     active_processes.remove(p)
-                    pr = Process(name=p.name, target=receiver, args=((minerva_core, p.name, event_method)))
+                    pr = Process(name=p.name, target=receiver, args=((p.name, channels, worker_lock)))
                     pr.start()
+                    p.join()
                     active_processes.append(pr)
-            for lp in log_procs:
-                if not lp.is_alive():
-                    lp.terminate()
-                    log_procs.remove(lp)
-                    if lp.name == filter_processor:
-                        log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core,process_lock), kwargs=({'processor': True,}))
-                    else:
-                        log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core,process_lock),)
-                    log_proc.start()
-                    log_procs.append(log_proc)
-            if not pcap_listener.is_alive():
-                pcap_listener.join()
-                pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
-                pcap_listener.start()
+            if not pub_listener.is_alive():
+                pub_listener.join()
+                pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
+                pub_listener.start()
+            if not worker_main.is_alive():
+                worker_main.join()
+                worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
+                worker_main.start()
             time.sleep(1)
-    except:
-        for p in active_processes:
-            p.terminate()
-        for l in log_procs:
-            l.terminate()
-        pcap_listener.terminate()
-        sys.exit()
+    #except:
+        #for p in active_processes:
+            #p.terminate()
+        #pub_listener.terminate()
+        #worker_main.terminate()
+        #sys.exit()
 main()

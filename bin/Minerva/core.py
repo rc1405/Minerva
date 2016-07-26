@@ -23,8 +23,6 @@ import os
 import ssl
 import sys
 
-import pymongo
-
 class MinervaConfigs():
     def __init__(self, **kwargs):
         if not 'conf' in kwargs:
@@ -41,6 +39,7 @@ class MinervaConfigs():
             config = yaml.load(f)
         self.conf = config
     def get_db(self):
+        import pymongo
         db_conf = self.conf['Webserver']['db']
         if db_conf['useAuth']:
             if db_conf['AuthType'] == 'Password':
