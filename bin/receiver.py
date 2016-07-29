@@ -114,6 +114,7 @@ def update_yara(minerva_core, action=None, sig=None):
 
     def get_domains(item):
         watches['domain_%i' % int(item['priority'])].append(item['domain'])
+        return 'something'
 
     def ip_to_str(item):
         return str(item)
@@ -121,14 +122,20 @@ def update_yara(minerva_core, action=None, sig=None):
     def get_ips(item):
         try:
             ipaddress = netaddr.IPNetwork(item['address'])
-        except:
+        #except:
+            #return
+        except Exception as e:
+            print('{}: {}'.format(e.__class__.__name__,e))
             return
+
         if ipaddress.size > 1:
             priority = int(item['priority'])
-            for i in map(self.ip_to_str, list(ipaddress.iter_hosts())):
+            for i in map(ip_to_str, list(ipaddress.iter_hosts())):
                 watches['IP_%i' % priority].append(i)
+            return 'something'
         else:
             watches['IP_%i' % int(item['priority'])].append(item['address'])
+            return 'something'
 
     watchlist = db.watchlist
 
@@ -146,26 +153,198 @@ def update_yara(minerva_core, action=None, sig=None):
     }
 
     map(get_ips, list(db.watchlist.aggregate([{ "$match": { "type": "ip_address", "STATUS": "ENABLED" }},{ "$project": { "address": "$criteria", "priority": "$priority" }}])))
-
     map(get_domains, list(db.watchlist.aggregate([{ "$match": { "type": "domain", "STATUS": "ENABLED" }}, { "$project": { "domain": "$criteria", "priority": "$priority" }}])))
 
     for k in watches.keys():
-        action_string = "rule %s\n{\n\tstrings:\n"
         rule_count = 1
         for s in watches[k]:
-            sig_string = "rule %s\n{\n\tstrings:\n\t\t$1 = %s\n\tcondition:\n\t\tall of them\n}\n" % (s.replace('.','_'), s)
+            sig_string = "rule %s__%s\n{\n\tstrings:\n\t\t$1 = \"%s\\\"\"\n\tcondition:\n\t\tall of them\n}\n" % (k, s.replace('.','_'), s)
             sig_fh.writelines(sig_string)
-            action_string = action_string + "\t\t$%i = %s\n"
             rule_count += 1
-        if rule_count > 1:
-            action_string = action_string + "\tcondition:\n\t\tany of them\n}\n"
-            action_fs.writelines(action_string)
 
     sig_fh.flush()
     sig_fh.truncate()
+
+
+    filters = {
+        'P__inc__1': [],
+        'P__dec__1': [],
+        'P__inc__2': [],
+        'P__dec__2': [],
+        'P__inc__3': [],
+        'P__dec__3': [],
+        'P__inc__4': [],
+        'P__dec__4': [],
+        'P__inc__5': [],
+        'P__dec__5': [],
+        'S__C': [],
+        'S__E': [],
+        'S__O': [],
+    }
+
+    def get_rule_type(item):
+        action_pre = item['action_type'][:1].upper()
+        if action_pre == 'P':
+            if int(item['action_value']) > 0:
+                action_method = 'inc'
+                action_value = int(item['action_value'])
+            else:
+                action_method = 'dec'
+                action_value = abs(item['action_value'])
+
+            rule_type = '%s__%s__%i' % (action_pre, action_method, action_value)
+        else:
+            action_method = item['action_value'][:1].upper()
+            rule_type = '%s__%s' % (action_pre, action_method)
+        return rule_type
+
+    def get_sids(item):
+
+        rule_type = get_rule_type(item)
+
+        filters[rule_type].append([
+            "sid\":(*?\w+)\"%s\"" %  str(item['sig_id']),
+            "rev\":(*?\w+)\"%s\"" % str(item['rev']),
+            "gid\":(*?\w+)\"%s\"" % str(item['gid'])
+        ])
+
+    def get_cat(item):
+        rule_type = get_rule_type(item)
+
+        filters[rule_type].append([
+            "category\":(*?\w+)\"%s\"" % item['category']
+        ])
+
+    def get_addresses(item):
+        rule_type = get_rule_type(item)
+        filters[rule_type].append([
+            "\"%s\"" % item['ip_address']
+        ])
+
+    def get_sessions(item):
+        rule_type = get_rule_type(item)
+       
+        filters[rule_type].append([
+            "\"%s\"" % item['src_ip'],
+            "\"%s\"" % item['dest_ip']
+        ])
+
+    def get_sigAddress(item):
+        rule_type = get_rule_type(item)
+        filters[rule_type].append([
+            "sid\":(*?\w+)\"%s\"" %  str(item['sig_id']),
+            "rev\":(*?\w+)\"%s\"" % str(item['rev']),
+            "gid\":(*?\w+)\"%s\"" % str(item['gid']),
+            "\"%s\"" % item['ip_address']
+        ])
+
+    def get_sigSession(item):
+        rule_type = get_rule_type(item)
+        filters[rule_type].append([
+            "sid\":(*?\w+)\"%s\"" %  str(item['sig_id']),
+            "rev\":(*?\w+)\"%s\"" % str(item['rev']),
+            "gid\":(*?\w+)\"%s\"" % str(item['gid']),
+            "\"%s\"" % item['src_ip'],
+            "\"%s\"" % item['dest_ip']
+        ])
+
+    watch_filters = db.filters
+
+    map(get_sids, list(watch_filters.aggregate([{ "$match": { "type": "signature" }},
+        { "$project": { 
+              "sig_id": "$sig_id", 
+              "rev": "$rev", 
+              "gid": "$gid", 
+              "action_type": "$action_type", 
+              "action_value": "$action_value" 
+        }}])))
+
+    map(get_cat, list(watch_filters.aggregate([{ "$match": { "type": "categories" }}, 
+        { "$project": { 
+              "category": "$category", 
+              "action_type": "$action_type", 
+              "action_value": "$action_value"  
+        }}])))
+
+    map(get_addresses, list(watch_filters.aggregate([{ "$match": { "type": "address" }}, 
+        { "$project": { 
+              "ip_address": "$ip_address", 
+              "action_type": "$action_type", 
+              "action_value": "$action_value"
+        }}])))
+
+    map(get_sessions, list(watch_filters.aggregate([{ "$match": { "type": "session" }}, 
+        { "$project": { 
+              "src_ip": "$src_ip", 
+              "dest_ip": "$dest_ip", 
+              "action_type": "$action_type", 
+              "action_value": "$action_value" 
+        }}])))
+
+    map(get_sigAddress, list(watch_filters.aggregate([{ "$match": { "type": "sig_address"}}, 
+        { "$project": { 
+              "sig_id": "$sig_id", 
+              "rev": "$rev", 
+              "gid": "$gid", 
+              "ip_address": "$ip_address", 
+              "action_type": "$action_type", 
+              "action_value": "$action_value" 
+        }}])))
+
+    map(get_sigSession, list(watch_filters.aggregate([{ "$match": { "type": "sig_session"}}, 
+        { "$project": { 
+              "sig_id": "$sig_id", 
+              "rev": "$rev", 
+              "gid": "$gid", 
+              "src_ip": "$src_ip", 
+              "dest_ip": "$dest_ip", 
+              "action_type": "$action_type", 
+              "action_value": "$action_value" 
+        }}])))
+
+    for k in filters.keys():
+        if len(filters[k]) == 0:
+            continue
+        conditions = []
+        action_fh.writelines("rule %s\n{\n\tstrings:\n" % k)
+        rule_count = 1
+        for s in filters[k]:
+            cur_conditions = []
+            for r in s:
+                action_fh.writelines("\t\t$%i = %s\n" % (rule_count, r))
+                cur_conditions.append(rule_count)
+                rule_count += 1
+            conditions.append(cur_conditions)
+
+        condition = '\tcondition:\n'
+        ccount = 1
+        for c in conditions:
+            icount = 1
+            if len(c) > 1:
+                if ccount == 1:
+                    condition = condition + "\t\tall of ( "
+                else:
+                    condition = condition + "\t\tor all of ( "
+                    
+                for x in c:
+                    if icount == len(c):
+                        condition = condition + "$%i" % x
+                    else:
+                        condition = condition + "$%i," % x
+                    icount += 1
+                condition = condition + ")\n"
+            else:
+                if ccount == 1:
+                    condition = condition + "\t\t$%i" % c[0]
+                else:
+                    condition = condition + "\t\tor $%i" % c[0]
+            ccount += 1
+        condition = condition + "\n}\n"
+        action_fh.writelines(condition)
+
     action_fh.flush()
     action_fh.truncate()
-
+    time.sleep(1)
     if return_stuff:
         return action_fh, sig_fh
     else:
@@ -191,6 +370,17 @@ def checkCert(cur_config, minerva_core):
             "cert": open(cur_config['certs']['server_cert'],'r').read(), 
             "key": open(cur_config['certs']['private_key']).read() 
         } )
+        for i in cur_config['listen_ip']:
+            for p in cur_config['listen_ip'][i]['rec_ports']:
+                certdb.update({"type": "receiver"}, { "$push": { "receivers": "%s-%i" % (i, p) }})
+
+    else:
+        if 'receivers' in results[0].keys():
+            receivers = results[0]['receivers']
+        for i in cur_config['listen_ip']:
+            for p in cur_config['listen_ip'][i]['rec_ports']:
+                if not "%s-%i" % (i, p) in receivers:
+                    certdb.update({"type": "receiver"}, { "$push": { "receivers": "%s-%i" % (i, p) }})
     return
 
 

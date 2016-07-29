@@ -146,12 +146,12 @@ class EventWorker(Process):
                         if 1 == 1:
                             if denc_msg['_function'] == 'events':
                                 print("Received %i events" % len(denc_msg['events']))
-                                watch_events = inserter(ID, denc_msg['events'])
+                                watch_events = inserter(ID, denc_msg['events'], watcher.filter_check)
                                 #print(watch_events)
                                 if len(watch_events) > 0:
-                                     watch_alerts = watcher.watch(watch_events)
+                                     watch_alerts = list(watcher.watch(watch_events))
                                      if watch_alerts:
-                                        inserter('receiver', wevent)
+                                        inserter('receiver', watch_alerts, watcher.filter_check)
                                 #print("done processing events")
                                 work_send([ID, json.dumps({
                                     "_payload": self._encrypt_rsa(msg['_cert'], json_dumps({
@@ -243,7 +243,7 @@ class MongoInserter(object):
             #self.work.connect(self.channels['receiver'][p])
 
 
-    def insert_data(self, sensor, msg):
+    def insert_data(self, sensor, msg, filter_check):
         alert_events = []
         flow_events = []
         dns_events = []
@@ -265,15 +265,19 @@ class MongoInserter(object):
                         continue
             event['sensor'] = sensor
             event['uuid'] = str(uuid.uuid4())
+            event['MINERVA_STATUS'] = 'OPEN'
             if event['logType'] == 'alert':
+                #initiated filters
+                event = filter_check(event)
                 timestamp = event['timestamp']
                 try:
                     ts = parse(timestamp)
                     tz = timezone('UTC')
                     event['timestamp'] = ts.astimezone(tz)
                     #event['epoch'] = int(time.mktime(ts.timetuple()))
-                except:
-                    continue
+                except ValueError:
+                    event['timestamp'] = ts
+                    #continue
                 #event['orig_timestamp'] = timestamp
                 alert_events.append(event)
                 #self.work.send_json({
@@ -282,8 +286,11 @@ class MongoInserter(object):
                         "sensor": sensor, 
                         "uuid": event['uuid'], 
                         "_function": "watchlist",
-                        "sip": event['src_ip'], 
-                        "dip": event['dest_ip'], 
+                        "proto": event['proto'],
+                        "src_ip": event['src_ip'], 
+                        "src_port": event['src_port'], 
+                        "dest_ip": event['dest_ip'], 
+                        "dest_port": event['dest_port'], 
                         "type": "ip"
                     })
             elif event['logType'] == 'flow':
@@ -300,13 +307,17 @@ class MongoInserter(object):
                     continue
                 #self.work.send_json({
                 watch_events.append( {
-                    "sensor": sensor, 
-                    "uuid": event['uuid'], 
+                    "sensor": sensor,
+                    "uuid": event['uuid'],
                     "_function": "watchlist",
-                    "sip": event['src_ip'], 
-                    "dip": event['dest_ip'], 
+                    "proto": event['proto'],
+                    "src_ip": event['src_ip'],
+                    "src_port": event['src_port'],
+                    "dest_ip": event['dest_ip'],
+                    "dest_port": event['dest_port'],
                     "type": "ip"
                 })
+
             elif event['logType'] == 'dns':
                 timestamp = event['timestamp']
                 try:
@@ -319,24 +330,29 @@ class MongoInserter(object):
                 #event['orig_timestamp'] = timestamp
                 dns_events.append(event)
                 #self.work.send_json({
-                watch_events.append({
+                dns_watch = {
                     "sensor": sensor, 
                     "uuid": event['uuid'], 
                     "_function": "watchlist",
-                    "sip": event['src_ip'], 
-                    "dip": event['dest_ip'], 
+                    "proto": event['proto'],
+                    "src_ip": event['src_ip'], 
+                    "src_port": event['src_port'], 
+                    "dest_ip": event['dest_ip'], 
+                    "dest_port": event['dest_port'], 
                     "type": "ip"
-                })
+                }
                 if event['dns']['type'] == 'answer':
                     if 'rdata' in event['dns']:
+                        dns_watch['domain'] = event['dns']['rdata']
                         #self.work.send_json({
-                        watch_events.append( {
-                            "sensor": sensor, 
-                            "uuid": event['uuid'], 
-                            "_function": "watchlist",
-                            "domain": event['dns']['rdata'], 
-                            "type": "dns"
-                        })
+                        #watch_events.append( {
+                            #"sensor": sensor, 
+                            #"uuid": event['uuid'], 
+                            #"_function": "watchlist",
+                            #"domain": event['dns']['rdata'], 
+                            #"type": "dns"
+                        #})
+                watch_events.append(dns_watch)
 
         try:
             if len(alert_events) > 0:
@@ -444,10 +460,6 @@ class EventWatch(object):
         self.sig = yara.compile(sig_file)
         self.last_update = int(time.time())
         self.update_thres = self.config['Event_Receiver']['watchlist_update_sec']
-        #self.channels = channels
-        ##self.work = channels['context'].socket(zmq.PULL)
-        #for p in self.channels['receiver'].keys():
-            #self.work.connect(self.channels['receiver'][p])
 
     def update_yara(self):
         if self.update_lock.acquire(timeout=.1):
@@ -463,49 +475,62 @@ class EventWatch(object):
         for event in events:
             alerts = self.sig.match(data=json.dumps(event))
             if alerts:
-                actions = self.action.match(data=alerts)
-                if 'alert' in actions:
-                    for a in alerts:
-                        alert_type, priority = actions[0].split('-')
-                        self.fire_alert(event, a, alert_type, priority)
+                for a in alerts:
+                    cat, hit = str(a).split('__')
+                    alert_type, priority = cat.split('_')
+                    match = hit.replace('_','.')
+                    yield self.fire_alert(event, match, alert_type, priority)
+
+    def filter_check(self, event):
+        if int(time.time()) - self.last_update < self.update_thres:
+            self.update_yara()
+        matches = self.action.match(data=json.dumps(event))
+        if matches:
+            for m in matches:
+                rule = m.split('__')
+                if rule[0] == 'P':
+                    if rule[1] == 'inc':
+                        sev = event['alert']['severity'] + int(rule[2])
+                        if sev > 5:
+                            sev = 5
+                    else:
+                        sev = event['alert']['severity'] - int(rule[2])
+                        if sev < 1:
+                            sev = 1
+                    event['alert']['severity'] = sev
+                else:
+                    if rule[1] == 'C':
+                        event['MINERVA_STATUS'] = 'CLOSED'
+                    elif rule[1] == 'E':
+                        event['MINERVA_STATUS'] = 'ESCALATED'
+                    else:
+                        event['MINERVA_STATUS'] = 'OPEN'
+        return event
+                    
+
  
     def fire_alert(self, event, match, alert_type, priority):
-        if alert_type == 'ip':
-            src_event = self.alerts.find_one({"uuid": event['uuid']})
-            if not src_event:
-                src_event = self.alerts.find_one({"uuid": event['uuid']})
-        else:
-            src_event = self.dns.find_one({"uuid": event['uuid']})
         new_event = {
-            "_function": "watch_event",
-            "mid": "receiver",
-            "payload": { 
-                "payload_printable" : "",
-                "src_port" : src_event['src_port'],
-                "event_type" : "alert",
-                "proto" : src_event['proto'],
-                "sensor": src_event['sensor'],
-                "alert" : {
-                        "category" : "minerva-watchlist",
-                        "severity" : priority,
-                        "rev" : 1,
-                        "gid" : 999,
-                        "signature" : "Minerva Watchlist %s - %s" % (alert_type, match),
-                        "signature_id" : 9000000
-                },
-                "src_ip" : "192.168.218.9",
-                "logType" : "alert",
-                "packet" : "",
-                "dest_ip" : src_event['dest_ip'],
-                "dest_port" : src_event['dest_port'],
-                "payload" : "",
-                "MINERVA_STATUS" : "OPEN",
-            }
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "payload_printable" : "",
+            "src_port" : event['src_port'],
+            "event_type" : "alert",
+            "proto" : event['proto'],
+            "sensor": event['sensor'],
+            "alert" : {
+                "category" : "minerva-watchlist",
+                "severity" : int(priority),
+                "rev" : 1,
+                "gid" : 999,
+                "signature" : "Minerva Watchlist %s - %s" % (alert_type, match),
+                "signature_id" : 9000000
+            },
+            "src_ip" : event['src_ip'],
+            "logType" : "alert",
+            "packet" : "",
+            "dest_ip" : event['dest_ip'],
+            "dest_port" : event['dest_port'],
+            "payload" : "",
+            "MINERVA_STATUS" : "OPEN",
         }
-        if 'orig_timestamp' in event:
-            new_event['payload']['timestamp'] = event['orig_timestamp']
-        else:
-            new_event['payload']['timestamp'] = event['timestamp']
-       
-        #self.work.send_json(new_event)
-        yield new_event
+        return json.dumps(new_event)

@@ -35,7 +35,6 @@ class sensors(object):
         return sensor
 
     def get_sensors(self):
-        #items_found = self.collection.aggregate([{ "$match": { "STATUS": { "$in": ["NOT_APPROVED","CERT_CHANGED","APPROVED","_DENIED","RECEIVER_CHANGED","IP_CHANGED"]} } }, { "$project": { "ID": "$_id", "STATUS": "$STATUS", "document": "$$ROOT" }},{ "$sort": { "STATUS": -1 }},{ "$limit": self.sizeLimit } ] )
         items_found = map(self.map_sensors, self.collection.find({"type": "sensor"} ).sort([("STATUS", pymongo.DESCENDING)]).limit(self.sizeLimit))
 
         return items_found

@@ -50,5 +50,4 @@ class ConvertFast():
         return_dict['alert']['signature'] = matches.group('sig_name')
         return_dict['sensor'] = self.sensor
         return_dict['logType'] = 'alert'
-        return_dict['MINERVA_STATUS'] = 'OPEN'
         return return_dict

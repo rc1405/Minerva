@@ -22,6 +22,10 @@ import yaml
 import os
 import ssl
 import sys
+import threading
+import zmq
+from logging import DEBUG, INFO, getLogger, Formatter
+from logging.handlers import RotatingFileHandler
 
 class MinervaConfigs():
     def __init__(self, **kwargs):
@@ -118,3 +122,39 @@ class MinervaConfigs():
             db.filters.ensure_index("temp_timestamp",expireAfterSeconds=filterTimeout)
 
         return config
+
+class MinervaLog(threading.Thread):
+    def __init__(self, config, channels):
+        threading.Thread.__init__(self)
+        self.channels = channels
+        self.config = config
+
+    def run(logname):
+        #setup logger
+        logger = getLogger("Minerva")
+        if self.config['Logger']['level'] == 'INFO':
+            logger.setLevel(INFO)
+        else:
+            logger.setLevel(DEBUG)
+        logger_format = Formatter('%(astime)s:%(levelname)s: %(message)s')
+        handler = RotatingFileHandler(filename="%s/%s.log" % (self.config['Logging']['logDir'], logname), maxBytes=int(self.config['Logging']['maxSize']), backupCount=int(self.config['Logging']['maxCount']))
+        handler.setFormatter(logger_format)
+        logger.addHandler(handler)
+        log = {
+            "INFO": logger.info,
+            "DEBUG": logger.debug
+        }
+
+        #setup ZMQ
+        context = zmq.Context()
+        log_queue = context.socket(zmq.PULL)
+        log_queue.bind(self.channels['logger'])
+
+        while True:
+            try:
+                if log_queue.poll(1000):
+                    msg = log_queue.recv_multipart()
+                    log[msg[0]](msg[1])
+            except:
+                pass
+    

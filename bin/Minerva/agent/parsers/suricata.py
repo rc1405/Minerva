@@ -30,7 +30,6 @@ def _convertJSON(entry, sensor):
         return False
 
     new_entry['sensor'] = sensor
-    new_entry['MINERVA_STATUS'] = 'OPEN'
     return new_entry
 
 class ConvertEve():
