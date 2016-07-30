@@ -122,7 +122,7 @@
                 <td class="minerva-investigate">
                   <a href="#"><span class="glyphicon glyphicon glyphicon-circle-arrow-right" aria-hidden="true"></span></a>
                 </td>
-                <td>{{ item.document.timestamp |iso_to_utc }}</td>
+                <td>{{ item.document.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                 <td>{{ item.document.sensor }}</td>
                 <td>{{ item.document.proto }}</td>
                 <td>{{ item.document.src_ip }}</td>

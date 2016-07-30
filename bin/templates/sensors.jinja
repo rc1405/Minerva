@@ -82,8 +82,8 @@
         <tbody>
 	{% for item in items_found %}
         <tr class={{status_class[item.STATUS]}} data-id="{{item.ID}}">
-        <td>{{ item.time_created|iso_to_utc}}</td>
-        <td>{{ item.last_modified|iso_to_utc}}</td>
+        <td>{{ item.time_created.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+        <td>{{ item.last_modified.strftime('%Y-%m-%d %H:%M:%S')}}</td>
         <td>{{ item.SERVER }}</td>
         <td>{{ item.IP }}</td>
         <td>{{ item.STATUS }}</td></tr>
