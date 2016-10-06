@@ -26,6 +26,7 @@ import re
 
 import pymongo
 import netaddr
+import zmq
 
 class watchlist(object):
     '''Setup Initial Parameters'''
@@ -34,6 +35,32 @@ class watchlist(object):
         db = minerva_core.get_db()
         self.watchlist = db.watchlist
         self.flow = db.flow
+
+    def send_update_to_receiver(self):
+        context = zmq.Context()
+        sender = context.socket(zmq.DEALER)
+        receivers = {}
+
+
+        #for r in self.db.search.for.receivers['receivers']:
+            #receivers[r] = context.socket(zmq.DEALER)
+            #ip, recv_port, sub_port = r.split('_')
+            #sender.connect('tcp://%s:%s' % (ip, recv_port))
+            #receiver.connect('tcp://%s:%s' % (ip, sub_port))
+
+        sender.send_json({
+            "_function": "auth",
+            "_cert": self.PUBCERT
+        })
+        msg = sender.recv_json()
+        server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
+        pub_key = server_cert.get_pubkey()
+        rsa_key = pub_key.get_rsa()
+        self.SRVKEY = rsa_key
+        AESKEY = self._decrypt_rsa(msg['_message'])
+        if AESKEY:
+            self.AESKEY = AESKEY.decode('base64')
+
 
     def map_watchlist(self, item):
         ID = item.pop('_id')
@@ -166,48 +193,3 @@ class watchlist(object):
                     else:
                         self.watchlist.update({"_id": bson.objectid.ObjectId(event) }, { "$set": { "STATUS": "ENABLED", "date_changed": datetime.datetime.utcnow() }})
         return 
-
-    '''
-    def change_alerts(self, request, username):
-        search = {}
-        if request['action_type'] == 'STATUS':
-            change = { "$set": { "MINERVA_STATUS": str(request['action_value'])}, "$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': 'Mass Change.  Status changed to %s' % str(request['action_value']), 'COMMENT_TIME': datetime.datetime.utcnow() }}}
-        elif request['action_type'] == 'priority':
-            if request['priority_op'] == 'increase':
-                delta = int(request['action_value'])
-            else:
-                if int(request['action_value']) < 0:
-                    delta = request['action_value']
-                else:
-                    delta = 0 - int(request['action_value'])
-            change = { "$inc": { "alert.severity": delta },"$push": { "MINERVA_COMMENTS": { 'USER': username, 'COMMENT': 'Mass Change.  Priority changed by %i' % delta, 'COMMENT_TIME': datetime.datetime.utcnow() }}}
-        if 'ApplyTo' in request.keys():
-            if request['ApplyTo'] == 'OPEN':
-                search['MINERVA_STATUS'] = 'OPEN'
-            if request['ApplyTo'] == 'ESCALATED':
-                search['MINERVA_STATUS'] = 'ESCALATED'
-            if request['ApplyTo'] == 'NOT_CLOSED':
-                search['MINERVA_STATUS'] = { "$in": ['OPEN', 'ESCALATED']}
-            if request['ApplyTo'] == 'ClOSED':
-                search['MINERVA_STATUS'] = 'ClOSED'
-        if request['type'] in ['signature', 'sig_session', 'sig_address']:
-            search['alert.signature_id'] = int(request['sig_id'])
-            search['alert.rev'] = int(request['rev'])
-            search['alert.gid'] = int(request['gid'])
-        if request['type'] in ['address', 'sig_address']:
-            search['$or'] = []
-            search['$or'].append({"src_ip": request['ip_address']})
-            search['$or'].append({"dest_ip": request['ip_address']})
-        elif request['type'] in ['session', 'sig_session']:
-            search['$or'] = []
-            search['$or'].append({"src_ip": request['src_ip'], "dest_ip": request['dest_ip']})
-            search['$or'].append({"src_ip": request['dest_ip'], "dest_ip": request['src_ip']})
-        if request['type'] == 'category':
-            search['alert.category'] = request['category'] 
-        self.alerts.update_many(search,change)
-        if request['action_type'] == 'priority':
-            self.alerts.update_many({"alert.severity": { "$gt": 5 }}, { "$set": { "alert.severity": 5 }})
-            self.alerts.update_many({"alert.severity": { "$lt": 1 }}, { "$set": { "alert.severity": 1 }})
-
-        return'''
-

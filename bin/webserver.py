@@ -30,12 +30,12 @@ import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, iso_to_utc, epoch_to_datetime, HandleRequests, event_filters, MinervaSignatures, watchlist, dns
+from Minerva.server import alert_console, alert_flow, sensors, Users, HandleRequests, event_filters, MinervaSignatures, watchlist, dns
 
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
-env.filters['iso_to_utc'] = iso_to_utc
-env.filters['epoch_to_datetime'] = epoch_to_datetime
+#env.filters['iso_to_utc'] = iso_to_utc
+#env.filters['datetime_to_iso'] = datetime_to_iso
 
 class Minerva(object):
     def __init__(self, minerva_core):
@@ -72,8 +72,10 @@ class Minerva(object):
             else:
                 return '<script type="text/javascript">window.alert("Invalid Username or Pasword");location="/login";</script>'
         else:
+            context_dict = {}
+            context_dict['motd'] = self.configs['web']['motd']
             tmp = env.get_template('login.jinja')
-            return tmp.render()
+            return tmp.render(context_dict)
     
     @cherrypy.expose
     def logout(self, **kwargs):
@@ -1178,14 +1180,24 @@ def genKey(cur_config, minerva_core):
 def checkCert(cur_config, minerva_core):
     db = minerva_core.get_db()
     certdb = db.certs
-    results = list(certdb.find({"type": "webserver"}))
-    if len(results) == 0:
-        certdb.insert({"type": "webserver", "cert": open(cur_config['certs']['webserver_cert'],'r').read() } )
+    results = certdb.find_one({"type": "webserver"})
+    if not results:
+        certdb.insert({
+            "SERVER": "webserver", 
+            "type": "webserver", 
+            "CERT": open(cur_config['certs']['webserver_cert'],'r').read(), 
+            "key": open(cur_config['certs']['webserver_key'],'r').read(),
+            "STATUS": "APPROVED" 
+        } )
     else:
-        cert = results[0]['cert']
+        cert = results['CERT']
         if cert != open(cur_config['certs']['webserver_cert'],'r').read():
             print('Cert Changed')
-            certdb.update({"type": "webserver"},{ "$set": { "cert": open(cur_config['certs']['webserver_cert'],'r').read() }})
+            certdb.update({"SERVER": "webserver"},{ 
+                "$set": { 
+                    "CERT": open(cur_config['certs']['webserver_cert'],'r').read(),
+                    "key":  open(cur_config['certs']['webserver_key'],'r').read()
+            }})
     return
 
 
