@@ -366,21 +366,24 @@ def checkCert(cur_config, minerva_core):
         if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
             genKey(cur_config, minerva_core)
         certdb.insert({
+            "SERVER": "receiver", 
             "type": "receiver", 
             "cert": open(cur_config['certs']['server_cert'],'r').read(), 
             "key": open(cur_config['certs']['private_key']).read() 
         } )
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]['rec_ports']:
-                certdb.update({"type": "receiver"}, { "$push": { "receivers": "%s-%i" % (i, p) }})
+                certdb.update({"SERVER": "receiver"}, { "$push": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
 
     else:
         if 'receivers' in results[0].keys():
             receivers = results[0]['receivers']
+        else:
+            receivers = []
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]['rec_ports']:
                 if not "%s-%i" % (i, p) in receivers:
-                    certdb.update({"type": "receiver"}, { "$push": { "receivers": "%s-%i" % (i, p) }})
+                    certdb.update({"SERVER": "receiver"}, { "$push": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
     return
 
 
@@ -395,8 +398,10 @@ def main():
         "worker": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
         "worker_main": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
         "pub": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "logger": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
         "receiver": {},
     }
+
 
     for i in cur_config['listen_ip']:
         for p in cur_config['listen_ip'][i]['rec_ports']:
@@ -406,6 +411,9 @@ def main():
     checkCert(cur_config, minerva_core)
 
     active_processes = []
+
+    #log_proc = core.MinervaLog(config, channels)
+    #log_proc.start()
 
     pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
     pub_listener.start()
@@ -439,6 +447,10 @@ def main():
                 worker_main.join()
                 worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
                 worker_main.start()
+            #if not log_proc.is_alive():
+                #log_proc.join()
+                #log_proc = core.MinervaLog(config, channels)
+                #log_proc.start()
             time.sleep(1)
     #except:
         #for p in active_processes:
