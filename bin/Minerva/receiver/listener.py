@@ -34,13 +34,21 @@ class EventReceiver(object):
         self.channels['context'] = zmq.Context()
 
     def listen(self, pname):
+        print('listening to %s' % pname)
         ip, port = pname.split('-')
+
+        #logger = self.channels['context'].socket(zmq.PUSH)
+        #logger.connect(self.channels['logger'])
+
         server = self.channels['context'].socket(zmq.ROUTER)
         server.bind('tcp://%s:%s' % (ip, port))
+        #logger.send_multipart(['DEBUG', "Receiver listening for messages on tcp://%s:%s" % (ip, port)])
 
         workers = self.channels['context'].socket(zmq.DEALER)
-        print("binded to %s" % self.channels['receiver']["%s-%s" % (ip, port)])
+        #logger.send_multipart(['DEBUG', "Receiver binded workers to %s" % self.channels['receiver']["%s-%s" % (ip, port)]])
         workers.bind(self.channels['receiver']["%s-%s" % (ip, port)])
+
+        #logger.send_multipart(['INFO', "Receiver listening for events"])
 
         try:
             zmq.proxy(server, workers)
@@ -49,6 +57,8 @@ class EventReceiver(object):
         except:
             server.close()
             workers.close()
+
+        #logger.send_multipart(['INFO', "Receiver shutting down"])
 
 class EventPublisher(object):
     def __init__(self, minerva_core, channels, cur_config):
@@ -62,7 +72,7 @@ class EventPublisher(object):
         keys = db.certs.find_one({"type": "receiver"})
         webcert = db.certs.find_one({"type": "webserver"})
         if webcert:
-            webcert = M2Crypto.X509.load_cert_string(str(webcert['cert']))
+            webcert = M2Crypto.X509.load_cert_string(str(webcert['CERT']))
             pubkey = webcert.get_pubkey()
             self.WEBKEY = pubkey.get_rsa()
         else:
@@ -98,8 +108,6 @@ class EventPublisher(object):
             print('connected to %s %s' % ( r, str(self.config['listen_ip'][r]['pub_port'])))
             sender.bind('tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port'])))
 
-        #sender.bind('tcp://%s:%s' % (ip, port))
-
         receiver = self.channels['context'].socket(zmq.PULL)
         receiver.bind(self.channels['pub'])
  
@@ -110,28 +118,35 @@ class EventPublisher(object):
                 if receiver.poll(500):
                     print('have message')
                     msg = receiver.recv_json()
-                    if msg['_payload']['action'] == "request":
-                        payload = {
-                            "_function": "PCAP",
-                            "action": "request",
-                            "console": msg['_payload']['console'],
-                            "request_id": msg['_payload']['request_id'],
-                            "request": msg['_payload']['request']
-                        }
-                        enc_payload = self._encrypt_aes(msg['mid'], json.dumps(payload))
-                        if enc_payload:
-                            print('request sent')
-                            sender.send_multipart([str(msg['mid']), json.dumps({
-                                "mid": msg['mid'],
-                                "_payload": enc_payload
-                            })])
-                        else:
-                            event_queue.append([msg['mid'], payload])
-                            sender.send_multipart([str(msg['mid']), json.dumps({
-                                "mid": msg['mid'],
-                                "_function": "auth",
-                                "_cert": self.PUBCERT
-                            })])
+                    if msg['_function'] == 'PCAP':
+                        try:
+                            if msg['_payload']['action'] == "request":
+                                payload = {
+                                    "_function": "PCAP",
+                                    "action": "request",
+                                    "console": msg['_payload']['console'],
+                                    "request_id": msg['_payload']['request_id'],
+                                    "request": msg['_payload']['request']
+                                }
+                                enc_payload = self._encrypt_aes(msg['mid'], json.dumps(payload))
+                                if enc_payload:
+                                    print('request sent')
+                                    sender.send_multipart([str(msg['mid']), json.dumps({
+                                        "mid": msg['mid'],
+                                        "_payload": enc_payload
+                                    })])
+                                else:
+                                    event_queue.append([msg['mid'], payload])
+                                    sender.send_multipart([str(msg['mid']), json.dumps({
+                                        "mid": msg['mid'],
+                                        "_function": "auth",
+                                        "_cert": self.PUBCERT
+                                    })])
+                        except TypeError:
+                            print('sending back to web server')
+                            sender.send_multipart([str(msg['mid']), json.dumps(msg)])
+                    
+                    '''
                     elif msg['_payload']['action'] == "reply":
      
                         key = os.urandom(32)
@@ -142,6 +157,7 @@ class EventPublisher(object):
                                 "_cipher": cipher,
                                 "_payload": self_encrypt_aes(msg['_payload']['console'], json.dumps(msg['_payload']), key=key)
                             })])
+                    '''
                 if len(event_queue) > 0:
                     for e in event_queue:
                         enc_payload = self._encrypt_aes(e[0], json.dumps(e[1]))
@@ -152,5 +168,6 @@ class EventPublisher(object):
                             })])
                             event_queue.remove(e)
         except:
+            print('listener crashed: %s' % e)
             sender.close()
             receiver.close()

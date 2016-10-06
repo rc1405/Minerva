@@ -37,13 +37,11 @@ from dateutil.parser import parse
 #class EventWorker(threading.Thread):
 class EventWorker(Process):
     def __init__(self, minerva_core, channels, update_lock, action_file, sig_file):
-        #threading.Thread.__init__(self)
         Process.__init__(self)
         self.config = minerva_core.conf
         self.core = minerva_core
         self.channels = channels
         db = minerva_core.get_db()
-        #TODO Update CERTS
         keys = db.certs.find_one({"type": "receiver"})
         key = keys['key']
         self.PUBCERT = keys['cert']
@@ -52,12 +50,12 @@ class EventWorker(Process):
         self.action_file = action_file
         self.sig_file = sig_file
         self.certs = db.certs
+        self.keys = db.keys
 
     def get_name(self):
         return "Process %s" % self.name
 
     def _decrypt_rsa(self, cert, enc_payload):
-        #print(enc_payload)
         CERT = M2Crypto.X509.load_cert_string(str(cert))
         PUBKEY = CERT.get_pubkey()
         RSA = PUBKEY.get_rsa()
@@ -68,16 +66,31 @@ class EventWorker(Process):
             #return False
         return dmesg
 
+    def _encrypt_aes_web(self, payload):
+        print('aes_web')
+        aes_key = self.keys.find_one({"SERVER": "webserver"})
+        print(aes_key)
+        try:
+            aes_key = aes_key['KEY'].decode('base64')
+        except:
+            aes_key = os.urandom(32).encode('base64')
+            self.keys.update_one({"SERVER": "webserver"},{"$set": { "KEY": aes_key }}, upsert=True)
+
+        cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=aes_key, iv=aes_key, op=1)
+        enc_payload = cipher.update(payload) + cipher.final()
+        print(enc_payload.encode('base64'))
+        return enc_payload.encode('base64')
+
     def _decrypt_aes(self, key, payload):
         print('trying to decrypt')
-        #try:
-        if 1 == 1:
+        try:
+        #if 1 == 1:
             key = key.decode('base64')
             cipher = M2Crypto.EVP.Cipher('aes_256_cbc', key=key, iv=key, op=0)
             events = json.loads(cipher.update(payload.decode('base64')) + cipher.final())
             return events
-        #except:
-            #return False
+        except:
+            return False
 
     def _encrypt_rsa(self, cert, payload):
         CERT = M2Crypto.X509.load_cert_string(str(cert))
@@ -95,12 +108,9 @@ class EventWorker(Process):
         work_recv = work.recv_multipart
         work_send = work.send_multipart
 
-        #work.bind(self.channels['worker'][proc_num])
         for p in self.channels['receiver'].keys():
             print("Connected to %s" % self.channels['receiver'][p])
             work.connect(self.channels['receiver'][p])
-
-        #print('working %s' % self.channels['worker'])
 
         publisher = self.channels['context'].socket(zmq.PUSH)
         publisher.connect(self.channels['pub'])
@@ -127,32 +137,30 @@ class EventWorker(Process):
                 ID, msg = work_recv()
                 msg = json_loads(msg)
                 print("received event %i" % count)
+                #Add check for string
                 count += 1
                 try:
                     if msg['_function'] == 'auth':
                         is_auth = auth_check(ID, msg['_cert'])
-                        #print('made it past auth')
                         work_send([ID, json.dumps({
                             "_function": "auth",
                             "_cert": self.PUBCERT,
                             "_message": self._encrypt_rsa(msg['_cert'], is_auth)
                         })])
                 except KeyError:
+                    print('checking auth')
                     is_auth = auth_check(ID, msg['_cert'])
                     if is_auth:
                         denc_msg = self._decrypt_aes(is_auth, msg['_payload'])
-                        #print('made it past decrypt')
                         #try:
                         if 1 == 1:
                             if denc_msg['_function'] == 'events':
                                 print("Received %i events" % len(denc_msg['events']))
                                 watch_events = inserter(ID, denc_msg['events'], watcher.filter_check)
-                                #print(watch_events)
                                 if len(watch_events) > 0:
                                      watch_alerts = list(watcher.watch(watch_events))
                                      if watch_alerts:
                                         inserter('receiver', watch_alerts, watcher.filter_check)
-                                #print("done processing events")
                                 work_send([ID, json.dumps({
                                     "_payload": self._encrypt_rsa(msg['_cert'], json_dumps({
                                        "_function": "events",
@@ -160,17 +168,6 @@ class EventWorker(Process):
                                     })),
                                 })])
                                 print('pubing stuff')
-                                publisher.send_json({
-                                     "mid": ID,
-                                     "_payload": {
-                                         "action": "request",
-                                         "request": { "some": "request" },
-                                         "console": "testing",
-                                         "request_id": str(uuid.uuid4()),
-                                         "_function": "PCAP",
-                                     },
-                                     "_function": "PCAP",
-                                })
 
                             elif denc_msg['_function'] == 'PCAP':
                                 if denc_msg['_action'] == 'request':
@@ -179,8 +176,8 @@ class EventWorker(Process):
                                          "_payload": { 
                                              "action": "request",
                                              "request": denc_msg['request'], 
-                                             "console": ID, 
-                                             "request_id": str(uuid.uuid4()), 
+                                             "console": denc_msg['console'], 
+                                             "request_id": denc_msg['request_id'],
                                              "_function": "PCAP",
                                          },
                                          "_function": "PCAP",
@@ -188,30 +185,41 @@ class EventWorker(Process):
                                     work_send([ID, json.dumps({
                                         "_function": "ack",
                                     })])
-                                elif msg['_action'] == 'reply':
+                                elif denc_msg['_action'] == 'reply':
                                     publisher.send_json({
                                          "mid": denc_msg['console'], 
-                                         "_payload": denc_msg,
-                                         "request_id": denc_msg['request_id'], 
+                                         "_payload": self._encrypt_aes_web(json_dumps(denc_msg)),
+                                         "request_id": denc_msg['request_id'],
                                          "_function": "PCAP",
                                     })
+                                    print('done sending to web')
                                     work_send([ID, json.dumps({
                                         "_function": "ack",
                                     })])
-                            elif msg['_function'] == '_RECV_UPDATE':
+                            elif denc_msg['_function'] == '_RECV_UPDATE':
                                 receiver.send("UPDATE_YARA")
+                                work_send([ID, json.dumps({
+                                    "_function": "ack",
+                                })])
+
                             else:
                                 work_send([ID, json.dumps({
                                     "_function": "auth",
                                     "_cert": self.PUBCERT
                                 })])
                                 continue
-                        #except TypeError:
-                            #work_send([ID, json.dumps({
-                                #"_function": "auth",
-                                #"_cert": self.PUBCERT
-                            #})])
+                        '''
+                        except TypeError:
+                            print('something dun broke')
+                            print(msg)
+                            print(denc_msg)
+                            work_send([ID, json.dumps({
+                                "_function": "auth",
+                                "_cert": self.PUBCERT
+                            })])
+                        '''
                     else:
+                        print("bad auth")
                         work_send([ID, json.dumps({
                             "_function": "auth",
                             "_cert": self.PUBCERT
@@ -237,11 +245,6 @@ class MongoInserter(object):
         self.flow = db.flow
         self.dns = db.dns
         self.certs = db.certs
-        #self.channels = channels
-        #self.work = channels['context'].socket(zmq.PUSH)
-        #for p in self.channels['receiver'].keys():
-            #self.work.connect(self.channels['receiver'][p])
-
 
     def insert_data(self, sensor, msg, filter_check):
         alert_events = []
@@ -265,34 +268,41 @@ class MongoInserter(object):
                         continue
             event['sensor'] = sensor
             event['uuid'] = str(uuid.uuid4())
-            event['MINERVA_STATUS'] = 'OPEN'
             if event['logType'] == 'alert':
-                #initiated filters
+                event['MINERVA_STATUS'] = 'OPEN'
                 event = filter_check(event)
                 timestamp = event['timestamp']
                 try:
                     ts = parse(timestamp)
                     tz = timezone('UTC')
                     event['timestamp'] = ts.astimezone(tz)
-                    #event['epoch'] = int(time.mktime(ts.timetuple()))
                 except ValueError:
                     event['timestamp'] = ts
-                    #continue
-                #event['orig_timestamp'] = timestamp
                 alert_events.append(event)
-                #self.work.send_json({
                 if event['alert']['category'] != "minerva-watchlist":
-                    watch_events.append( {
-                        "sensor": sensor, 
-                        "uuid": event['uuid'], 
-                        "_function": "watchlist",
-                        "proto": event['proto'],
-                        "src_ip": event['src_ip'], 
-                        "src_port": event['src_port'], 
-                        "dest_ip": event['dest_ip'], 
-                        "dest_port": event['dest_port'], 
-                        "type": "ip"
-                    })
+                    try:
+                        watch_events.append( {
+                            "sensor": sensor, 
+                            "uuid": event['uuid'], 
+                            "_function": "watchlist",
+                            "proto": event['proto'],
+                            "src_ip": event['src_ip'], 
+                            "src_port": event['src_port'], 
+                            "dest_ip": event['dest_ip'], 
+                            "dest_port": event['dest_port'], 
+                            "type": "ip"
+                        })
+                    except KeyError:
+                        watch_events.append( {
+                            "sensor": sensor,
+                            "uuid": event['uuid'],
+                            "_function": "watchlist",
+                            "proto": event['proto'],
+                            "src_ip": event['src_ip'],
+                            "dest_ip": event['dest_ip'],
+                            "type": "ip"
+                        })
+
             elif event['logType'] == 'flow':
                 try:
                     tz = timezone('UTC')
@@ -305,18 +315,29 @@ class MongoInserter(object):
                     flow_events.append(event)
                 except:
                     continue
-                #self.work.send_json({
-                watch_events.append( {
-                    "sensor": sensor,
-                    "uuid": event['uuid'],
-                    "_function": "watchlist",
-                    "proto": event['proto'],
-                    "src_ip": event['src_ip'],
-                    "src_port": event['src_port'],
-                    "dest_ip": event['dest_ip'],
-                    "dest_port": event['dest_port'],
-                    "type": "ip"
-                })
+                try:
+                    watch_events.append( {
+                        "sensor": sensor,
+                        "uuid": event['uuid'],
+                        "_function": "watchlist",
+                        "proto": event['proto'],
+                        "src_ip": event['src_ip'],
+                        "src_port": event['src_port'],
+                        "dest_ip": event['dest_ip'],
+                        "dest_port": event['dest_port'],
+                        "type": "ip"
+                    })
+                except KeyError:
+                        watch_events.append( {
+                            "sensor": sensor,
+                            "uuid": event['uuid'],
+                            "_function": "watchlist",
+                            "proto": event['proto'],
+                            "src_ip": event['src_ip'],
+                            "dest_ip": event['dest_ip'],
+                            "type": "ip"
+                        })
+
 
             elif event['logType'] == 'dns':
                 timestamp = event['timestamp']
@@ -324,12 +345,9 @@ class MongoInserter(object):
                     ts = parse(timestamp)
                     tz = timezone('UTC')
                     event['timestamp'] = ts.astimezone(tz)
-                    #event['epoch'] = int(time.mktime(ts.timetuple()))
                 except:
                     continue
-                #event['orig_timestamp'] = timestamp
                 dns_events.append(event)
-                #self.work.send_json({
                 dns_watch = {
                     "sensor": sensor, 
                     "uuid": event['uuid'], 
@@ -344,14 +362,6 @@ class MongoInserter(object):
                 if event['dns']['type'] == 'answer':
                     if 'rdata' in event['dns']:
                         dns_watch['domain'] = event['dns']['rdata']
-                        #self.work.send_json({
-                        #watch_events.append( {
-                            #"sensor": sensor, 
-                            #"uuid": event['uuid'], 
-                            #"_function": "watchlist",
-                            #"domain": event['dns']['rdata'], 
-                            #"type": "dns"
-                        #})
                 watch_events.append(dns_watch)
 
         try:
@@ -383,7 +393,7 @@ class ClientAuth(object):
         self.keys = db.keys
 
     def check(self, mid, cert):
-        #sensor = self.certs.find_one({"CERT": cert})
+        mid = mid.split('|-_')[0]
         sensor = self.certs.find_one({"SERVER": mid})
         try:
             if sensor['CERT'] == cert and sensor['STATUS'] == 'APPROVED':
@@ -402,23 +412,21 @@ class ClientAuth(object):
                     "last_modified":  datetime.datetime.utcnow(),
                     "SERVER": mid,
                     "STATUS": "CERT_CHANGED",
-                    #"receiver": self.config['Event_Receiver']['PCAP']['ip'],
-                    #"receiver_port": int(self.config['Event_Receiver']['PCAP']['port']),
                     "CERT": cert
                   }
                 }, upsert=True)
                 return False
             return False
         except TypeError:
-            sensor = self.certs.find_one({"cert": cert})
+            sensor = self.certs.find_one({"CERT": cert})
             if sensor:
                 self.certs.update({ "SERVER": mid }, {
                   "$set": {
                     "last_modified":  datetime.datetime.utcnow(),
                     "SERVER": mid, 
                     "STATUS": "CERT_COPIED", 
-                    "receiver": self.config['Event_Receiver']['PCAP']['ip'], 
-                    "receiver_port": int(self.config['Event_Receiver']['PCAP']['port']),
+                    #"receiver": self.config['Event_Receiver']['PCAP']['ip'], 
+                    #"receiver_port": int(self.config['Event_Receiver']['PCAP']['port']),
                     "CERT": cert,
                     "type": "sensor"
                   }
@@ -437,8 +445,6 @@ class ClientAuth(object):
                     "last_modified":  datetime.datetime.utcnow(),
                     "SERVER": mid, 
                     "STATUS": "NOT_APPROVED", 
-                    #"receiver": self.config['Event_Receiver']['PCAP']['ip'], 
-                    #"receiver_port": int(self.config['Event_Receiver']['PCAP']['port']),
                     "CERT": cert,
                     "type": "sensor"
                   }
@@ -513,7 +519,6 @@ class EventWatch(object):
         new_event = {
             "timestamp": datetime.datetime.utcnow().isoformat(),
             "payload_printable" : "",
-            "src_port" : event['src_port'],
             "event_type" : "alert",
             "proto" : event['proto'],
             "sensor": event['sensor'],
@@ -529,8 +534,10 @@ class EventWatch(object):
             "logType" : "alert",
             "packet" : "",
             "dest_ip" : event['dest_ip'],
-            "dest_port" : event['dest_port'],
             "payload" : "",
             "MINERVA_STATUS" : "OPEN",
         }
+        if not new_event['proto'] == 'ICMP':
+            new_event['src_port'] = event['src_port']
+            new_event['dest_port'] = event['dest_port']
         return json.dumps(new_event)
