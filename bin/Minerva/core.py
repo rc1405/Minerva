@@ -124,20 +124,23 @@ class MinervaConfigs():
         return config
 
 class MinervaLog(threading.Thread):
-    def __init__(self, config, channels):
+    def __init__(self, config, channels, logname):
         threading.Thread.__init__(self)
         self.channels = channels
         self.config = config
+        self.logname = logname
 
-    def run(logname):
+    def run(self):
         #setup logger
         logger = getLogger("Minerva")
         if self.config['Logger']['level'] == 'INFO':
             logger.setLevel(INFO)
         else:
             logger.setLevel(DEBUG)
+        if not os.path.exists(self.config['Logger']['logDir']):
+            os.mkdir(self.config['Logger']['logDir'])
         logger_format = Formatter('%(astime)s:%(levelname)s: %(message)s')
-        handler = RotatingFileHandler(filename="%s/%s.log" % (self.config['Logging']['logDir'], logname), maxBytes=int(self.config['Logging']['maxSize']), backupCount=int(self.config['Logging']['maxCount']))
+        handler = RotatingFileHandler(filename="%s/%s.log" % (self.config['Logger']['logDir'], self.logname), maxBytes=int(self.config['Logger']['maxSize']), backupCount=int(self.config['Logger']['maxCount']))
         handler.setFormatter(logger_format)
         logger.addHandler(handler)
         log = {
@@ -157,4 +160,3 @@ class MinervaLog(threading.Thread):
                     log[msg[0]](msg[1])
             except:
                 pass
-    
