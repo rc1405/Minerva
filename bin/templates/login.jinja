@@ -14,7 +14,11 @@
   <body style="background-color:lightblue">
 
     <div class="container">
-
+    {% if motd %}
+    <pre>
+    {{motd}}
+    </pre>
+    {% endif %}
       <form class="form-signin" method="post" action="/login">
         <h2 class="form-signin-heading">Please sign in</h2>
         <label for="inputEmail" class="sr-only">Username</label>

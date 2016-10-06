@@ -94,7 +94,7 @@
               <tbody>
                 {% set oa = item.origin %}
                 <tr class="{{severity_class[oa.alert.severity]}}">
-                  <td>{{ oa.timestamp|datetime_to_iso}}</td>
+                  <td>{{ oa.timestamp.strftime('%Y-%m-%d %H:%M:%S')}}</td>
                   <td>{{ oa.sensor }}</td>
                   <td>{{ oa.proto }}</td>
                   <td>{{ oa.src_ip }}</td>
@@ -203,8 +203,8 @@
               {% for session in item.sessions %}
                 {% set sn = session.document %}
                 <tr>
-                  <td>{{ sn.netflow.start|datetime_to_iso }}</td>
-                  <td>{{ sn.netflow.end|datetime_to_iso }}</td>
+                  <td>{{ sn.netflow.start.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                  <td>{{ sn.netflow.end.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                   <td>{{ sn.sensor }}</td>
                   <td>{{ sn.proto }}</td>
                   <td>{{ sn.src_ip }}</td>

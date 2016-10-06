@@ -39,6 +39,7 @@ Webserver:
     certs:
       webserver_cert: {{config.Webserver.web.certs.webserver_cert}}
       webserver_key: {{config.Webserver.web.certs.webserver_key}}
+    motd: {{config.Webserver.web.motd}}
     session_timeout: {{config.Webserver.web.session_timeout}}
     password_requirements:
       password_tries: {{config.Webserver.web.password_requirements.password_tries}}
@@ -119,3 +120,8 @@ Agent_forwarder:
     pcap_directory: {{ config.Agent_forwarder.pcap.pcap_directory }}
     temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
 {%- endif %}
+Logger:
+  logDir: {{config.Logger.logDir}}
+  level: {{config.Logger.level}}
+  maxSize: {{config.Logger.maxSize}}
+  maxCount: {{config.Logger.maxCount}}
