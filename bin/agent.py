@@ -70,7 +70,32 @@ def tailFile(cur_config, fname, channels):
         ftailer = TailLog(channels, cur_config['send_batch'], converter, fname, pfile)
         ftailer.tail()
 
-#def worker(stuff):
+def worker(cur_config, channels):
+    #context = zmq.Context.instance()
+    #server = channels['context'].socket(zmq.PULL)
+    #server = context.socket(zmq.PULL)
+    #server.bind(channels['worker_main'])
+    #update_lock = Lock()
+    #action_fh, sig_fh = update_yara(minerva_core)
+    #workers = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+    worker_procs = []
+    #do_update = False
+    #try:
+    if 1 == 1:
+        for wp in range(0,int(cur_config['worker_threads'])):
+            #workers = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+            print('started %i' % wp)
+            worker = AgentWorker(cur_config, channels)
+            worker.start()
+            worker_procs.append(worker)
+        while True:
+            for p in worker_procs:
+                if not p.is_alive():
+                    worker_procs.remove(p)
+                    worker = AgentWorker(cur_config, channels)
+                    worker.start()
+                    p.join()
+                    worker_procs.append(worker)
 
 def publisher(cur_config, channels, start_workers):
     pub = AgentPublisher(cur_config, channels)
@@ -110,6 +135,9 @@ def main():
     pub_proc = Process(name='publisher', target=publisher, args=((cur_config, channels, start_workers)))
     pub_proc.start()
 
+    worker_main = Process(name='worker_main', target=worker, args=(cur_config, channels))
+    worker_main.start()
+
     time.sleep(5)
 
     if start_workers.acquire() :
@@ -120,20 +148,10 @@ def main():
             pr.start()
             log_procs.append(pr)
 
-
-
-
         #for wp in range(0,int(cur_config['worker_threads'])):
             #work_proc = Process(name='worker-%i' % wp, target=workers.start)
             #work_proc.start()
             #work_procs.append(work_proc)
-
-
-
-
-
-
-
 
         while True:
             for l in log_procs:
@@ -148,6 +166,10 @@ def main():
             if not pub_proc.is_alive():
                 pub_proc = Process(name='publisher', target=publisher, args=((cur_config, channels, start_workers)))
                 pub_proc.start()
+            if not worker_main.is_alive():
+                worker_main.join()
+                worker_main = Process(name='worker_main', target=worker, args=(cur_config, channels))
+                worker_main.start()
             time.sleep(10)
     #except:
         #time.sleep(1)

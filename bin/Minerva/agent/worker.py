@@ -20,119 +20,87 @@
 
 
 import json
+import zmq
 
 import M2Crypto
-#from .carver import PCAPCarver
-import threading
+from .carver import PCAPCarver
 
-class AgentWorker(threading.Thread):
-    def __init__(self, channels):
-        threading.Thread.__init__(self)
+class AgentWorker(object):
+    def __init__(self, cur_config, channels):
         self.channels = channels
-        server_cert = M2Crypto.X509.load_cert(str(self.server_cert))
-        pub_key = server_cert.get_pubkey()
-        rsa_key = pub_key.get_rsa()
-        self.PUBCERT = open(cur_config['client_cert'],'r').read()
-        self.PRIVKEY = M2Crypto.RSA.load_key_string(str(open(cur_config['client_private'],'r').read()))
+        self.config = cur_config
         self.AESKEY = False
+        self.SRVKEY = False
 
-    def run(self):
+    def _decrypt_aes(self, payload):
+        try:
+            cipher = M2Crypto.EVP.Cipher('aes_256_cbc', key=self.AESKEY, iv=self.AESKEY, op=0)
+            events = json.loads(cipher.update(payload.decode('base64')) + cipher.final())
+            return events
+        except:
+            return False
+
+    def start(self):
         context = zmq.Context.instance()
 
         work = context.socket(zmq.PULL)
         work.connect(self.channels['worker'])
 
-        publisher = context.socket(zmq.PUSH)
+        publisher = context.socket(zmq.REQ)
         publisher.connect(self.channels['pub'])
 
-        #pcapWorker = PCAPProessor(self.config)
+        pcapWorker = PCAPprocessor(self.config)
+
+        publisher.send_json({"_function": "AESKEY"})
+        msg = publisher.recv_json()
+        self.AESKEY = msg['key'].decode('base64')
+
 
         while True:
-            if work.poll(1000):
-                msg = work.recv_json()
-                try:
-                    if msg['_function'] == 'auth':
-                        try:
-                            key = self._decrypt_rsa(msg['_message'])
-                            if key:
-                                self.AESKEY = key
-                        except KeyError:
-                            try:
-                                self.AESKEY = msg['_cipher'].decode('base64')
-                            except KeyError:
-                                publisher.send_json({
-                                    "_function": "auth",
-                                    "_cert": self.PUBCERT,
-                                })
-                except KeyError:
-                    if self.AESKEY:
-                        denc_msg = self_decrypt_aes(msg['_payload'])
-                        if denc_msg:
-                            elif msg['_function'] == 'PCAP':
-                                packets = pcapWorker.process(dmsg['payload'])
-                                if packets:
-                                    publisher.send_json({
-                                        "mid": self.name,
-                                        "pubcert": self.PUBCERT,
-                                        "_action": "reply",
-                                        "payload": {
-                                            "payload": packets,
-                                            "console": dmsg['console'],
-                                            "request_id": msg['request_id']
-                                        },
-                                        "_function": "PCAP"
-                                    })
-                                else:
-                                    publisher.send_json({
-                                        "mid": self.name,
-                                        "pubcert": self.PUBCERT,
-                                        "_action": "reply",
-                                        "payload": {
-                                            "payload": "No Packets Found",
-                                            "console": dmsg['console'],
-                                            "request_id": msg['request_id']
-                                        },
-                                        "_function": "PCAP"
-                                    })
+            sensor, msg = work.recv_multipart()
+            print(msg)
+            msg = json.loads(msg)
+            if '_payload' in msg.keys():
+                msg = self._decrypt_aes(msg['_payload'])
+                if not msg:
+                    publisher.send_json({"payload": "reauth"})
+                    continue
+                print(msg)
 
-                        else:
-                            publisher.send_json({
-                                "_function": "auth",
-                                "_cert": self.PUBCERT,
-                            })
+            if msg['_function'] == 'PCAP':
+                print('pcap')
+                packets = pcapWorker.process(msg['request'])
+                attempts = 0
+                while True:
+                    if packets:
+                        print('packets')
+                        publisher.send_json({
+                            "payload": packets,
+                            "console": msg['console'],
+                            "request_id": msg['request_id'],
+                            "_function": "PCAP"
+                        })
                     else:
-                            publisher.send_json({
-                                "_function": "auth",
-                                "_cert": self.PUBCERT,
-                            })
-
-    def _decrypt_aes(self, payload):
-        print('trying to decrypt')
-        #try:
-        if 1 == 1:
-            cipher = M2Crypto.EVP.Cipher('aes_256_cbc', key=self.AESKEY, iv=self.AESKEY, op=0)
-            denc_msg = json.loads(cipher.update(payload.decode('base64')) + cipher.final())
-            return denc_msg
-        #except:
-            #return False
-                          
-    def decrypt_options(self, encrypted_options):
-        server_cert = M2Crypto.X509.load_cert(str(self.server_cert))
-        pub_key = server_cert.get_pubkey()
-        rsa_key = pub_key.get_rsa()
-        try:
-            decrypted_options = json.loads(rsa_key.public_decrypt(encrypted_options, M2Crypto.RSA.pkcs1_padding))
-        except:
-            return False
-        return decrypted_options
+                        print('no packets')
+                        publisher.send_json({
+                            "payload": "No Packets Found",
+                            "console": msg['console'],
+                            "request_id": msg['request_id'],
+                            "_function": "PCAP"
+                        })
+                    status = publisher.recv_json()
+                    if status['status'] == 'success':
+                        print('done')
+                        break
+                    elif status['status'] == 'failure':
+                        print('failed')
+                        attempts += 1
+                        self.AESKEY = status['KEY'].decode('base64')
 
 class PCAPprocessor(object):
     def __init__(self, config):
         self.config = config
-        self.server_cert = config['target_addr']['server_cert']
-        self.client_cert = config['client_cert']
-        self.client_key = config['client_private']
-        #self.carver = PCAPCarver(config)
+        self.carver = PCAPCarver(config)
 
     def process(self, options):
         if options['request_type'] == 'alert':
