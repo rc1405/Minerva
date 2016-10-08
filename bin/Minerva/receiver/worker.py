@@ -164,21 +164,34 @@ class EventWorker(Process):
                             if denc_msg['_function'] == 'events':
                                 self.logger.send_multipart(['DEBUG','Worker Recieived events from %s' % ID])
                                 watch_events = inserter(ID, denc_msg['events'], watcher.filter_check)
+                                print(self.logger.closed)
+                                self.logger.close(linger=1000)
+                                print(self.logger.closed)
+                                self.logger = self.core.get_socket(self.channels)
+                                self.logger.send_multipart(['DEBUG','Worker Recieived watch events from %s' % ID])
+                                print('wtf watch events: %i, %s' % (len(watch_events), ID))
+                                watch_alerts = False
                                 if len(watch_events) > 0:
-                                     watch_alerts = list(watcher.watch(watch_events))
-                                     if watch_alerts:
-                                         self.logger.send_multipart(['DEBUG','Worker has %i watchlist events from %s' % (len(watch_alerts), ID)])
-                                         inserter('receiver', watch_alerts, watcher.filter_check)
+                                    watch_alerts = list(watcher.watch(watch_events))
+                                    #if watch_alerts:
+                                        #self.logger.send_multipart(['DEBUG','Worker has %i watchlist events from %s' % (len(watch_alerts), ID)])
+                                        #watch_events = inserter('receiver', watch_alerts, watcher.filter_check)
+                                self.logger.send_multipart(['DEBUG','Worker is sending back ack to %s' % ID])
                                 work_send([ID, json.dumps({
                                     "_payload": self._encrypt_rsa(msg['_cert'], json_dumps({
                                        "_function": "events",
                                        "status": "success"
                                     })),
                                 })])
+                                self.logger.send_multipart(['DEBUG','Worker has sent back ack to %s' % ID])
+                                if watch_alerts:
+                                    self.logger.send_multipart(['DEBUG','Worker has %i watchlist events from %s' % (len(watch_alerts), ID)])
+                                    watch_events = inserter('receiver', watch_alerts, watcher.filter_check)
+
 
                             elif denc_msg['_function'] == 'PCAP':
                                 if denc_msg['_action'] == 'request':
-                                    self.logger.send_multipart(['DEBUG','Worker received PCAP reqeust for %s' % denc_msg['target']])
+                                    self.logger.send_multipart(['DEBUG','Worker received PCAP reqeust for %s' % str(denc_msg['target'])])
                                     publisher.send_json({
                                          "mid": denc_msg['target'], 
                                          "_payload": { 
@@ -280,7 +293,8 @@ class MongoInserter(object):
                     except:
                         self.logger.send_multipart(['DEBUG','Worker received Bad JSON event from %s' % sensor])
                         continue
-            event['sensor'] = sensor
+            if sensor != 'receiver':
+                event['sensor'] = sensor
             event['uuid'] = str(uuid.uuid4())
             if event['logType'] == 'alert':
                 event['MINERVA_STATUS'] = 'OPEN'
@@ -394,10 +408,13 @@ class MongoInserter(object):
                         "last_event":  datetime.datetime.utcnow()
                     }
                 })
-                self.logger.send_multipart(['DEBUG','Worker mongo passing on %i events from %s for additional filtering' % (len(watch_events), sensor)])
+                #self.logger.send_multipart(['DEBUG','Worker mongo passing on %i events from %s for additional filtering' % (len(watch_events), sensor)])
+
         except Exception as e:
             #pass
+            print('{}: {}'.format(e.__class__.__name__,e))
             return watch_events
+
         return watch_events
 
 class ClientAuth(object):
@@ -498,6 +515,7 @@ class EventWatch(object):
             self.action = yara.compile(self.sig_file)
             self.update_lock.release()
             self.last_update = int(time.time())
+            self.logger.send_multipart(['DEBUG','Worker completed updating watchlist and rule filters'])
         return
 
     def watch(self, events):
@@ -514,13 +532,13 @@ class EventWatch(object):
                     yield self.fire_alert(event, match, alert_type, priority)
 
     def filter_check(self, event):
-        if int(time.time()) - self.last_update < self.update_thres:
+        if (int(time.time()) - self.last_update) > self.update_thres:
             self.update_yara()
         matches = self.action.match(data=json.dumps(event))
         if matches:
             self.logger.send_multipart(['DEBUG','Worker received rule filter match from %s' % event['sensor']])
             for m in matches:
-                rule = m.split('__')
+                rule = str(m).split('__')
                 if rule[0] == 'P':
                     if rule[1] == 'inc':
                         sev = event['alert']['severity'] + int(rule[2])

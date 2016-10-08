@@ -57,7 +57,6 @@ class HandleRequests(object):
             dmesg = self.PRIVKEY.private_decrypt(enc_payload.decode('base64'), M2Crypto.RSA.pkcs1_padding)
             return dmesg
         else:
-            print('bad rsa')
             return False
 
 
@@ -116,11 +115,9 @@ class HandleRequests(object):
         if AESKEY:
             self.AESKEY = AESKEY.decode('base64')
         else:
-            print('bad aes key')
-            return "something bad"
+            return "Bad Key Exchange"
 
         for k in receivers.keys():
-            print('sending request to %s' % k)
             receivers[k].send_json({
                 "mid": self.name,
                 "_payload": self._encrypt_aes(json.dumps({
@@ -140,7 +137,6 @@ class HandleRequests(object):
 
         msg = False
         while int(time.time()) - start_time < threshold:
-            print('waiting response')
             if receiver.poll(1000):
                 mid, msg = receiver.recv_multipart()
                 msg = json.loads(msg)
@@ -149,11 +145,7 @@ class HandleRequests(object):
                 if receivers[i].poll(500):
                     rmsg = receivers[i].recv_json()
 
-        #Missing pub/sub response listener
-
-        print('stuff')
         if msg:
-            print(msg)
             denc_msg = self._decrypt_aes(msg['_payload'])
             if not denc_msg:
                 sender.send_json({

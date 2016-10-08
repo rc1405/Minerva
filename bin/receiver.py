@@ -27,12 +27,9 @@ import subprocess
 import uuid
 
 from multiprocessing import Process, active_children, Lock
-import threading
 from tempfile import NamedTemporaryFile
 
-import pymongo
 import zmq
-import netaddr
 
 from Minerva import core
 from Minerva.receiver import EventReceiver, EventPublisher, EventWorker, Watchlist
@@ -81,7 +78,7 @@ def worker(minerva_core, cur_config, channels):
                     log_client.send_multipart(['ERROR', 'Worker thread crashed, restarting'])
             if not do_update:
                 if server.poll(1000):
-                    yara_update.recv()
+                    server.recv()
                     do_update = True
             else: 
                 log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update started'])
@@ -91,7 +88,8 @@ def worker(minerva_core, cur_config, channels):
                 do_update = False
                 log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update finished'])
             time.sleep(1)
-    except:
+    except Exception as e:
+        print('{}: {}'.format(e.__class__.__name__,e))
         log_client.send_multipart(['INFO', 'Receiver Workers Shutting down'])
         for w in worker_procs:
             w.terminate()

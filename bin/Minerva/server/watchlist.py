@@ -23,10 +23,13 @@ import time
 import datetime
 import bson
 import re
+import uuid
+import json
 
 import pymongo
 import netaddr
 import zmq
+import M2Crypto
 
 class watchlist(object):
     '''Setup Initial Parameters'''
@@ -35,23 +38,49 @@ class watchlist(object):
         db = minerva_core.get_db()
         self.watchlist = db.watchlist
         self.flow = db.flow
+        self.certs = db.certs
+        keys = db.certs.find_one({"type": "webserver"})
+        key = keys['key']
+        self.PUBCERT = keys['CERT']
+        self.PRIVKEY = M2Crypto.RSA.load_key_string(str(key))
+        self.SRVKEY = False
+        self.AESKEY = False
+        self.name = 'webserver'
+
+    def _decrypt_rsa(self, enc_payload):
+        if enc_payload:
+            dmesg = self.PRIVKEY.private_decrypt(enc_payload.decode('base64'), M2Crypto.RSA.pkcs1_padding)
+            return dmesg
+        else:
+            return False
+
+    def _encrypt_aes(self, payload):
+        cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=self.AESKEY, iv=self.AESKEY, op=1)
+        enc_payload = cipher.update(payload) + cipher.final()
+        return enc_payload.encode('base64')
 
     def send_update_to_receiver(self):
+        req_id = str(uuid.uuid4())
         context = zmq.Context()
         sender = context.socket(zmq.DEALER)
+        sender.identity = "%s|-_%s" % (self.name, req_id)
         receivers = {}
 
-
-        #for r in self.db.search.for.receivers['receivers']:
-            #receivers[r] = context.socket(zmq.DEALER)
-            #ip, recv_port, sub_port = r.split('_')
-            #sender.connect('tcp://%s:%s' % (ip, recv_port))
-            #receiver.connect('tcp://%s:%s' % (ip, sub_port))
+        results = self.certs.find_one({"type": "receiver"})
+        if not results:
+            return 'error'
+        for r in results['receivers']:
+            receivers[r] = context.socket(zmq.DEALER)
+            receivers[r].identity = "%s|-_%s" % (self.name, str(r))
+            ip, recv_port, sub_port = r.split('-')
+            sender.connect('tcp://%s:%s' % (ip, recv_port))
+            receivers[r].connect('tcp://%s:%s' % (ip, recv_port))
 
         sender.send_json({
             "_function": "auth",
             "_cert": self.PUBCERT
         })
+
         msg = sender.recv_json()
         server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
         pub_key = server_cert.get_pubkey()
@@ -60,7 +89,26 @@ class watchlist(object):
         AESKEY = self._decrypt_rsa(msg['_message'])
         if AESKEY:
             self.AESKEY = AESKEY.decode('base64')
+        else:
+            return "Bad Key Exchange"
 
+        for k in receivers.keys():
+            receivers[k].send_json({
+                "mid": self.name,
+                "_payload": self._encrypt_aes(json.dumps({
+                    "_function": "_RECV_UPDATE",
+                })),
+                "_cert": self.PUBCERT
+            })
+
+        start_time = int(time.time())
+        threshold = 10
+
+        msg = False
+        while int(time.time()) - start_time < threshold:
+            for i in receivers:
+                if receivers[i].poll(500):
+                    rmsg = receivers[i].recv_json()
 
     def map_watchlist(self, item):
         ID = item.pop('_id')
@@ -97,6 +145,7 @@ class watchlist(object):
                    "date_created": datetime.datetime.utcnow(),
                    "date_changed": datetime.datetime.utcnow(),
             })
+            self.send_update_to_receiver()
             return 'Success'
         else:
             return 'Watchlist item %s already exists' % request['criteria']
@@ -175,6 +224,7 @@ class watchlist(object):
         else:
             self.watchlist.update({ "date_created": { "$exists": False}},{ "$set": { "date_updated": datetime.datetime.utcnow()}}, upsert=True, multi=True)
 
+        self.send_update_to_receiver()
         return '%i items added, %i items failed, %i were duplicated' % (added, failed, duplicate)
                 
             
@@ -192,4 +242,5 @@ class watchlist(object):
                         self.watchlist.update({"_id": bson.objectid.ObjectId(event) }, { "$set": { "STATUS": "DISABLED", "date_changed": datetime.datetime.utcnow() }})
                     else:
                         self.watchlist.update({"_id": bson.objectid.ObjectId(event) }, { "$set": { "STATUS": "ENABLED", "date_changed": datetime.datetime.utcnow() }})
+        self.send_update_to_receiver()
         return 

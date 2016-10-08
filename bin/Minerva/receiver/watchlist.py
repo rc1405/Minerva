@@ -19,37 +19,24 @@
 '''
 
 
-import os
 import time
-import sys
-import platform
-import subprocess
-import uuid
 
-from multiprocessing import Process, active_children, Lock
-import threading
 from tempfile import NamedTemporaryFile
 
-import pymongo
-import zmq
 import netaddr
-
-from Minerva import core
-from Minerva.receiver import EventReceiver, EventPublisher, EventWorker
-            
 
 class Watchlist():
     def update_yara(self, minerva_core, log_client, action=None, sig=None):
         if not action:
-            action_fh = NamedTemporaryFile()
+            action = NamedTemporaryFile()
             return_stuff = True
         else:
-            action_fh.seek(0)
+            action.seek(0)
             return_stuff = False
         if not sig:
-            sig_fh = NamedTemporaryFile()
+            sig = NamedTemporaryFile()
         else:
-            sig_fh.seek(0)
+            sig.seek(0)
     
         db = minerva_core.get_db()
     
@@ -97,13 +84,13 @@ class Watchlist():
             rule_count = 1
             for s in watches[k]:
                 sig_string = "rule %s__%s\n{\n\tstrings:\n\t\t$1 = \"%s\\\"\"\n\tcondition:\n\t\tall of them\n}\n" % (k, s.replace('.','_'), s)
-                sig_fh.writelines(sig_string)
+                sig.writelines(sig_string)
                 rule_count += 1
     
         log_client.send_multipart(['DEBUG','Found %i Watchlist Items' % (rule_count - 1)])
     
-        sig_fh.flush()
-        sig_fh.truncate()
+        sig.flush()
+        sig.truncate()
     
     
         filters = {
@@ -246,12 +233,12 @@ class Watchlist():
             if len(filters[k]) == 0:
                 continue
             conditions = []
-            action_fh.writelines("rule %s\n{\n\tstrings:\n" % k)
+            action.writelines("rule %s\n{\n\tstrings:\n" % k)
             rule_count = 1
             for s in filters[k]:
                 cur_conditions = []
                 for r in s:
-                    action_fh.writelines("\t\t$%i = %s\n" % (rule_count, r))
+                    action.writelines("\t\t$%i = %s\n" % (rule_count, r))
                     cur_conditions.append(rule_count)
                     rule_count += 1
                 conditions.append(cur_conditions)
@@ -280,13 +267,13 @@ class Watchlist():
                         condition = condition + "\t\tor $%i" % c[0]
                 ccount += 1
             condition = condition + "\n}\n"
-            action_fh.writelines(condition)
+            action.writelines(condition)
     
         log_client.send_multipart(['DEBUG','Found %i Rule Filters' % (rule_count - 1)])
-        action_fh.flush()
-        action_fh.truncate()
+        action.flush()
+        action.truncate()
         time.sleep(1)
         if return_stuff:
-            return action_fh, sig_fh
+            return action, sig
         else:
             return
