@@ -25,7 +25,7 @@ import sys
 import zmq
 
 class TailLog():
-    def __init__(self, channels, batchsize, convert, logFile, posFile):
+    def __init__(self, channels, batchsize, minerva_core, convert, logFile, posFile):
         self.logFile = logFile
         self.posFile = posFile
         self.pos = 0
@@ -34,6 +34,7 @@ class TailLog():
         self.channels = channels
         self.convert = convert.convert
         self.batchsize = int(batchsize) - 1
+        self.logger = minerva_core.get_socket(self.channels)
 
     def write_pos(self, pos):
         write_line = "%s,%s,%s" % (str(self.pos_inode),str(self.pos_size),str(pos))
@@ -47,9 +48,9 @@ class TailLog():
         event_wait = False
         event_queue = []
         queue_check = 0
-        #try:
-        if 1 == 1:
+        try:
             def reset_file():
+                self.logger.send_multipart(['DEBUG', "Agent log tailer resetting checkpoint for %s" % self.logFile])
                 lfile.close()
                 lfile = open(self.logFile,'r')
                 stat = os.fstat(lfile.fileno())
@@ -72,11 +73,14 @@ class TailLog():
                     self.pos = pos
                     self.pos_inode = pos_inode
                     self.pos_size = pos_size
+                    self.logger.send_multipart(['DEBUG', "Agent log tailer reading in checkpoint for %s" % self.logFile])
                 except:
                     pos = 0
                     pos_inode = 0
                     pos_size = 0
+                    self.logger.send_multipart(['ERROR', "Agent log tailer unable to read checkpoint for %s, resetting" % self.logFile])
             else:
+                self.logger.send_multipart(['DEBUG', "Agent log tailer checkpoint for %s doesn't exist" % self.logFile])
                 pos = 0
                 pos_inode = 0
                 pos_size = 0
@@ -86,13 +90,14 @@ class TailLog():
                 cur_inode = stat.st_ino
                 cur_size = stat.st_size
                 if cur_inode != pos_inode or cur_size < pos_size:
-                    print('resetting position')
+                    #print('resetting position')
                     pos = 0
                     pos_inode = cur_inode
                     pos_size = cur_size
                     self.pos_inode = cur_inode
                     self.pos_size = cur_size
                     self.write_pos(0)
+                    self.logger.send_multipart(['DEBUG', "Agent log tailer file %s changed, resetting checkpoint" % self.logFile])
                 else:
                     lfile.seek(pos)
                 sleep = 0.00001
@@ -118,6 +123,7 @@ class TailLog():
                     event = self.convert(line)
                     if event:
                         if not event_wait:
+                            self.logger.send_multipart(['DEBUG', "Agent log tailer %s sending event to publisher" % self.logFile])
                             event_receiver.send_json(event)
                             if not event_receiver.poll(50):
                                 event_wait = True
@@ -126,10 +132,13 @@ class TailLog():
                                 self.pos = lfile.tell()
                                 if status == "write checkpoint":
                                     self.write_pos(self.pos)
+                                    self.logger.send_multipart(['DEBUG', "Agent log tailer %s writing checkpoint" % self.logFile])
                         else:    
+                            self.logger.send_multipart(['DEBUG', "Agent log tailer %s adding event to queue" % self.logFile])
                             event_queue.append(event)
                             queue_check = lfile.tell()
                             if len(event_queue) < self.batchsize:
+                                self.logger.send_multipart(['DEBUG', "Agent log tailer %s event queue is full, waiting for receiver" % self.logFile])
                                 if event_receiver.poll(1):
                                     status = event_receiver.recv()
                                 else:
@@ -137,15 +146,18 @@ class TailLog():
                             else:
                                 status = event_receiver.recv()
                             if status:
-                                print('Event queue has %i events' % len(event_queue))
+                                #print('Event queue has %i events' % len(event_queue))
+                                self.logger.send_multipart(['DEBUG', "Agent log tailer %s is clearing queue of %i events" % (self.logFile, len(event_queue))])
                                 for e in event_queue:
                                     event_receiver.send_json(e)
                                     status = event_receiver.recv()
                                 event_wait = False
                                 event_queue = []
                                 self.write_pos(queue_check)
-                                print('event_queue flushed')
+                                self.logger.send_multipart(['DEBUG', "Agent log tailer %s event queue emptied, writing checkpoint" % self.logFile])
+                                #print('event_queue flushed')
             else:
-                raise "File not found"
-        #except:
-            #sys.exit()
+                elf.logger.send_multipart(['ERROR', "Agent log tailer cannot open %s, file doesnt exist" % self.logFile])
+        except:
+            self.logger.send_multipart(['DEBUG', "Agent log tailer %s is closing" % self.logFile])
+            sys.exit()
