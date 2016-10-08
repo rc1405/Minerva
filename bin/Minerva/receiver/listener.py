@@ -122,10 +122,11 @@ class EventPublisher(object):
             while True:
                 if receiver.poll(500):
                     msg = receiver.recv_json()
+                    ID = str(msg['mid'])
                     if msg['_function'] == 'PCAP':
                         try:
                             if msg['_payload']['action'] == "request":
-                                self.logger.send_multipart(['DEBUG','Publisher Received PCAP Request for %s' % msg['mid']])
+                                self.logger.send_multipart(['DEBUG','Publisher Received PCAP Request for %s' % ID])
                                 payload = {
                                     "_function": "PCAP",
                                     "action": "request",
@@ -133,30 +134,29 @@ class EventPublisher(object):
                                     "request_id": msg['_payload']['request_id'],
                                     "request": msg['_payload']['request']
                                 }
-                                enc_payload = self._encrypt_aes(msg['mid'], json.dumps(payload))
+                                enc_payload = self._encrypt_aes(ID, json.dumps(payload))
                                 if enc_payload:
-                                    sender.send_multipart([str(msg['mid']), json.dumps({
+                                    sender.send_multipart([ID, json.dumps({
                                         "mid": msg['mid'],
                                         "_payload": enc_payload
                                     })])
                                 else:
-                                    self.logger.send_multipart(['DEBUG','Publisher Unable to encrypt request for %s, sending reauth' % msg['mid']])
+                                    self.logger.send_multipart(['DEBUG','Publisher Unable to encrypt request for %s, sending reauth' % ID])
                                     event_queue.append([msg['mid'], payload])
-                                    sender.send_multipart([str(msg['mid']), json.dumps({
+                                    sender.send_multipart([ID, json.dumps({
                                         "mid": msg['mid'],
                                         "_function": "auth",
                                         "_cert": self.PUBCERT
                                     })])
                         except TypeError:
-                            #print('sending back to web server')
-                            self.logger.send_multipart(['DEBUG','Publisher Received PCAP Reply for %s' % msg['mid']])
+                            self.logger.send_multipart(['DEBUG','Publisher Received PCAP Reply for %s' % str(msg['mid'])])
                             sender.send_multipart([str(msg['mid']), json.dumps(msg)])
                     
                 if len(event_queue) > 0:
                     for e in event_queue:
-                        enc_payload = self._encrypt_aes(e[0], json.dumps(e[1]))
+                        enc_payload = self._encrypt_aes(str(e[0]), json.dumps(e[1]))
                         if enc_payload:
-                            self.logger.send_multipart(['DEBUG','Publisher Reauth success, sending message to %s' % e[0]])
+                            self.logger.send_multipart(['DEBUG','Publisher Reauth success, sending message to %s' % str(e[0])])
                             sender.send_multipart([str(e[0]), json.dumps({
                                 "mid": e[0],
                                 "_payload": enc_payload
