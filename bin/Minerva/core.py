@@ -123,6 +123,15 @@ class MinervaConfigs():
 
         return config
 
+    def get_socket(self, channels):
+        context = zmq.Context()
+        log_client = context.socket(zmq.PUSH)
+        log_client.set_hwm(100)
+        log_client.setsockopt(zmq.LINGER, 1000)
+        log_client.connect(channels['logger'])
+        return log_client
+
+
 class MinervaLog(threading.Thread):
     def __init__(self, config, channels, logname):
         threading.Thread.__init__(self)
@@ -139,13 +148,15 @@ class MinervaLog(threading.Thread):
             logger.setLevel(DEBUG)
         if not os.path.exists(self.config['Logger']['logDir']):
             os.mkdir(self.config['Logger']['logDir'])
-        logger_format = Formatter('%(astime)s:%(levelname)s: %(message)s')
+        logger_format = Formatter('%(asctime)s:%(levelname)s: %(message)s')
         handler = RotatingFileHandler(filename="%s/%s.log" % (self.config['Logger']['logDir'], self.logname), maxBytes=int(self.config['Logger']['maxSize']), backupCount=int(self.config['Logger']['maxCount']))
         handler.setFormatter(logger_format)
         logger.addHandler(handler)
         log = {
             "INFO": logger.info,
-            "DEBUG": logger.debug
+            "DEBUG": logger.debug,
+            "ERROR": logger.error,
+            "NONE": logger.critical
         }
 
         #setup ZMQ
@@ -157,6 +168,17 @@ class MinervaLog(threading.Thread):
             try:
                 if log_queue.poll(1000):
                     msg = log_queue.recv_multipart()
+                    if msg[0] == 'KILL':
+                        log_queue.close()
+                        #sys.exit()
+                        break
                     log[msg[0]](msg[1])
             except:
                 pass
+
+    def get_socket(self):
+        context = zmq.Context()
+        log_client = context.socket(zmq.PUSH)
+        log_client.connect(self.channels['logger'])
+        return log_client
+

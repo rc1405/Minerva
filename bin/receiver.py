@@ -37,9 +37,9 @@ import netaddr
 from Minerva import core
 from Minerva.receiver import EventReceiver, EventPublisher, EventWorker
             
-def receiver(pname, channels, worker_lock):
+def receiver(pname, minerva_core, channels):
     #try:
-        listener = EventReceiver(worker_lock, channels)
+        listener = EventReceiver(minerva_core, channels)
         listener.listen(pname)
     #except:
         #return
@@ -56,19 +56,16 @@ def work_thread(minerva_core, channels, update_lock, action_file, sig_file):
 
 def worker(minerva_core, cur_config, channels):
     context = zmq.Context.instance()
-    #server = channels['context'].socket(zmq.PULL)
+    log_client = minerva_core.get_socket(channels)
     server = context.socket(zmq.PULL)
     server.bind(channels['worker_main'])
     update_lock = Lock()
-    action_fh, sig_fh = update_yara(minerva_core)
-    #workers = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+    action_fh, sig_fh = update_yara(minerva_core, log_client)
     worker_procs = []
     do_update = False
-    #try:
-    if 1 == 1:
+    try:
         for wp in range(0,int(cur_config['worker_threads'])):
-            #workers = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
-            print('started %i' % wp)
+            log_client.send_multipart(['DEBUG', 'Started Worker #%i' % wp])
             worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
             worker.start()
             worker_procs.append(worker)
@@ -80,25 +77,29 @@ def worker(minerva_core, cur_config, channels):
                     worker.start()
                     p.join()
                     worker_procs.append(worker)
+                    log_client.send_multipart(['ERROR', 'Worker thread crashed, restarting'])
             if not do_update:
                 if server.poll(1000):
                     yara_update.recv()
                     do_update = True
             else: 
+                log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update started'])
                 update_lock.acquire()
-                update_yara(minerva_core, action=action_fh, sig=sig_fh)
+                update_yara(minerva_core, log_client, action=action_fh, sig=sig_fh)
                 update_lock.release()
                 do_update = False
+                log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update finished'])
             time.sleep(1)
-    #except:
-        #for w in worker_procs:
-            #w.terminate()
-        #action_fh.close()
-        #sig_fh.close()
-        #server.close()
-        #return
+    except:
+        log_client.send_multipart(['INFO', 'Receiver Workers Shutting down'])
+        for w in worker_procs:
+            w.terminate()
+        action_fh.close()
+        sig_fh.close()
+        server.close()
+        sys.exit()
 
-def update_yara(minerva_core, action=None, sig=None):
+def update_yara(minerva_core, log_client, action=None, sig=None):
     if not action:
         action_fh = NamedTemporaryFile()
         return_stuff = True
@@ -126,16 +127,13 @@ def update_yara(minerva_core, action=None, sig=None):
             #return
         except Exception as e:
             print('{}: {}'.format(e.__class__.__name__,e))
-            return
 
         if ipaddress.size > 1:
             priority = int(item['priority'])
             for i in map(ip_to_str, list(ipaddress.iter_hosts())):
                 watches['IP_%i' % priority].append(i)
-            return 'something'
         else:
             watches['IP_%i' % int(item['priority'])].append(item['address'])
-            return 'something'
 
     watchlist = db.watchlist
 
@@ -161,6 +159,8 @@ def update_yara(minerva_core, action=None, sig=None):
             sig_string = "rule %s__%s\n{\n\tstrings:\n\t\t$1 = \"%s\\\"\"\n\tcondition:\n\t\tall of them\n}\n" % (k, s.replace('.','_'), s)
             sig_fh.writelines(sig_string)
             rule_count += 1
+
+    log_client.send_multipart(['DEBUG','Found %i Watchlist Items' % rule_count])
 
     sig_fh.flush()
     sig_fh.truncate()
@@ -342,6 +342,7 @@ def update_yara(minerva_core, action=None, sig=None):
         condition = condition + "\n}\n"
         action_fh.writelines(condition)
 
+    log_client.send_multipart(['DEBUG','Found %i Rule Filters' % rule_count])
     action_fh.flush()
     action_fh.truncate()
     time.sleep(1)
@@ -412,50 +413,72 @@ def main():
 
     active_processes = []
 
-    #log_proc = core.MinervaLog(config, channels)
-    #log_proc.start()
+    log_proc = core.MinervaLog(config, channels, 'receiver')
+    log_proc.start()
+
+    log_client = minerva_core.get_socket(channels)
 
     pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
     pub_listener.start()
+    log_client.send_multipart(['DEBUG', 'Starting Receiver Publishing Process'])
 
     worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
     worker_main.start()
+    log_client.send_multipart(['DEBUG', 'Starting Worker Thread Manager'])
 
     worker_lock = Lock()
 
-    #try:
-    if 1 == 1:
+    try:
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]['rec_ports']:
                 name = "%s-%s" % (i,p)
-    	        pr = Process(name=name, target=receiver, args=((name, channels, worker_lock)))
+    	        pr = Process(name=name, target=receiver, args=((name, minerva_core, channels)))
                 pr.start()
                 active_processes.append(pr)
+                log_client.send_multipart(['DEBUG', 'Starting Receiver %s' % name])
+        log_client.send_multipart(['INFO', 'Receiver Processes Started'])
         while True:
             for p in active_processes:
                 if not p.is_alive():
                     active_processes.remove(p)
-                    pr = Process(name=p.name, target=receiver, args=((p.name, channels, worker_lock)))
+                    pr = Process(name=p.name, target=receiver, args=((p.name, minerva_core, channels)))
                     pr.start()
                     p.join()
                     active_processes.append(pr)
+                    log_client.send_multipart(['ERROR', 'Receiver %s crashed, restarting' % p.name])
             if not pub_listener.is_alive():
                 pub_listener.join()
                 pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
                 pub_listener.start()
+                log_client.send_multipart(['ERROR', 'Receiver Publishing Process crashed, restarting'])
             if not worker_main.is_alive():
                 worker_main.join()
                 worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
                 worker_main.start()
-            #if not log_proc.is_alive():
-                #log_proc.join()
-                #log_proc = core.MinervaLog(config, channels)
-                #log_proc.start()
+                log_client.send_multipart(['ERROR', 'Worker Thread Manager crashed, restarting'])
+            if not log_proc.is_alive():
+                log_proc.join()
+                log_proc = core.MinervaLog(config, channels)
+                log_proc.start()
+                log_client.send_multipart(['ERROR', 'Logging Process crashed, restarting'])
             time.sleep(1)
-    #except:
-        #for p in active_processes:
-            #p.terminate()
-        #pub_listener.terminate()
-        #worker_main.terminate()
-        #sys.exit()
+    except:
+        log_client.send_multipart(['INFO', 'Receiver Processes Shutting down'])
+        for p in active_processes:
+            p.terminate()
+            log_client.send_multipart(['DEBUG', 'Terminating Process %s' % p.name])
+        pub_listener.terminate()
+        log_client.send_multipart(['DEBUG', 'Terminating Receiver Publishing Process'])
+        worker_main.terminate()
+        log_client.send_multipart(['DEBUG', 'Terminating Worker Thread Manager'])
+        for i in channels['receiver']:
+            if os.path.exists(i):
+                os.remove(i)
+        del channels['receiver']
+        for i in channels.keys():
+            if os.path.exists(channels[i][6:]):
+                os.remove(channels[i][6:])
+        log_client.send_multipart(['DEBUG', 'Terminating Logging Thread'])
+        log_client.send_multipart(['KILL', 'Stop Logger thread'])
+        sys.exit()
 main()

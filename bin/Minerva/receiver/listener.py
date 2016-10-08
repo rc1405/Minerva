@@ -28,27 +28,26 @@ import json
 import os
 
 class EventReceiver(object):
-    def __init__(self, worker_lock, channels):
-        self.worker_lock = worker_lock
+    def __init__(self, minerva_core, channels):
         self.channels = channels
         self.channels['context'] = zmq.Context()
+        self.minerva_core = minerva_core
 
     def listen(self, pname):
-        print('listening to %s' % pname)
+        log_client = self.minerva_core.get_socket(self.channels)
+        log_client.send_multipart(['DEBUG','Starting Event Listener %s' % pname])
+        #print('listening to %s' % pname)
         ip, port = pname.split('-')
-
-        #logger = self.channels['context'].socket(zmq.PUSH)
-        #logger.connect(self.channels['logger'])
 
         server = self.channels['context'].socket(zmq.ROUTER)
         server.bind('tcp://%s:%s' % (ip, port))
-        #logger.send_multipart(['DEBUG', "Receiver listening for messages on tcp://%s:%s" % (ip, port)])
+        log_client.send_multipart(['DEBUG', "Receiver listening for messages on tcp://%s:%s" % (ip, port)])
 
         workers = self.channels['context'].socket(zmq.DEALER)
-        #logger.send_multipart(['DEBUG', "Receiver binded workers to %s" % self.channels['receiver']["%s-%s" % (ip, port)]])
+        log_client.send_multipart(['DEBUG', "Receiver binded workers to %s" % self.channels['receiver']["%s-%s" % (ip, port)]])
         workers.bind(self.channels['receiver']["%s-%s" % (ip, port)])
 
-        #logger.send_multipart(['INFO', "Receiver listening for events"])
+        log_client.send_multipart(['INFO', "Receiver listening for events"])
 
         try:
             zmq.proxy(server, workers)
@@ -58,11 +57,12 @@ class EventReceiver(object):
             server.close()
             workers.close()
 
-        #logger.send_multipart(['INFO', "Receiver shutting down"])
+        log_client.send_multipart(['INFO', "Receiver %s shutting down" % pname])
 
 class EventPublisher(object):
     def __init__(self, minerva_core, channels, cur_config):
         db = minerva_core.get_db()
+        self.logger = minerva_core.get_socket(channels)
         #TODO Update CERTS
         self.certs = db.certs
         self.channels = channels
@@ -87,40 +87,45 @@ class EventPublisher(object):
             if aeskey:
                 aeskey = aeskey['KEY'].decode('base64')
             else:
+                self.logger.send_multipart(['ERROR','Publisher Failed to find AES Key for %s' % target])
                 return False
         else:
             aeskey = key
         cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=aeskey, iv=aeskey, op=1)
         enc_payload = cipher.update(payload) + cipher.final()
+        self.logger.send_multipart(['DEBUG','Publisher AES Encrypted Message for %s' % target])
         return enc_payload.encode('base64')
 
     def _encrypt_rsa(self, payload):
         if self.WEBKEY:
             enc_payload = self.WEBKEY.public_encrypt(payload, M2Crypto.RSA.pkcs1_padding).encode('base64')
+            self.logger.send_multipart(['DEBUG','Publisher RSA Encrypted Message for %s' % target])
             return enc_payload
         else:
+            self.logger.send_multipart(['ERROR','Publisher Unable to encrypt RSA for %s' % target])
             return False
 
     def publish(self):
         sender = self.channels['context'].socket(zmq.PUB)
 
         for r in self.config['listen_ip'].keys():
-            print('connected to %s %s' % ( r, str(self.config['listen_ip'][r]['pub_port'])))
+            self.logger.send_multipart(['DEBUG','Starting Publisher on tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port']))])
             sender.bind('tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port'])))
 
         receiver = self.channels['context'].socket(zmq.PULL)
         receiver.bind(self.channels['pub'])
+        self.logger.send_multipart(['DEBUG','Publisher now listening for events from workers'])
  
         event_queue = []
 
         try:
             while True:
                 if receiver.poll(500):
-                    print('have message')
                     msg = receiver.recv_json()
                     if msg['_function'] == 'PCAP':
                         try:
                             if msg['_payload']['action'] == "request":
+                                self.logger.send_multipart(['DEBUG','Publisher Received PCAP Request for %s' % msg['mid']])
                                 payload = {
                                     "_function": "PCAP",
                                     "action": "request",
@@ -130,12 +135,12 @@ class EventPublisher(object):
                                 }
                                 enc_payload = self._encrypt_aes(msg['mid'], json.dumps(payload))
                                 if enc_payload:
-                                    print('request sent')
                                     sender.send_multipart([str(msg['mid']), json.dumps({
                                         "mid": msg['mid'],
                                         "_payload": enc_payload
                                     })])
                                 else:
+                                    self.logger.send_multipart(['DEBUG','Publisher Unable to encrypt request for %s, sending reauth' % msg['mid']])
                                     event_queue.append([msg['mid'], payload])
                                     sender.send_multipart([str(msg['mid']), json.dumps({
                                         "mid": msg['mid'],
@@ -143,31 +148,21 @@ class EventPublisher(object):
                                         "_cert": self.PUBCERT
                                     })])
                         except TypeError:
-                            print('sending back to web server')
+                            #print('sending back to web server')
+                            self.logger.send_multipart(['DEBUG','Publisher Received PCAP Reply for %s' % msg['mid']])
                             sender.send_multipart([str(msg['mid']), json.dumps(msg)])
                     
-                    '''
-                    elif msg['_payload']['action'] == "reply":
-     
-                        key = os.urandom(32)
-                        cipher = self._encrypt_rsa(key)
-                        if cipher:
-                            sender.send_multipart([str(msg['payload']['console']), json.dumps({
-                                "mid": msg['payload']['console'],
-                                "_cipher": cipher,
-                                "_payload": self_encrypt_aes(msg['_payload']['console'], json.dumps(msg['_payload']), key=key)
-                            })])
-                    '''
                 if len(event_queue) > 0:
                     for e in event_queue:
                         enc_payload = self._encrypt_aes(e[0], json.dumps(e[1]))
                         if enc_payload:
+                            self.logger.send_multipart(['DEBUG','Publisher Reauth success, sending message to %s' % e[0]])
                             sender.send_multipart([str(e[0]), json.dumps({
                                 "mid": e[0],
                                 "_payload": enc_payload
                             })])
                             event_queue.remove(e)
         except:
-            print('listener crashed: %s' % e)
             sender.close()
             receiver.close()
+            self.logger.send_multipart(['INFO', "Publisher is shutting down"])
