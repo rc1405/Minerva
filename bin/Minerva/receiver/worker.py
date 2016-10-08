@@ -164,12 +164,9 @@ class EventWorker(Process):
                             if denc_msg['_function'] == 'events':
                                 self.logger.send_multipart(['DEBUG','Worker Recieived events from %s' % ID])
                                 watch_events = inserter(ID, denc_msg['events'], watcher.filter_check)
-                                print(self.logger.closed)
                                 self.logger.close(linger=1000)
-                                print(self.logger.closed)
                                 self.logger = self.core.get_socket(self.channels)
                                 self.logger.send_multipart(['DEBUG','Worker Recieived watch events from %s' % ID])
-                                print('wtf watch events: %i, %s' % (len(watch_events), ID))
                                 watch_alerts = False
                                 if len(watch_events) > 0:
                                     watch_alerts = list(watcher.watch(watch_events))

@@ -27,13 +27,13 @@ import netaddr
 
 class Watchlist():
     def update_yara(self, minerva_core, log_client, action=None, sig=None):
-        if not action:
+        if action is None:
             action = NamedTemporaryFile()
             return_stuff = True
         else:
             action.seek(0)
             return_stuff = False
-        if not sig:
+        if sig is None:
             sig = NamedTemporaryFile()
         else:
             sig.seek(0)
