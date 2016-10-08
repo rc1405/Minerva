@@ -371,7 +371,7 @@ class Minerva(object):
 
         elif 'newLogin' in perm_return:
             cherrypy.session['get_request'] = cherrypy.request.params
-            raise cheryypy.HTTPRedirect('/login')
+            raise cherrypy.HTTPRedirect('/login')
 
         else:
             raise cherrypy.HTTPError(403)
@@ -439,7 +439,7 @@ class Minerva(object):
             if cherrypy.request.method == 'POST':
                 cherrypy.session['port_request'] = cherrypy.request.json
 
-            raise cheryypy.HTTPRedirect('/login')
+            raise cherrypy.HTTPRedirect('/login')
 
         else:
             raise cherrypy.HTTPError(403)
@@ -531,7 +531,7 @@ class Minerva(object):
             if cherrypy.request.method == 'POST':
                 cherrypy.session['port_request'] = cherrypy.request.json
 
-            raise cheryypy.HTTPRedirect('/login')
+            raise cherrypy.HTTPRedirect('/login')
 
         else:
             raise cherrypy.HTTPError(403)
