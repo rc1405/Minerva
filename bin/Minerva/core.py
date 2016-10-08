@@ -126,8 +126,8 @@ class MinervaConfigs():
     def get_socket(self, channels):
         context = zmq.Context()
         log_client = context.socket(zmq.PUSH)
-        log_client.set_hwm(100)
-        log_client.setsockopt(zmq.LINGER, 1000)
+        log_client.set_hwm(10000)
+        log_client.setsockopt(zmq.LINGER, 10000)
         log_client.connect(channels['logger'])
         return log_client
 
@@ -166,7 +166,7 @@ class MinervaLog(threading.Thread):
 
         while True:
             try:
-                if log_queue.poll(1000):
+                if log_queue.poll(500):
                     msg = log_queue.recv_multipart()
                     if msg[0] == 'KILL':
                         log_queue.close()
