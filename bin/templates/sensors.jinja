@@ -59,7 +59,7 @@
             <th>Time Created</th>
             <th>Last Modified</th>
             <th>Sensor</th>
-            <th>Sensor IP</th>
+            <th>Last Event</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -85,7 +85,7 @@
         <td>{{ item.time_created.strftime('%Y-%m-%d %H:%M:%S')}}</td>
         <td>{{ item.last_modified.strftime('%Y-%m-%d %H:%M:%S')}}</td>
         <td>{{ item.SERVER }}</td>
-        <td>{{ item.IP }}</td>
+        <td>{{ item.last_event.strftime('%Y-%m-%d %H:%M:%S') }}</td>
         <td>{{ item.STATUS }}</td></tr>
 	{% endfor %}
         </tbody>
