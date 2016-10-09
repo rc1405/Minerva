@@ -434,7 +434,7 @@ class ClientAuth(object):
                 if not aes_key:
                     self.logger.send_multipart(['DEBUG','Worker generating AES key for %s' % mid])
                     aes_key = os.urandom(32).encode('base64')
-                    self.keys.update_one({"SERVER": mid},{"$set": { "KEY": aes_key }}, upsert=True)
+                    self.keys.update_one({"SERVER": mid},{"$set": { "KEY": aes_key, "timestamp": datetime.datetime.utcnow() }}, upsert=True)
                     return aes_key
                 else:
                     self.logger.send_multipart(['DEBUG','Worker AES key for %s exists' % mid])
