@@ -68,7 +68,6 @@ Event_Receiver:
              {%- endfor %}
          {%- endfor %}
   worker_threads: {{config.Event_Receiver.worker_threads}}
-  listener_timeout: {{config.Event_Receiver.listener_timeout}}
   watchlist_update_sec: {{config.Event_Receiver.watchlist_update}}
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
@@ -85,24 +84,15 @@ Agent_forwarder:
       {% for i in config.Agent_forwarder.logfiles[lf].keys() %}
       {{i}}: {{config.Agent_forwarder.logfiles[lf][i]}}
       {% endfor %}
-      {#type: {{config.Agent_forwarder.logfiles[lf]['type']}}
-      {% if config.Agent_forwarder.logfiles[lf]['type'] in ['suricata-redis-channel','suricata-redis-list'] %}
-      channel: {{config.Agent_forwarder.logfiles[lf]['channel']}}
-      {% else %}
-      position_file: {{config.Agent_forwarder.logfiles[lf]['position_file']}}
-      {% endif %}#}
     {%- endfor %}
   destinations:
     {% for dest in config.Agent_forwarder.destinations.keys() %}
-    {{dest}}:
-        {% for port in config.Agent_forwarder.destinations[dest]['recv_ports'] %}
-        - {{port}}
-        {%- endfor %}
+    {{dest}}: {{config.Agent_forwarder.destinations[dest]['sub_port']}}
     {%- endfor %}
   listeners:
     {% for dest in config.Agent_forwarder.destinations.keys() %}
     {{dest}}:
-        {% for port in config.Agent_forwarder.destinations[dest]['listen_ports'] %}
+        {% for port in config.Agent_forwarder.destinations[dest]['pub_ports'] %}
         - {{port}}
         {%- endfor %}
     {%- endfor %}
@@ -121,7 +111,7 @@ Agent_forwarder:
     temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
 {%- endif %}
 Logger:
-  logDir: {{config.Logger.logDir}}
+  logDir: {{config.Logger.directory}}
   level: {{config.Logger.level}}
-  maxSize: {{config.Logger.maxSize}}
-  maxCount: {{config.Logger.maxCount}}
+  maxSize: {{config.Logger.size}}
+  maxCount: {{config.Logger.count}}

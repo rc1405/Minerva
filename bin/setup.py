@@ -12,6 +12,36 @@ import hashlib
 import platform
 import re
 
+def check_core():
+    try:
+        import M2Crypto
+        logger.error('%s is installed' % 'M2Crypto')
+    except:
+        print('M2Crypto not installed')
+        logger.error('M2Crypto not installed')
+        sys.exit()
+    try:
+        import zmq
+        logger.info('%s is installed' % 'pytz')
+    except:
+        print('pytz not installed')
+        logger.error('pytz not installed')
+        sys.exit()
+    try:
+        import yaml
+        logger.info('%s is installed' % 'pyyaml')
+    except:
+        print('PyYAmL not installed')
+        logger.error('PyYAmL not installed')
+        sys.exit()
+    try:
+        import pytz
+        logger.info('%s is installed' % 'pytz')
+    except:
+        print('pytz not installed')
+        logger.error('pytz not installed')
+        sys.exit()
+
 def check_server():
     try:
         import pymongo
@@ -19,13 +49,6 @@ def check_server():
     except:
         print('Pymongo not installed')
         logger.info('Pymongo not installed')
-        sys.exit()
-    try:
-        import M2Crypto
-        logger.error('%s is installed' % 'M2Crypto')
-    except:
-        print('M2Crypto not installed')
-        logger.error('M2Crypto not installed')
         sys.exit()
     try:
         import cherrypy
@@ -42,63 +65,14 @@ def check_server():
         logger.error('Jinja2 not installed')
         sys.exit()
     try:
-        import yaml
-        logger.info('%s is installed' % 'pyyaml')
-    except:
-        print('PyYAmL not installed')
-        logger.error('PyYAmL not installed')
-        sys.exit()
-    try:
         import dateutil
         logger.info('%s is installed' % 'dateutil')
     except:
         print('python-dateutil not installed')
         logger.error('python-dateutil not installed')
         sys.exit()
-    try:
-        import pytz
-        logger.info('%s is installed' % 'pytz')
-    except:
-        print('pytz not installed')
-        logger.error('pytz not installed')
-        sys.exit()
-
-def check_agent():
-    try:
-        import M2Crypto
-        logger.info('%s is installed' % 'M2Crypto')
-    except:
-        print('M2Crypto not installed')
-        logger.error('M2Crypto not installed')
-        sys.exit()
-    try:
-        import yaml
-        logger.info('%s is installed' % 'pyyaml')
-    except:
-        print('PyYAmL not installed')
-        sys.exit()
-    try:
-        import pytz
-        logger.info('%s is installed' % 'pytz')
-    except:
-        print('pytz not installed')
-        logger.error('pytz not installed')
 
 def check_receiver():
-    try:
-        import yaml
-        logger.info('%s is installed' % 'pyyaml')
-    except:
-        print('PyYAmL not installed')
-        logger.error('PyYAmL not installed')
-        sys.exit()
-    try:
-        import M2Crypto
-        logger.info('%s is installed' % 'M2Crypto')
-    except:
-        print('M2Crypto not installed')
-        logger.error('M2Crypto not installed')
-        sys.exit()
     try:
         import pymongo
         logger.info('%s is installed' % 'pymongo')
@@ -107,17 +81,11 @@ def check_receiver():
         logger.error('Pymongo not installed')
         sys.exit()
     try:
-        import pytz
-        logger.info('%s is installed' % 'pytz')
+        import yara
+        logger.info('%s is installed' % 'yara-python')
     except:
-        print('pytz not installed')
-        logger.error('pytz not installed')
-    try:
-        import numpy
-        logger.info('%s is installed' % 'numpy')
-    except:
-        print('numpy not installed')
-        logger.error('numpy not installed')
+        print('yara-pyhon not installed')
+        logger.error('yara-python not installed')
         sys.exit()
     try:
         import netaddr
@@ -516,8 +484,8 @@ def setup_db():
         db.create_collection('sessions')
     else:
         db.sessions.drop_indexes()
-    if not 'sensors' in collections:
-        db.create_collection('sensors')
+    if not 'keys' in collections:
+        db.create_collection('keys')
     if not 'users' in collections:
         db.create_collection('users')
    
@@ -525,7 +493,6 @@ def setup_db():
     logger.info("Alert search index created is: %s" % '([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")')
 
     db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
-
 
     while True:
         expiredDays = raw_input("Enter number of days to keep alerts: ")
@@ -601,6 +568,8 @@ def setup_db():
     logger.info("Session timeout %i minutes" % sessionMinutes)
     sessionTimeout = int(sessionMinutes) * 60
     db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
+
+    db.keys.ensure_index("timestamp",expireAfterSeconds=3600)
 
     if keep_db:
         while True:
@@ -695,6 +664,76 @@ def setup_core():
     else:
         shutil.copytree('Minerva','/usr/lib/python2.7/Minerva')
     logger.info('Minerva python modules are installed')
+    print("**********************************************************")
+    print("                Setting Up Logger                        *")
+    print("**********************************************************")
+    logger.info("Setting up the logger")
+    while True:
+        print("**********************************************************")
+        print("  Choose Logging Level:                                  *")
+        print("     1)  Normal  - Default                               *")
+        print("     2)  Debug                                           *")
+        print("**********************************************************")
+        log_level = raw_input("> ")
+        if len(log_level) == 0:
+            log_level = 'INFO'
+            break
+        else:
+            try:
+                if int(log_level) == 1:
+                    log_level = 'INFO'
+                    break
+                elif int(log_level) == 2:
+                    log_level = 'DEBUG'
+                    break
+                else:
+                    print("Invalid Option")
+            except:
+                print("Invalid Option")
+    logger.info("Log level set to %s" % log_level)
+    config['Logger'] = {}
+    config['Logger']['level'] = log_level
+    while True:
+        print("**********************************************************")
+        print("  Choose Logging directory:                              *")
+        print("**********************************************************")
+        log_directory = raw_input("> ")
+        if not os.path.exists(log_directory):
+            log_cont = raw_input("Path does not exist.  Add anyways? [Y/N] ")
+            if log_cont.upper() == 'Y':
+                break
+            elif log_cont.upper() == 'N':
+                continue
+            else:
+                print('Invalid Option')
+                continue
+        break
+    logger.info("Log directory set to %s" % log_directory)
+    config['Logger']['directory'] = log_directory
+    while True:
+        log_count = raw_input("Enter number of logs to retain: [2] ")
+        try:
+            if len(log_count) == 0:
+                log_count = 2
+            else:
+                log_count = int(log_count)
+            break
+        except:
+            print("Invalid selection")
+    logger.info("Log retention is %i" % log_count)
+    config['Logger']['count'] = log_count
+    while True:
+        log_size = raw_input("Enter size of logs in MB: [20] ")
+        try:
+            if int(log_size) == 0:
+                log_size = 1024 * 1024 * 1024 * 20
+            else:
+                log_size = int(log_count) * 1024 * 1024 * 1024 
+            break
+        except:
+            print("Invalid selection")
+    logger.info("Log size set to %i bytes" % log_size)
+    config['Logger']['size'] = log_size
 
 def setup_server():
     print("**********************************************************")
@@ -924,9 +963,9 @@ def setup_receiver():
     logger.info("Setting up the event receiver")
     listen_ips = {}
     print("**********************************************************")
-    print("* The next IP and Port is what will listen for events    *")
-    print("*   This is the combination that will be required for    *")
-    print("*   setting up Agent Forwarders.                         *")
+    print("* The next IP and Ports are for received events and      *")
+    print("*   requesting PCAP. These combinations will be required *")
+    print("*   for setting up Agent Forwarders.                     *")
     print("**********************************************************")
     while True:
         while True:
@@ -935,10 +974,20 @@ def setup_receiver():
                 break
             else:
                 print('Invalid IP')
-        logger.info("Adding listener ip %s" % listen_ip)
+        logger.info("Adding ip %s" % listen_ip)
         listen_ips[listen_ip] = {}
-        listen_ips[listen_ip]['ports'] = []
+        listen_ips[listen_ip]['recv_ports'] = []
         while True:
+            while True:
+                pub_port = raw_input("Enter port to publish requests on: ")
+                try:
+                    pub_port = int(pub_port)
+                    break
+                except:
+                    print('Invalid Port')
+                    pass
+            logger.info("Adding pub port %i" % pub_port)
+            listen_ips[listen_ip]['pub_port'] = pub_port
             while True:
                 listen_port = raw_input("Enter port to listen on: ")
                 try:
@@ -947,8 +996,8 @@ def setup_receiver():
                 except:
                     print('Invalid Port')
                     pass
-            logger.info("Adding listener port %i" % int(listen_port))
-            listen_ips[listen_ip]['ports'].append(int(listen_port))
+            logger.info("Adding recv port %i" % int(listen_port))
+            listen_ips[listen_ip]['recv_ports'].append(int(listen_port))
             while True:
                 resp = raw_input("Do you want to add more ports? [y/n] ")
                 if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N':
@@ -968,66 +1017,8 @@ def setup_receiver():
         if resp == 'n' or resp == 'N':
             break
 
-    use_redis = 'yes'
     while True:
-        event_key = raw_input("What Redis key do you want to use for events? [minerva-receiver] ")
-        if len(event_key) == 0:
-            event_key = 'minerva-receiver'
-        break
-    while True:
-        filter_key = raw_input("What Redis key do you want to use for filters? [minerva-filters] ")
-        if len(filter_key) == 0:
-            filter_key = 'minerva-filters'
-        break
-    while True:
-        filtercheck_key = raw_input("What Redis key do you want to use for filter management? [minerva-filters-check] ")
-        if len(filtercheck_key) == 0:
-            filtercheck_key = 'minerva-filters-check'
-        break
-    while True:
-        watchlist_key = raw_input("What Redis key do you want to use for watchlists? [minerva-watchlist] ")
-        if len(watchlist_key) == 0:
-            watchlist_key = 'minerva-watchlist'
-        break
-    while True:
-        watchcheck_key = raw_input("What Redis key do you want to use watchlist management? [minerva-watch-check] ")
-        if len(watchcheck_key) == 0:
-            watchcheck_key = 'minerva-watch-check'
-        break
-
-    while True:
-        redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-        if len(redis_server) == 0:
-            redis_server = '127.0.0.1'
-        break
-    while True:
-        redis_port = raw_input("Enter redis port: [6379] ")
-        if len(redis_port) == 0:
-            redis_port = 6379
-            break
-        else:
-            try:
-                redis_port = int(redis_port)
-                break
-            except:
-                print('Bad Redis Port Number')
-
-    while True:
-        listener_timeout = raw_input("Enter number of seconds to timeout on a single receive thread: [20] ")
-        if len(listener_timeout) == 0:
-            listener_timeout = 20
-            break
-        else:
-            try:
-                listener_timeout = int(listener_timeout)
-                break
-            except:
-                print('Invalid timeout')
-                pass
-    logger.info("Setting listener timeout at %i seconds" % int(listener_timeout))
-
-    while True:
-        ins_threads = raw_input("Enter number of processes you want to insert alerts: [4] ")
+        ins_threads = raw_input("Enter number of worker processes: [4] ")
         if len(ins_threads) == 0:
             ins_threads = 4
             break
@@ -1041,35 +1032,7 @@ def setup_receiver():
     logger.info("Setting inserter threads to %i" % int(ins_threads))
 
     while True:
-        ins_batch = raw_input("Enter max number of events to insert at a time: [500] ")
-        if len(ins_batch) == 0:
-            ins_batch = 500
-            break
-        else:
-            try:
-                ins_batch = int(ins_batch)
-                break
-            except:
-                print('Invalid batch count')
-                pass
-    logger.info("Setting max events to insert to %i" % int(ins_batch))
-
-    while True:
-        ins_wait = raw_input("Enter max seconds to wait before inserting events: [20] ")
-        if len(ins_wait) == 0:
-            ins_wait = 20
-            break
-        else:
-            try:
-                ins_wait = int(ins_wait)
-                break
-            except:
-                print('Invalid wait time')
-                pass
-    logger.info("Setting max seconds before inserting to %i seconds" % int(ins_wait))
-
-    while True:
-        filter_wait = raw_input("Enter number of seconds before reloading event filters: [3600] ")
+        filter_wait = raw_input("Enter number of seconds before reloading event filters and watchlist: [3600] ")
         if len(filter_wait) == 0:
             filter_wait = 3600
             break
@@ -1078,7 +1041,7 @@ def setup_receiver():
                 filter_wait = int(filter_wait)
                 break
             except:
-                print('Invalid time')
+                print('Invalid entry')
                 pass
     logger.info("Setting filter reload time to %i seconds" % int(filter_wait))
 
@@ -1091,85 +1054,13 @@ def setup_receiver():
     logger.info("Certificate path set to %s" % rec_cert)
     logger.info("Private key path set to %s" % rec_key)
 
-    print("***********************************************************")
-    print("*  The next IP/port will be used to process pcap requests *")
-    print("*    from the webserver.  This will only be used for      *")
-    print("*    webserver communications                             *")
-    print("***********************************************************")
-    while True:
-        pcap_ip = raw_input("Enter IP Address to listen for pcap requests from the webserver: ")
-        if validate_ip(pcap_ip):
-            break
-        else:
-            print('Invalid IP')
-    logger.info("PCAP listening IP set to %s" % pcap_ip)
-
-    while True:
-        pcap_port = raw_input("Enter Port of Receiver to list for pcap requests for: [10009] ")
-        if len(pcap_port) == 0:
-            pcap_port = 10009
-            break
-        else:
-            try:
-                pcap_port = int(pcap_port)
-                break
-            except:
-                print('Invalid port number')
-                pass
-    logger.info("PCAP listening port set to %i" % int(pcap_port))
-
-    while True:
-        pcap_threads = raw_input("Enter number of threads to process pcap requests: [4] ")
-        if len(pcap_threads) == 0:
-            pcap_threads = 4
-            break
-        else:
-            try:
-                pcap_threads = int(pcap_threads)
-                break
-            except:
-                print('Invalid thread count')
-                pass
-    logger.info("Threads processing PCAP requests set to %i" % int(pcap_threads))
-
-    while True:
-        pcap_timeout = raw_input("Enter number of seconds to wait for a pcap request, Should be the same as webserver value: [300] ")
-        if len(pcap_timeout) == 0:
-            pcap_timeout = 300
-            break
-        else:
-            try:
-                pcap_timeout = int(pcap_timeout)
-                break
-            except:
-                print('Invalid timeout')
-                pass
-    logger.info("PCAP Request timeout set to %i seconds" % int(pcap_timeout))
-
     config['Event_Receiver'] = {}
     config['Event_Receiver']['listen_ip'] = listen_ips
-    config['Event_Receiver']['listener_timeout'] = listener_timeout
-    config['Event_Receiver']['insertion_threads'] = int(ins_threads)
-    config['Event_Receiver']['insertion_batch'] = int(ins_batch)
-    config['Event_Receiver']['insertion_wait'] = int(ins_wait)
-    config['Event_Receiver']['filter_wait'] = int(filter_wait)
-    config['Event_Receiver']['redis'] = {}
-    config['Event_Receiver']['redis']['enabled'] = use_redis
-    config['Event_Receiver']['redis']['event_key'] = event_key
-    config['Event_Receiver']['redis']['filter_key'] = filter_key
-    config['Event_Receiver']['redis']['filtercheck_key'] = filtercheck_key
-    config['Event_Receiver']['redis']['watchlist_key'] = watchlist_key
-    config['Event_Receiver']['redis']['watchcheck_key'] = watchcheck_key
-    config['Event_Receiver']['redis']['server'] = redis_server
-    config['Event_Receiver']['redis']['port'] = redis_port
+    config['Event_Receiver']['worker_threads'] = int(ins_threads)
+    config['Event_Receiver']['watchlist_update'] = int(filter_wait)
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key
-    config['Event_Receiver']['PCAP'] = {}
-    config['Event_Receiver']['PCAP']['ip'] = pcap_ip
-    config['Event_Receiver']['PCAP']['port'] = pcap_port
-    config['Event_Receiver']['PCAP']['threads'] = pcap_threads
-    config['Event_Receiver']['PCAP']['timeout'] = pcap_timeout
     shutil.copy('receiver.py',os.path.join(install_path,'bin'))
 
 def setup_agent():
@@ -1195,93 +1086,36 @@ def setup_agent():
     logger.info("Client certificate path set to %s" % client_cert)
     logger.info("Client private key path set to %s" % client_key)
 
-    while True:
-        use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
-        redis_mod = False
-        if use_redis == 'y':
-            try:
-                import redis
-                redis_mod = True
-            except:
-                print("Redis Chosen but missing python-redis module")
-                logger.info("Redis Chosen but missing redis module")
-                sys.exit()
-            use_redis = 'yes'
-            while True:
-                redis_key = raw_input("What Redis key do you want to use? [minerva-agent] ")
-                if len(redis_key) == 0:
-                    redis_key = 'minerva-agent'
-                break
-            while True:
-                redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-                if len(redis_server) == 0:
-                    redis_server = '127.0.0.1'
-                break
-            while True:
-                redis_port = raw_input("Enter redis port: [6379] ")
-                if len(redis_port) == 0:
-                    redis_port = 6379
-                    break
-                else:
-                    try:
-                        redis_port = int(redis_port)
-                        break
-                    except:
-                        print('Bad Redis Port Number')
-            break
-        else:
-            use_redis = 'no'
-            redis_key = ''   
-            redis_server = ''
-            redis_port = ''
-
     logfiles = {}
     while True:
         while True:
-            ltype = raw_input("Enter alert type of log file: (suricata_eve, suricata-redis-channel, suricata-redis-list, snort_alert): ")
-            if ltype in ['suricata-redis-channel','suricata-redis-list']:
-                if use_redis == 'yes':
-                    while True:
-                        use_main_redis = raw_input("Same host (%s) and port (%i) information? [yes/no] " % (redis_server, redis_port))
-                        if len(use_main_redis) == 0:
-                            use_main_redis = 'yes'
-                            break
-                        elif use_main_redis in ['y','Y','yes','YES']:
-                            use_main_redis = 'yes'
-                            break
-                        elif use_main_redis in ['n','N','no','NO']:
-                            use_main_redis = 'no'
-                            break
-                        else:
-                            print('Invalid option')
-                else:
-                    use_main_redis = 'no'
-                    try:
-                        import redis
-                    except:
-                        print("Redis Chosen but missing python-redis module")
-                        logger.info("Redis Chosen but missing redis module")
-                        sys.exit()
+            ltype = raw_input("Enter alert type of log file: (suricata_eve, suricata-redis-list, snort_alert): ")
+            if ltype == 'suricata-redis-list':
+                try:
+                    import redis
+                except:
+                    print("Redis Chosen but missing python-redis module")
+                    logger.info("Redis Chosen but missing redis module")
+                    sys.exit()
 
-                if use_redis == 'no' or use_main_redis == 'no':
-                    while True:
-                        redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-                        if len(redis_server) == 0:
-                            redis_server = '127.0.0.1'
-                        break
-                    while True:
-                        redis_port = raw_input("Enter redis port: [6379] ")
-                        if len(redis_port) == 0:
-                            redis_port = 6379
-                            break
-                        else:
-                            try:
-                                redis_port = int(redis_port)
-                                break
-                            except:
-                                print('Bad Redis Port Number')
                 while True:
-                    redis_channel = raw_input("Enter Redis Channel or Key for Suricata: ")
+                    redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
+                    if len(redis_server) == 0:
+                        redis_server = '127.0.0.1'
+                    break
+                while True:
+                    redis_port = raw_input("Enter redis port: [6379] ")
+                    if len(redis_port) == 0:
+                        redis_port = 6379
+                        break
+                    else:
+                        try:
+                            redis_port = int(redis_port)
+                            break
+                        except:
+                            print('Bad Redis Port Number')
+                while True:
+                    redis_channel = raw_input("Enter Redis Key for Suricata: ")
                     if len(redis_channel) > 0:
                         break
                     else:
@@ -1308,13 +1142,11 @@ def setup_agent():
         logger.info("Log file type is %s" % ltype)
         logfiles[lfile] = {}
         logfiles[lfile]['type'] = ltype
-        if ltype in ['suricata-redis-channel','suricata-redis-list']:
+        if ltype == 'suricata-redis-list':
             logger.info("Redis channel is %s" % redis_channel)
             logfiles[lfile]['channel'] = redis_channel
-            logfiles[lfile]['use_main'] = use_main_redis
-            if use_main_redis == 'no':
-                logfiles[lfile]['server'] = redis_server
-                logfiles[lfile]['port'] = redis_port
+            logfiles[lfile]['server'] = redis_server
+            logfiles[lfile]['port'] = redis_port
         else:
             while True:
                 pfile = raw_input("Enter full pathname of position file: ")
@@ -1341,23 +1173,47 @@ def setup_agent():
 
     print("*****************************************************************")
     print("* The Receiver IP And Port is where events will be forwarded to *")
+    print("*   and where the agent will listen for PCAP requests           *")
     print("*****************************************************************")
+    receivers = {}
     while True:
-        destination = raw_input("Enter IP address of receiver to send to: ")
-        if validate_ip(destination):
-            break
-        else:
-            print('Invalid IP')
-    logger.info("Receiver destination of %s set" % destination)
+        while True:
+            destination = raw_input("Enter IP address of receiver to send to: ")
+            if validate_ip(destination):
+                break
+            else:
+                print('Invalid IP')
+        logger.info("Receiver destination of %s added" % destination)
+        receivers[destination] = {}
+        receivers[destination]['pub_ports'] = []
 
-    while True:
-        dest_port = raw_input("Enter destination port to send to: ")
-        try:
-            dest_port = int(dest_port)
-            break
-        except:
-            print('Invalid Port')
-    logger.info("Receiver port of %s set" % dest_port)
+        while True:
+            while True:
+                dest_port = raw_input("Enter destination port to send to: ")
+                try:
+                    dest_port = int(dest_port)
+                    break
+                except:
+                    print('Invalid Port')
+            logger.info("Receiver port of %s added" % dest_port)
+            receivers[destination]['pub_ports'].append(dest_port)
+            more_ports = raw_input("Would you like to add more ports? [Y/N]")
+            if more_ports.upper() == 'N':
+                break
+
+        while True:
+            sub_port = raw_input("Enter receiver port to listen for requests: ")
+            try:
+                sub_port = int(sub_port)
+                break
+            except:
+                print('Invalid Port')
+        logger.info("Sub port of %s added" % sub_port)
+        receivers[destination]['sub_ports'] = sub_port
+
+        more_dest = raw_input("Would you like to add more receivers? [Y/N]")
+        if more_dest.upper() == 'N':
+            break    
 
     while True:
         send_batch = raw_input("Enter max # of events to send at once: [500] ")
@@ -1400,10 +1256,6 @@ def setup_agent():
                 print('Invalid fail time')
                 pass
     logger.info("Max fail time between sending events after a failure is set to %i" % int(fail_wait))
-
-
-
-
 
     print("**********************************************************")
     print("*          Configuring Agent PCAP Requests               *")
@@ -1505,32 +1357,6 @@ def setup_agent():
         logger.info("PCAP temp dir doesn't exist, creating it")
         os.makedirs(temp_directory)
 
-    print("***************************************************************")
-    print("*  This next IP and port is the what the agent will listen to *")
-    print("*    for pcap requests from the receiver                      *")
-    print("***************************************************************")
-    while True:
-        listener_ip = raw_input("Enter ip address to listen for requests on: ")
-        if validate_ip(listener_ip):
-            break
-        else:
-            print('Invalid IP Entered')
-    logger.info("PCAP Listener bound to %s" % listener_ip)
-
-    while True:
-        listener_port = raw_input("Enter port to listen for requests on: [10010] ")
-        if len(listener_port) == 0:
-            listener_port = 10010
-            break
-        else:
-            try:
-                listener_port = int(listener_port)
-                break
-            except:
-                print('Invalid port')
-                pass
-    logger.info("PCAP Listener port set to %i" % int(listener_port))
-
     while True:
         listener_threads = raw_input("Enter number of threads to process requests: [4] ")
         if len(listener_threads) == 0:
@@ -1549,19 +1375,11 @@ def setup_agent():
     config['Agent_forwarder']['sensor_name'] = sensor_name
     config['Agent_forwarder']['client_cert'] = client_cert
     config['Agent_forwarder']['client_private'] = client_key
-    config['Agent_forwarder']['redis'] = {}
-    config['Agent_forwarder']['redis']['enabled'] = use_redis
-    config['Agent_forwarder']['redis']['key'] = redis_key
-    config['Agent_forwarder']['redis']['server'] = redis_server
-    config['Agent_forwarder']['redis']['port'] = redis_port
     config['Agent_forwarder']['logfiles'] = logfiles
-    config['Agent_forwarder']['target_addr'] = {}
-    config['Agent_forwarder']['target_addr']['server_cert'] = server_cert
-    config['Agent_forwarder']['target_addr']['destination'] = destination
-    config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
-    config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
-    config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
-    config['Agent_forwarder']['target_addr']['fail_wait'] = int(fail_wait)
+    config['Agent_forwarder']['destinations'] = receivers
+    config['Agent_forwarder']['send_batch'] = int(send_batch)
+    config['Agent_forwarder']['send_wait'] = int(send_wait)
+    config['Agent_forwarder']['fail_wait'] = int(fail_wait)
     config['Agent_forwarder']['pcap'] = {}
     config['Agent_forwarder']['pcap']['max_packets'] = max_packets
     config['Agent_forwarder']['pcap']['max_size'] = max_size
@@ -1571,10 +1389,7 @@ def setup_agent():
     config['Agent_forwarder']['pcap']['suffix'] = suffix
     config['Agent_forwarder']['pcap']['pcap_directory'] = pcap_directory
     config['Agent_forwarder']['pcap']['temp_directory'] = temp_directory
-    config['Agent_forwarder']['listener'] = {}
-    config['Agent_forwarder']['listener']['ip'] = listener_ip
-    config['Agent_forwarder']['listener']['port'] = listener_port
-    config['Agent_forwarder']['listener']['threads'] = listener_threads
+    config['Agent_forwarder']['worker_threads'] = listener_threads
     shutil.copy('agent.py',os.path.join(install_path,'bin'))
 
 def write_config():
@@ -1666,13 +1481,13 @@ def main():
             print("Unable to make directory %s, check permissions and try again" % location)
             logger.error("Unable to make directory %s, check permissions and try again" % location)
             sys.exit()
+    
+    check_core()
     if int(install_type) == 1:
         check_server()
-        check_agent()
         check_receiver()
         choose_db()
         setup_server()
-        setup_core()
         setup_receiver()
         setup_agent()
     elif int(install_type) == 2:
@@ -1680,26 +1495,22 @@ def main():
         check_receiver()
         choose_db()
         setup_server()
-        setup_core()
         setup_receiver()
     elif int(install_type) == 3:
         check_server()
         choose_db()
         setup_server()
-        setup_core()
     elif int(install_type) == 4:
         check_receiver()
         choose_db()
-        setup_core()
         setup_receiver()
     elif int(install_type) == 5:
-        check_agent()
-        setup_core()
         setup_agent()
     elif int(install_type) == 6:
         choose_db()
         setup_server()
-        setup_core()
+    setup_core()
+
     logger.info('Writing Config to disk')
     write_config()
     logger.info('********************************************************************************************************')
