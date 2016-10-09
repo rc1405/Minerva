@@ -7,3 +7,4 @@ cherrypy
 hashlib
 pytz
 markupsafe
+zmq

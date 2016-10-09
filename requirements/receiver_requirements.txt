@@ -4,4 +4,5 @@ python-dateutil
 M2Crypto
 pytz
 netaddr
-redis
+zmq
+yara-python

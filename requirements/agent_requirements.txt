@@ -4,3 +4,4 @@ M2Crypto
 pytz
 dpkt
 pypcap
+zmq

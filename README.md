@@ -1,11 +1,10 @@
-# Development Branch!  Not yet fully functional
+# Development Branch!  Beta Build 1
 
 # Release Notes:
 
 ## Version 0.2:
 * Complete overhaul of receiver and transport.  
     * Eliminated raw sockets and moved to utilizing ZeroMQ
-    * Watchlist loading and execution greatly improved
     * Clean up of unneeded transformations and additions
 * Redesign of Agent forwarder and log ingestion
     * Better log collection performance
