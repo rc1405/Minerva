@@ -45,12 +45,6 @@ def publisher(minerva_core, channels, cur_config):
     pub = EventPublisher(minerva_core, channels, cur_config)
     pub.publish()
 
-
-def work_thread(minerva_core, channels, update_lock, action_file, sig_file):
-    workers = EventWorker(minerva_core, channels, update_lock, action_file, sig_file)
-    workers.start()
-
-
 def worker(minerva_core, cur_config, channels):
     context = zmq.Context.instance()
     log_client = minerva_core.get_socket(channels)
@@ -219,8 +213,8 @@ def main():
         worker_main.terminate()
         log_client.send_multipart(['DEBUG', 'Terminating Worker Thread Manager'])
         for i in channels['receiver']:
-            if os.path.exists(i):
-                os.remove(i)
+            if os.path.exists(i[6:]):
+                os.remove(i[6:])
         del channels['receiver']
         for i in channels.keys():
             if os.path.exists(channels[i][6:]):
