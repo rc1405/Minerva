@@ -38,11 +38,10 @@ class AgentSubscriber(object):
         receiver.identity = self.config['sensor_name']
         receiver.setsockopt(zmq.SUBSCRIBE, self.config['sensor_name'])
 
-        for r in self.config['listeners'].keys():
-            for p in self.config['listeners'][r]:
-                self.logger.send_multipart(['DEBUG', "Agent listening for messages on tcp://%s:%s" % (r, p)])
-                #print("connected to %s %s" % ( r, p))
-                receiver.connect('tcp://%s:%s' % (r, p))
+        for r in self.config['subscriptions'].keys():
+            self.logger.send_multipart(['DEBUG', "Agent listening for messages on tcp://%s:%s" % (r, self.config['subscriptions'][r])])
+            #print("connected to %s %s" % ( r, p))
+            receiver.connect('tcp://%s:%s' % (r, self.config['subscriptions'][r]))
 
         workers = context.socket(zmq.PUSH)
         workers.bind(self.channels['worker'])
@@ -77,9 +76,10 @@ class AgentPublisher(object):
         poll = zmq.Poller()
         poll.register(sender, zmq.POLLIN)
 
-        for r in self.config['destinations'].keys():
-            self.logger.send_multipart(['DEBUG', "Agent connected to receiver at tcp://%s:%s" % (r, self.config['destinations'][r])])
-            sender.connect('tcp://%s:%s' % (r, self.config['destinations'][r]))
+        for r in self.config['publishers'].keys():
+            for p in self.config['publishers'][r]:
+                self.logger.send_multipart(['DEBUG', "Agent connected to receiver at tcp://%s:%s" % (r, p)])
+                sender.connect('tcp://%s:%s' % (r, p))
 
         receiver = context.socket(zmq.REP)
         receiver.bind(self.channels['pub'])

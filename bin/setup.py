@@ -1006,8 +1006,6 @@ def setup_receiver():
                     print('Invalid Option')
             if resp == 'n' or resp == 'N':
                 break
-        listen_ips[listen_ip]['receive_threads'] = int(raw_input("How many threads do you want to process events? "))
-        logger.info("Setting receive threads at %i" % listen_ips[listen_ip]['receive_threads'])
         while True:
             resp1 = raw_input("Do you want to add another IP? [y/n] ")
             if resp1 == 'y' or resp1 == 'Y' or resp1 == 'n' or resp1 == 'N':

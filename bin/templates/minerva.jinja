@@ -61,9 +61,9 @@ Event_Receiver:
   listen_ip:
     {%- for ip in config.Event_Receiver.listen_ip.keys() %}
     {{ip}}:
-         pub_port: {{config.Event_Receiver[ip]['pub_port']}}
+         pub_port: {{config.Event_Receiver.listen_ip[ip]['pub_port']}}
          rec_ports:
-             {%- for port in config.Event_Receiver.listen_ip[ip]['rec_ports'] %}
+             {%- for port in config.Event_Receiver.listen_ip[ip]['recv_ports'] %}
              - {{port}}
              {%- endfor %}
          {%- endfor %}
@@ -85,11 +85,11 @@ Agent_forwarder:
       {{i}}: {{config.Agent_forwarder.logfiles[lf][i]}}
       {%- endfor %}
     {%- endfor %}
-  destinations:
+  subscriptions:
     {% for dest in config.Agent_forwarder.destinations.keys() %}
     {{dest}}: {{config.Agent_forwarder.destinations[dest]['sub_port']}}
     {%- endfor %}
-  listeners:
+  publishers:
     {%- for dest in config.Agent_forwarder.destinations.keys() %}
     {{dest}}:
         {%- for port in config.Agent_forwarder.destinations[dest]['pub_ports'] %}
