@@ -11,12 +11,8 @@
     * Better log collection performance
     * Faster resumption after stoppage
 * Overhaul of encryption
-    * OpenSSL Certificates still used for authentication and key exchange
+    * x509 Certificates still used for authentication and key exchange
     * Event transport now utilizes AES keys, updated on an hourly basis
-* TODO: Enhanced Logging Support
-* TODO: Event Multihosting available:
-    * Analysts can be granted full access or one to many different alert groups
-    * Sensor administrators can be segmented into the same categories
 * New Watchlist Capability
     * Upload single entries or text files with IP or domain indicators
     * Alerts will be generated off of traffic seen and available in the console
@@ -36,7 +32,7 @@
     * pyzmq
 * Dependencies Removed
     * numpy
-    * redis
+    * redis - Removed from receiver.  Only needed on Agent for Suricata EVE logs in Redis
 
 #Minerva
 
@@ -64,6 +60,10 @@ This menu provides the final layer of analysis on the events. The look is the sa
 
 Additional information may be pivoted from the event consoles.  Such information includes the original event, ASCII payload if available, previous comments and any netflow associated with the session.  From this menu, the analyst has the same options as the console pages; they can comment, close, escalate or request PCAP for a given event.
 
+
+
+###Event Watchlist:
+This feature allows responders to perform static indicator matching against known malicious indicators.  Users can input single entries or submit line delimited text files to be added to the watchlist.  Accepted entries are single IP Addresses, CIDR ranges and Domain name matches.
 
 
 ###Event Filters:
