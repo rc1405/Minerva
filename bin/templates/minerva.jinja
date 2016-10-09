@@ -81,24 +81,24 @@ Agent_forwarder:
   logfiles:
     {%- for lf in config.Agent_forwarder.logfiles %}
     {{lf}}:
-      {% for i in config.Agent_forwarder.logfiles[lf].keys() %}
+      {%- for i in config.Agent_forwarder.logfiles[lf].keys() %}
       {{i}}: {{config.Agent_forwarder.logfiles[lf][i]}}
-      {% endfor %}
+      {%- endfor %}
     {%- endfor %}
   destinations:
     {% for dest in config.Agent_forwarder.destinations.keys() %}
     {{dest}}: {{config.Agent_forwarder.destinations[dest]['sub_port']}}
     {%- endfor %}
   listeners:
-    {% for dest in config.Agent_forwarder.destinations.keys() %}
+    {%- for dest in config.Agent_forwarder.destinations.keys() %}
     {{dest}}:
-        {% for port in config.Agent_forwarder.destinations[dest]['pub_ports'] %}
+        {%- for port in config.Agent_forwarder.destinations[dest]['pub_ports'] %}
         - {{port}}
         {%- endfor %}
     {%- endfor %}
-  send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
-  send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
-  fail_wait: {{config.Agent_forwarder.target_addr.fail_wait}}
+  send_batch: {{config.Agent_forwarder.send_batch}}
+  send_wait: {{config.Agent_forwarder.send_wait}}
+  fail_wait: {{config.Agent_forwarder.fail_wait}}
   worker_threads: {{ config.Agent_forwarder.worker_threads }}
   pcap:
     max_packets: {{config.Agent_forwarder.pcap.max_packets}}

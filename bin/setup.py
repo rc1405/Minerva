@@ -1209,7 +1209,7 @@ def setup_agent():
             except:
                 print('Invalid Port')
         logger.info("Sub port of %s added" % sub_port)
-        receivers[destination]['sub_ports'] = sub_port
+        receivers[destination]['sub_port'] = sub_port
 
         more_dest = raw_input("Would you like to add more receivers? [Y/N]")
         if more_dest.upper() == 'N':
@@ -1397,7 +1397,6 @@ def write_config():
     env = Environment(loader=FileSystemLoader('templates'))
     tmp = env.get_template('minerva.jinja')
     conf_file = open(os.path.join(install_path,'etc/minerva.yaml'),'w')
-    conf_write = tmp.render(config)
     conf_file.writelines(tmp.render({ "config": config }))
     conf_file.close()
 
