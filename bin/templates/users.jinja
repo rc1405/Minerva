@@ -174,7 +174,7 @@
              <tr class="{{ user_status[item.ENABLED] }} text-center" data-id="{{loop.index}}">
                <td>{{ item.USERNAME}}</td>
                <td>{{ item.date_created.strftime('%Y-%m-%d %H:%M:%S')}}</td>
-               <td>{% if last_login in item.keys() %}{{ item.last_login.strftime('%Y-%m-%d %H:%M:%S') }}{% endif %}</td>
+               <td>{% if 'last_login' in item.keys() %}{{ item.last_login.strftime('%Y-%m-%d %H:%M:%S') }}{% endif %}</td>
                <td><input type="checkbox" id="console{{loop.index}}" disabled {% if item.console == 'true' %}checked{% endif %}></td>
                <td><input id="responder{{loop.index}}" type="checkbox" disabled {% if item.responder == 'true' %}checked{%endif%}></td>
                <td><input id="event_filters{{loop.index}}" type="checkbox" disabled {% if item.event_filters == 'true' %}checked{%endif%}></td>
