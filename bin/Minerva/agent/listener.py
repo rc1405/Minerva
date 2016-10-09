@@ -23,6 +23,7 @@ import json
 import uuid
 import zmq
 import M2Crypto
+import sys
 
 class AgentSubscriber(object):
     def __init__(self, cur_config, minerva_core, channels):
@@ -49,11 +50,12 @@ class AgentSubscriber(object):
 
         try:
             zmq.proxy(receiver, workers)
-            server.close()
+            receiver.close()
             workers.close()
         except:
-            server.close()
-        self.logger.send_multipart(['DEBUG', "Agent Subscriber shutting down"])
+            receiver.close()
+            self.logger.send_multipart(['DEBUG', "Agent Subscriber shutting down"])
+            sys.exit()
 
 class AgentPublisher(object):
     def __init__(self, cur_config, minerva_core, channels):
@@ -112,97 +114,104 @@ class AgentPublisher(object):
         worker_count = 0
         sending_pcap = False
 
-        while True:
-           sockets = dict(poll.poll(100))
-           if event_transport in sockets:
-               self.logger.send_multipart(['DEBUG', "Agent publisher received event from log tailer"])
-               event = event_transport.recv()
-               worker_count += 1
-               events.append(event)
-               if not event_waiting:
-                   #print('returning event')
-                   event_transport.send("success")
-                   worker_count -= 1
-           if len(events) > self.event_thres or (int(time.time()) - last_sent > self.time_thres and len(events) > 0):
-               if not event_waiting and self.AESKEY:
-                   #print('sending event to receiver')
-                   self.logger.send_multipart(['DEBUG', "Agent publisher sending %i events to receivers" % len(events)])
-                   sender.send_json({
-                     "_payload": self._encrypt_aes(json.dumps({
-                       "_function": "events",
-                       "events": events
-                     })),
-                     "_cert": self.PUBCERT
-                   })
-                   event_waiting = True
-               if not self.AESKEY:
-                   self.logger.send_multipart(['ERROR', "Agent publisher unable to send events, not authorized"])
-                   sender.send_json({
-                       "_function": "auth",
-                       "_cert": self.PUBCERT
-                   })
-
-           if sender in sockets:
-               msg = sender.recv_json()
-               try:
-                   if msg['_function'] == 'auth':
-                       server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
-                       pub_key = server_cert.get_pubkey()
-                       rsa_key = pub_key.get_rsa()
-                       self.SRVKEY = rsa_key
-                       try:
-                           self.logger.send_multipart(['DEBUG', "Agent publisher received auth request from receiver"])
-                           aes = self._decrypt_rsa(msg['_message'])
-                           if aes:
-                               self.AESKEY = aes.strip().decode('base64')
-                           event_waiting = False
+        try:
+            while True:
+               sockets = dict(poll.poll(100))
+               if event_transport in sockets:
+                   self.logger.send_multipart(['DEBUG', "Agent publisher received event from log tailer"])
+                   event = event_transport.recv()
+                   worker_count += 1
+                   events.append(event)
+                   if not event_waiting:
+                       #print('returning event')
+                       event_transport.send("success")
+                       worker_count -= 1
+               if len(events) > self.event_thres or (int(time.time()) - last_sent > self.time_thres and len(events) > 0):
+                   if not event_waiting and self.AESKEY:
+                       #print('sending event to receiver')
+                       self.logger.send_multipart(['DEBUG', "Agent publisher sending %i events to receivers" % len(events)])
+                       sender.send_json({
+                         "_payload": self._encrypt_aes(json.dumps({
+                           "_function": "events",
+                           "events": events
+                         })),
+                         "_cert": self.PUBCERT
+                       })
+                       event_waiting = True
+                   if not self.AESKEY:
+                       self.logger.send_multipart(['ERROR', "Agent publisher unable to send events, not authorized"])
+                       sender.send_json({
+                           "_function": "auth",
+                           "_cert": self.PUBCERT
+                       })
+    
+               if sender in sockets:
+                   msg = sender.recv_json()
+                   try:
+                       if msg['_function'] == 'auth':
+                           server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
+                           pub_key = server_cert.get_pubkey()
+                           rsa_key = pub_key.get_rsa()
+                           self.SRVKEY = rsa_key
+                           try:
+                               self.logger.send_multipart(['DEBUG', "Agent publisher received auth request from receiver"])
+                               aes = self._decrypt_rsa(msg['_message'])
+                               if aes:
+                                   self.AESKEY = aes.strip().decode('base64')
+                               event_waiting = False
+                               if sending_pcap:
+                                   receiver.send_json({"status": "failure", "KEY": aes.strip()})
+                                   sending_pcap = False
+                                   self.logger.send_multipart(['DEBUG', "Agent publisher received PCAP Faliure, sending new AES Key"])
+                           except KeyError:
+                               #print('reauth')
+                               self.logger.send_multipart(['DEBUG', "Agent publisher sending auth request to receivers"])
+                               sender.send_json({
+                                   "_function": "auth",
+                                   "_cert": self.PUBCERT
+                               })
+                       elif msg['_function'] == 'ack':
                            if sending_pcap:
-                               receiver.send_json({"status": "failure", "KEY": aes.strip()})
-                               sending_pcap = False
-                               self.logger.send_multipart(['DEBUG', "Agent publisher received PCAP Faliure, sending new AES Key"])
-                       except KeyError:
-                           #print('reauth')
-                           self.logger.send_multipart(['DEBUG', "Agent publisher sending auth request to receivers"])
-                           sender.send_json({
-                               "_function": "auth",
-                               "_cert": self.PUBCERT
-                           })
-                   elif msg['_function'] == 'ack':
-                       if sending_pcap:
-                           receiver.send_json({"status": "success"})
-                           self.logger.send_multipart(['DEBUG', "Agent publisher received PCAP success"])
-               except KeyError:
-                   denc_msg = json.loads(self._decrypt_rsa(msg['_payload']))
-                   if denc_msg['_function'] == 'events':
-                       if denc_msg['status'] == 'success':
-                           self.logger.send_multipart(['DEBUG', "Agent publisher received ack on sent events"])
-                           for i in xrange(0, worker_count):
-                               event_transport.send("write checkpoint")
-                               worker_count -= 1
-                       event_waiting = False
-                       events = []
-                       last_sent = int(time.time())
-
-           if receiver in sockets:
-               msg = receiver.recv_json()
-               if msg['_function'] == 'PCAP':
-                   self.logger.send_multipart(['DEBUG', "Agent publisher received PCAP reply for %s" % str(msg['console'])])
-                   sender.send_json({
-                       "_payload": self._encrypt_aes(json.dumps({
-                           "_function": "PCAP", 
-                           "console": msg['console'],
-                           "payload": msg['payload'],
-                           "_action": "reply",
-                           "request_id": msg['request_id']
-                       })),
-                       "_cert": self.PUBCERT,
-                   })
-                   sending_pcap = True
-               elif msg['_function'] == 'AESKEY':
-                   receiver.send_json({"key": self.AESKEY.encode('base64')})
-                   self.logger.send_multipart(['DEBUG', "Agent publisher received AES key requst from worker"])
-
-
+                               receiver.send_json({"status": "success"})
+                               self.logger.send_multipart(['DEBUG', "Agent publisher received PCAP success"])
+                   except KeyError:
+                       denc_msg = json.loads(self._decrypt_rsa(msg['_payload']))
+                       if denc_msg['_function'] == 'events':
+                           if denc_msg['status'] == 'success':
+                               self.logger.send_multipart(['DEBUG', "Agent publisher received ack on sent events"])
+                               for i in xrange(0, worker_count):
+                                   event_transport.send("write checkpoint")
+                                   worker_count -= 1
+                           event_waiting = False
+                           events = []
+                           last_sent = int(time.time())
+    
+               if receiver in sockets:
+                   msg = receiver.recv_json()
+                   if msg['_function'] == 'PCAP':
+                       self.logger.send_multipart(['DEBUG', "Agent publisher received PCAP reply for %s" % str(msg['console'])])
+                       sender.send_json({
+                           "_payload": self._encrypt_aes(json.dumps({
+                               "_function": "PCAP", 
+                               "console": msg['console'],
+                               "payload": msg['payload'],
+                               "_action": "reply",
+                               "request_id": msg['request_id']
+                           })),
+                           "_cert": self.PUBCERT,
+                       })
+                       sending_pcap = True
+                   elif msg['_function'] == 'AESKEY':
+                       receiver.send_json({"key": self.AESKEY.encode('base64')})
+                       self.logger.send_multipart(['DEBUG', "Agent publisher received AES key requst from worker"])
+        except:
+            self.logger.send_multipart(['DEBUG', "Agent publisher shutting down"])
+            self.logger.close(linger=1000)
+            receiver.close(linger=1000)
+            sender.close(linger=1000)
+            sys.exit()
+    
+    
     def _encrypt_rsa(self, payload):
         self.logger.send_multipart(['DEBUG', "Agent publisher RSA encrypting message"])
         enc_payload = self.SRVKEY.public_encrypt(payload, M2Crypto.RSA.pkcs1_padding)
