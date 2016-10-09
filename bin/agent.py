@@ -105,9 +105,9 @@ def worker(cur_config, minerva_core, channels):
             i.terminate()
         sys.exit()
 
-def publisher(cur_config, minerva_core, channels, start_workers):
+def publisher(cur_config, minerva_core, channels):
     pub = AgentPublisher(cur_config, minerva_core, channels)
-    pub.publish(start_workers)
+    pub.publish()
 
 def subscriber(cur_config, minerva_core, channels):
     sub = AgentSubscriber(cur_config, minerva_core, channels)
@@ -149,9 +149,7 @@ if __name__ == '__main__':
     sub_proc.start()
     log_client.send_multipart(['DEBUG', 'Starting Subscriber Process'])
 
-    start_workers = Lock()
-
-    pub_proc = Process(name='publisher', target=publisher, args=((cur_config, minerva_core, channels, start_workers)))
+    pub_proc = Process(name='publisher', target=publisher, args=((cur_config, minerva_core, channels)))
     pub_proc.start()
     log_client.send_multipart(['DEBUG', 'Starting Publisher Process'])
 
@@ -179,7 +177,7 @@ if __name__ == '__main__':
                 sub_proc.start()
                 log_client.send_multipart(['ERROR', 'Subscriber Process crashed, restarting'])
             if not pub_proc.is_alive():
-                pub_proc = Process(name='publisher', target=publisher, args=((cur_config, minerva_core, channels, start_workers)))
+                pub_proc = Process(name='publisher', target=publisher, args=((cur_config, minerva_core, channels)))
                 pub_proc.start()
                 log_client.send_multipart(['ERROR', 'Publisher Process crashed, restarting'])
             if not worker_main.is_alive():
