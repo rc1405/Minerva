@@ -85,7 +85,11 @@
         <td>{{ item.time_created.strftime('%Y-%m-%d %H:%M:%S')}}</td>
         <td>{{ item.last_modified.strftime('%Y-%m-%d %H:%M:%S')}}</td>
         <td>{{ item.SERVER }}</td>
+        {% if 'last_event' in item.keys() %}
         <td>{{ item.last_event.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        {% else %}
+        <td></td>
+        {% endif %}
         <td>{{ item.STATUS }}</td></tr>
 	{% endfor %}
         </tbody>
