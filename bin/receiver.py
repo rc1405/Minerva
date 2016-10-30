@@ -34,17 +34,6 @@ import zmq
 from Minerva import core
 from Minerva.receiver import EventReceiver, EventPublisher, EventWorker, Watchlist
             
-def receiver(pname, minerva_core, channels):
-    #try:
-        listener = EventReceiver(minerva_core, channels)
-        listener.listen(pname)
-    #except:
-        #return
-
-def publisher(minerva_core, channels, cur_config):
-    pub = EventPublisher(minerva_core, channels, cur_config)
-    pub.publish()
-
 def worker(minerva_core, cur_config, channels):
     context = zmq.Context.instance()
     log_client = minerva_core.get_socket(channels)
@@ -129,7 +118,7 @@ def checkCert(cur_config, minerva_core):
     return
 
 
-def main():
+if __name__ == '__main__':
     minerva_core = core.MinervaConfigs()
     config = minerva_core.conf
     cur_config = config['Event_Receiver']
@@ -159,7 +148,7 @@ def main():
 
     log_client = minerva_core.get_socket(channels)
 
-    pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
+    pub_listener = EventPublisher(minerva_core, channels, cur_config)
     pub_listener.start()
     log_client.send_multipart(['DEBUG', 'Starting Receiver Publishing Process'])
 
@@ -173,8 +162,10 @@ def main():
         for i in cur_config['listen_ip']:
             for p in cur_config['listen_ip'][i]['rec_ports']:
                 name = "%s-%s" % (i,p)
-    	        pr = Process(name=name, target=receiver, args=((name, minerva_core, channels)))
+
+                pr = EventReceiver(name, minerva_core, channels)
                 pr.start()
+
                 active_processes.append(pr)
                 log_client.send_multipart(['DEBUG', 'Starting Receiver %s' % name])
         log_client.send_multipart(['INFO', 'Receiver Processes Started'])
@@ -182,14 +173,15 @@ def main():
             for p in active_processes:
                 if not p.is_alive():
                     active_processes.remove(p)
-                    pr = Process(name=p.name, target=receiver, args=((p.name, minerva_core, channels)))
-                    pr.start()
                     p.join()
+                    pr = EventReceiver(p.name, minerva_core, channels)
+                    p.join()
+                    pr.start()
                     active_processes.append(pr)
                     log_client.send_multipart(['ERROR', 'Receiver %s crashed, restarting' % p.name])
             if not pub_listener.is_alive():
                 pub_listener.join()
-                pub_listener = Process(name='publisher', target=publisher, args=(minerva_core, channels, cur_config))
+                pub_listener = EventPublisher(minerva_core, channels, cur_config)
                 pub_listener.start()
                 log_client.send_multipart(['ERROR', 'Receiver Publishing Process crashed, restarting'])
             if not worker_main.is_alive():
@@ -213,8 +205,8 @@ def main():
         worker_main.terminate()
         log_client.send_multipart(['DEBUG', 'Terminating Worker Thread Manager'])
         for i in channels['receiver']:
-            if os.path.exists(i[6:]):
-                os.remove(i[6:])
+            if os.path.exists(channels['receiver'][i][6:]):
+                os.remove(channels['receiver'][i][6:])
         del channels['receiver']
         for i in channels.keys():
             if os.path.exists(channels[i][6:]):
@@ -222,4 +214,3 @@ def main():
         log_client.send_multipart(['DEBUG', 'Terminating Logging Thread'])
         log_client.send_multipart(['KILL', 'Stop Logger thread'])
         sys.exit()
-main()

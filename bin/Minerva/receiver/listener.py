@@ -26,24 +26,27 @@ import M2Crypto
 import time
 import json
 import os
+from multiprocessing import Process
 
-class EventReceiver(object):
-    def __init__(self, minerva_core, channels):
+class EventReceiver(Process):
+    def __init__(self, pname, minerva_core, channels):
+        Process.__init__(self)
         self.channels = channels
-        self.channels['context'] = zmq.Context()
         self.minerva_core = minerva_core
+        self.pname = pname
 
-    def listen(self, pname):
+    def run(self):
+        context = zmq.Context()
         log_client = self.minerva_core.get_socket(self.channels)
-        log_client.send_multipart(['DEBUG','Starting Event Listener %s' % pname])
+        log_client.send_multipart(['DEBUG','Starting Event Listener %s' % self.pname])
         #print('listening to %s' % pname)
-        ip, port = pname.split('-')
+        ip, port = self.pname.split('-')
 
-        server = self.channels['context'].socket(zmq.ROUTER)
+        server = context.socket(zmq.ROUTER)
         server.bind('tcp://%s:%s' % (ip, port))
         log_client.send_multipart(['DEBUG', "Receiver listening for messages on tcp://%s:%s" % (ip, port)])
 
-        workers = self.channels['context'].socket(zmq.DEALER)
+        workers = context.socket(zmq.DEALER)
         log_client.send_multipart(['DEBUG', "Receiver binded workers to %s" % self.channels['receiver']["%s-%s" % (ip, port)]])
         workers.bind(self.channels['receiver']["%s-%s" % (ip, port)])
 
@@ -57,17 +60,17 @@ class EventReceiver(object):
             server.close()
             workers.close()
 
-        log_client.send_multipart(['INFO', "Receiver %s shutting down" % pname])
+        log_client.send_multipart(['INFO', "Receiver %s shutting down" % self.pname])
 
-class EventPublisher(object):
+class EventPublisher(Process):
     def __init__(self, minerva_core, channels, cur_config):
+        Process.__init__(self)
         db = minerva_core.get_db()
         self.logger = minerva_core.get_socket(channels)
         #TODO Update CERTS
         self.certs = db.certs
         self.channels = channels
         self.config = cur_config
-        self.channels['context'] = zmq.Context()
         self.keys = db.keys
         keys = db.certs.find_one({"type": "receiver"})
         webcert = db.certs.find_one({"type": "webserver"})
@@ -105,14 +108,15 @@ class EventPublisher(object):
             self.logger.send_multipart(['ERROR','Publisher Unable to encrypt RSA for %s' % target])
             return False
 
-    def publish(self):
-        sender = self.channels['context'].socket(zmq.PUB)
+    def run(self):
+        context = zmq.Context()
+        sender = context.socket(zmq.PUB)
 
         for r in self.config['listen_ip'].keys():
             self.logger.send_multipart(['DEBUG','Starting Publisher on tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port']))])
             sender.bind('tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port'])))
 
-        receiver = self.channels['context'].socket(zmq.PULL)
+        receiver = context.socket(zmq.PULL)
         receiver.bind(self.channels['pub'])
         self.logger.send_multipart(['DEBUG','Publisher now listening for events from workers'])
  
