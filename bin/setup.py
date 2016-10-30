@@ -142,7 +142,7 @@ def setup_db_lite():
         else:
             print('Invalid db auth option')
     logger.info('Use DB Auth is set to %s' % useAuth)
-    if useAuth == 'y' or useAuth == 'Y':
+    if useAuth.lower() == 'y':
         while True:
             print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
             choice = raw_input()
@@ -158,7 +158,7 @@ def setup_db_lite():
                 pass
         logger.info('DB Auth Type is %s' % authType)
         while True:
-            username = raw_input("Enter a username: ")
+            username = raw_input("Enter a username or x509 Subject: ")
             if len(username) > 0:
                 break
             else:
