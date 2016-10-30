@@ -5,7 +5,6 @@ python-dateutil
 M2Crypto
 cherrypy
 pytz
-hashlib
 markupsafe
 dpkt
 pypcap
