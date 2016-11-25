@@ -795,6 +795,7 @@ def setup_server():
     config['Webserver']['web']['password_requirements']['upper_count'] = upper_count
     config['Webserver']['web']['password_requirements']['digit_count'] = digit_count
     config['Webserver']['web']['password_requirements']['special_count'] = special_count
+    config['Webserver']['events'] = {}
     config['Webserver']['events']['maxResults'] = maxResults
     #os.makedirs(os.path.join(install_path,'bin/templates'))
     #os.makedirs(os.path.join(install_path,'bin/static'))
