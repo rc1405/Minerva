@@ -105,7 +105,11 @@ def validate_ip(ipaddress):
     else:
         return False
 
+def map_indexes(ind):
+    return ind['name']
+
 def setup_db_new(lite=False):
+    INDEX_VER = 101
     import pymongo
     print("IMPORTANT: If using a sharded cluster, shard keys must be setup before running this script")
     print("Setting Up Receiver DB connection")
@@ -207,18 +211,6 @@ def setup_db_new(lite=False):
                     continue
                 break
             logger.info('Auth Cert path is %s' % auth_cert)
-            '''
-            while True:
-                auth_ca = raw_input("Enter full path to ca_certs to be used: ")
-                if len(auth_ca) == 0:
-                    print('No path specified')
-                    continue
-                if not os.path.exists(auth_ca):
-                    print('Cert does not exist')
-                    continue
-                break
-            logger.info('Auth CA path is %s' % auth_ca)
-            '''
             try:
                 if int(port) == 0:
                     conn_str = ip
@@ -307,9 +299,14 @@ def setup_db_new(lite=False):
         else:
             create_user = False
 
+        alert_indexes = map(map_indexes, db.alerts.list_indexes())
+        for i in alert_indexes:
+            if i == 'timestamp_1' or i[:12] == 'alert-search' or i[:13] == 'alert-expired':
+                db.alerts.drop_index(i)
+
         logger.info("Alert search index created is: %s" % '([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")')
 
-        db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
+        db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-%i" % INDEX_VER)
 
         while True:
             expiredDays = raw_input("Enter number of days to keep alerts: ")
@@ -321,11 +318,17 @@ def setup_db_new(lite=False):
                 pass
         logger.info("Days to keep alerts %i" % expiredDays)
         expiredSeconds = int(expiredDays) * 86400
-        db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
+        db.alerts.ensure_index("timestamp",name="alert-expired-%i" % INDEX_VER, expireAfterSeconds=expiredSeconds)
+
+
+        flow_indexes = map(map_indexes, db.flow.list_indexes())
+        for i in flow_indexes:
+            if i == 'timestamp_1' or i[:11] == 'flow-search' or i[:12] == 'flow-expired':
+                db.flow.drop_index(i)
 
         logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")')
 
-        db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")
+        db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-%i" % INDEX_VER)
 
         while True:
             expiredflowDays = raw_input("Enter number of days to keep flow data: ")
@@ -338,11 +341,16 @@ def setup_db_new(lite=False):
 
         logger.info("Days to keep flow data %i" % expiredflowDays)
         flowexpiredSeconds = int(expiredflowDays) * 86400
-        db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
+        db.flow.ensure_index("timestamp",name="flow-expired-%i" % INDEX_VER,expireAfterSeconds=flowexpiredSeconds)
+
+        dns_indexes = map(map_indexes, db.dns.list_indexes())
+        for i in dns_indexes:
+            if i == 'timestamp_1' or i[:10] == 'dns-search' or i[:11] == 'dns-expired':
+                db.dns.drop_index(i)
 
         logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")')
 
-        db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")
+        db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-%i" % INDEX_VER)
 
         while True:
             expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
@@ -355,7 +363,12 @@ def setup_db_new(lite=False):
 
         logger.info("Days to keep dns logs: %i" % expireddnsDays)
         dnsexpiredSeconds = int(expireddnsDays) * 86400
-        db.dns.ensure_index("timestamp",expireAfterSeconds=dnsexpiredSeconds)
+        db.dns.ensure_index("timestamp",name="dns-expired-%i" % INDEX_VER, expireAfterSeconds=dnsexpiredSeconds)
+
+        filters_indexes = map(map_indexes, db.filters.list_indexes())
+        for i in filters_indexes:
+            if i == 'temp_timestamp_1' or i[:12] == 'temp-expired':
+                db.filters.drop_index(i)
 
         while True:
             expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
@@ -372,7 +385,12 @@ def setup_db_new(lite=False):
 
         logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
         expiredTempSeconds = expiredTempHours * 3600
-        db.filters.ensure_index("temp_timestamp", expireAfterSeconds=expiredTempSeconds)
+        db.filters.ensure_index("temp_timestamp", name="temp-expired-%i" % INDEX_VER, expireAfterSeconds=expiredTempSeconds)
+
+        session_indexes = map(map_indexes, db.sessions.list_indexes())
+        for i in session_indexes:
+            if i == 'last_accessed_1' or i[:15] == 'session-expired':
+                db.sessions.drop_index(i)
 
         while True:
             sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
@@ -384,9 +402,13 @@ def setup_db_new(lite=False):
                 pass
         logger.info("Session timeout %i minutes" % sessionMinutes)
         sessionTimeout = int(sessionMinutes) * 60
-        db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
+        db.sessions.ensure_index("last_accessed",name="session-expired-%i" % INDEX_VER, expireAfterSeconds=sessionTimeout)
 
-        db.keys.ensure_index("timestamp",expireAfterSeconds=3600)
+        key_indexes = map(map_indexes, db.keys.list_indexes())
+        for i in key_indexes:
+            if i == 'timestamp_1' or i[:11] == 'key-expired':
+                db.keys.drop_index(i)
+        db.keys.ensure_index("timestamp",name="key-expired-%i" % INDEX_VER,expireAfterSeconds=3600)
 
         if not create_user:
             while True:
