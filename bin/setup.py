@@ -459,6 +459,16 @@ def setup_db_new(lite=False):
                     "date_created" : datetime.datetime.utcnow(),
                     "PASSWORD_CHANGED": datetime.datetime.utcnow(),
                 })
+    else:
+        while True:
+            sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
+            try:
+                sessionMinutes = int(sessionMinutes)
+                break
+            except:
+                print('Invalid minutes')
+                pass
+        logger.info("Session timeout %i minutes" % sessionMinutes)
 
     config['Database'] = {}
     config['Database']['db'] = {}
