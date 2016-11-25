@@ -308,18 +308,19 @@ def setup_db_new(lite=False):
 
         db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-%i" % INDEX_VER)
 
-        while True:
-            expiredDays = raw_input("Enter number of days to keep alerts: ")
-            try:
-                expiredDays = int(expiredDays)
-                break
-            except:
-                print('Invalid day option')
-                pass
-        logger.info("Days to keep alerts %i" % expiredDays)
+    while True:
+        expiredDays = raw_input("Enter number of days to keep alerts: ")
+        try:
+            expiredDays = int(expiredDays)
+            break
+        except:
+            print('Invalid day option')
+            pass
+    logger.info("Days to keep alerts %i" % expiredDays)
+
+    if not lite:
         expiredSeconds = int(expiredDays) * 86400
         db.alerts.ensure_index("timestamp",name="alert-expired-%i" % INDEX_VER, expireAfterSeconds=expiredSeconds)
-
 
         flow_indexes = map(map_indexes, db.flow.list_indexes())
         for i in flow_indexes:
@@ -330,16 +331,18 @@ def setup_db_new(lite=False):
 
         db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-%i" % INDEX_VER)
 
-        while True:
-            expiredflowDays = raw_input("Enter number of days to keep flow data: ")
-            try:
-                expiredflowDays = int(expiredflowDays)
-                break
-            except:
-                print('Invalid day option')
-                pass
+    while True:
+        expiredflowDays = raw_input("Enter number of days to keep flow data: ")
+        try:
+            expiredflowDays = int(expiredflowDays)
+            break
+        except:
+            print('Invalid day option')
+            pass
 
-        logger.info("Days to keep flow data %i" % expiredflowDays)
+    logger.info("Days to keep flow data %i" % expiredflowDays)
+
+    if not lite:
         flowexpiredSeconds = int(expiredflowDays) * 86400
         db.flow.ensure_index("timestamp",name="flow-expired-%i" % INDEX_VER,expireAfterSeconds=flowexpiredSeconds)
 
@@ -352,15 +355,16 @@ def setup_db_new(lite=False):
 
         db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-%i" % INDEX_VER)
 
-        while True:
-            expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
-            try:
-                expireddnsDays = int(expireddnsDays)
-                break
-            except:
-                print('Invalid day option')
-                pass
+    while True:
+        expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
+        try:
+            expireddnsDays = int(expireddnsDays)
+            break
+        except:
+            print('Invalid day option')
+            pass
 
+    if not lite:
         logger.info("Days to keep dns logs: %i" % expireddnsDays)
         dnsexpiredSeconds = int(expireddnsDays) * 86400
         db.dns.ensure_index("timestamp",name="dns-expired-%i" % INDEX_VER, expireAfterSeconds=dnsexpiredSeconds)
@@ -370,20 +374,22 @@ def setup_db_new(lite=False):
             if i == 'temp_timestamp_1' or i[:12] == 'temp-expired':
                 db.filters.drop_index(i)
 
-        while True:
-            expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
-            if len(expiredTempHours) == 0:
-                expiredTempHours = 24
+    while True:
+        expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
+        if len(expiredTempHours) == 0:
+            expiredTempHours = 24
+            break
+        else:
+            try:
+                expiredTempHours = int(expiredTempHours)
                 break
-            else:
-                try:
-                    expiredTempHours = int(expiredTempHours)
-                    break
-                except:
-                    print('Invalid Day option')
-                    pass
+            except:
+                print('Invalid Day option')
+                pass
 
-        logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
+    logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
+
+    if not lite:
         expiredTempSeconds = expiredTempHours * 3600
         db.filters.ensure_index("temp_timestamp", name="temp-expired-%i" % INDEX_VER, expireAfterSeconds=expiredTempSeconds)
 
@@ -392,15 +398,17 @@ def setup_db_new(lite=False):
             if i == 'last_accessed_1' or i[:15] == 'session-expired':
                 db.sessions.drop_index(i)
 
-        while True:
-            sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
-            try:
-                sessionMinutes = int(sessionMinutes)
-                break
-            except:
-                print('Invalid minutes')
-                pass
-        logger.info("Session timeout %i minutes" % sessionMinutes)
+    while True:
+        sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
+        try:
+            sessionMinutes = int(sessionMinutes)
+            break
+        except:
+            print('Invalid minutes')
+            pass
+    logger.info("Session timeout %i minutes" % sessionMinutes)
+
+    if not lite:
         sessionTimeout = int(sessionMinutes) * 60
         db.sessions.ensure_index("last_accessed",name="session-expired-%i" % INDEX_VER, expireAfterSeconds=sessionTimeout)
 
@@ -459,16 +467,6 @@ def setup_db_new(lite=False):
                     "date_created" : datetime.datetime.utcnow(),
                     "PASSWORD_CHANGED": datetime.datetime.utcnow(),
                 })
-    else:
-        while True:
-            sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
-            try:
-                sessionMinutes = int(sessionMinutes)
-                break
-            except:
-                print('Invalid minutes')
-                pass
-        logger.info("Session timeout %i minutes" % sessionMinutes)
 
     config['Database'] = {}
     config['Database']['db'] = {}
@@ -492,16 +490,18 @@ def setup_db_new(lite=False):
             config['Database']['db']['password'] = password
             config['Database']['db']['PW_Mechanism'] = PW_Mechanism
         config['Database']['db']['AuthType'] = authType
-    config['Database']['web'] = {}
-    config['Database']['web']['session_timeout'] = sessionMinutes
+    config['Webserver'] = {}
+    config['Webserver']['web'] = {}
+    config['Webserver']['web']['session_timeout'] = sessionMinutes
     config['Database']['events'] = {}
 
     if not lite:
         config['Database']['db']['SESSION_KEY'] = session_salt
-        config['Database']['events']['max_age'] = expiredDays
-        config['Database']['events']['flow_max_age'] = expiredflowDays
-        config['Database']['events']['dns_max_age'] = expireddnsDays
-        config['Database']['events']['temp_filter_age'] = expiredTempHours
+
+    config['Database']['events']['max_age'] = expiredDays
+    config['Database']['events']['flow_max_age'] = expiredflowDays
+    config['Database']['events']['dns_max_age'] = expireddnsDays
+    config['Database']['events']['temp_filter_age'] = expiredTempHours
 
 def setup_core():
     if os.path.exists('/usr/lib/python2.7/Minerva'):
@@ -776,9 +776,6 @@ def setup_server():
 
     logger.info("Min numbers of special characters in password is %i" % int(special_count))
 
-    if not 'Webserver' in config.keys():
-        config['Webserver'] = {}
-        config['Webserver']['web'] = {}
     config['Webserver']['web']['hostname'] = hostname
     config['Webserver']['web']['bindIp'] = bindIp
     config['Webserver']['web']['port'] = webport

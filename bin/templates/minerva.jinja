@@ -39,9 +39,7 @@ Database:
     PW_Mechanism: {{config.Database.db.PW_Mechanism}}
     {%- endif %}
     {%- endif %}
-    {%- if 'session_timeout' in config.Database.web.keys() %}
     SESSION_KEY: "{{config.Database.db.SESSION_KEY}}"
-    {%- endif %}
   events:
     max_age: {{config.Database.events.max_age}}
     flow_max_age: {{config.Database.events.flow_max_age}}
@@ -50,6 +48,7 @@ Database:
 
 {%- endif %}
 {%- if 'Webserver' in config %}
+{%- if config.Webserver.web.keys() |length > 1 %}
 Webserver:
   web:
     hostname: {{config.Webserver.web.hostname}}
@@ -72,6 +71,7 @@ Webserver:
       special_count: {{ config.Webserver.web.password_requirements.special_count }}
   events:
     maxResults: {{config.Webserver.events.maxResults}}
+{%- endif %}
 {%- endif %}
 {%- if 'Event_Receiver' in config %}
 Event_Receiver:
