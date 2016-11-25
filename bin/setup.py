@@ -105,46 +105,77 @@ def validate_ip(ipaddress):
     else:
         return False
 
-def setup_db_lite():
+def setup_db_new(lite=False):
     import pymongo
+    print("IMPORTANT: If using a sharded cluster, shard keys must be setup before running this script")
     print("Setting Up Receiver DB connection")
     logger.info("Setting Up Receiver DB connection")
     
     while True:
-        ip = raw_input('Please enter database ip: [127.0.0.1] ')
+        ip = raw_input('Please enter database IP or mongodb connection string: [127.0.0.1] ')
         if len(ip) == 0:
             ip = '127.0.0.1'
-            break
-        elif validate_ip(ip):
-            break
-        else:
-            print('Invalid IP Adress')
-    logger.info("DB Ip is set to %s" % ip)
+        break
+    logger.info("DB Connection string set to %s" % ip)
 
     while True:
-        port = raw_input('Please enter database port: [27017] ')
-        if len(port) == 0:
-            port = 27017
+        use_port = raw_input('Would you like to specify a port? [Y/N] Select N to use connection string only ')
+        if use_port[:1].lower() == 'y':
+            while True:
+                port = raw_input('Please enter database port: [27017] ')
+                if len(port) == 0:
+                    port = 27017
+                    break
+                else:
+                    try:
+                        port = int(port)
+                        break
+                    except:
+                        print('Invalid port')
+                        pass
+            logger.info("DB Port is set to %i" % int(port))
+            break
+        elif use_port[:1].lower() == 'n':
+            port = 0
+            logger.info("No port specified")
             break
         else:
-            try:
-                port = int(port)
+            print("invalid selection")
+
+    while True:
+        useSSL = raw_input('Use SSL to connect to the DB? [Y/N]')
+        if len(useSSL) == 0:
+            print("No input detected")
+            continue
+        if useSSL[:1].lower() == 'y':
+            while True:
+                ssl_certfile = raw_input('Specify the cert file to use: ')
+                if len(ssl_certfile) == 0 or not os.path.exists(ssl_certfile):
+                    print("Error: Cert file does not exist")
+                    continue 
                 break
-            except:
-                print('Invalid port')
-                pass
-    logger.info("DB Port is set to %i" % int(port))
+            while True:
+                ssl_ca_certs = raw_input('Specify the CACerts file to use: ')
+                if len(ssl_ca_certs) == 0 or not os.path.exists(ssl_ca_certs):
+                    print("Error: Cert file does not exist")
+                    continue
+                break
+            break
+        elif useSSL[:1].lower() == 'n':
+            break
+        else:
+            print("Invalid selection")
 
     while True:
         useAuth = raw_input('Use db authentication? Y/N [N] ')
-        if useAuth == 'y' or use_auth == 'Y' or use_auth == 'n' or use_auth == 'N' or len(use_auth) == 0:
+        if useAuth.lower() == 'y' or use_auth.lower() == 'n' or len(use_auth) == 0:
             break
         else:
             print('Invalid db auth option')
     logger.info('Use DB Auth is set to %s' % useAuth)
     if useAuth.lower() == 'y':
         while True:
-            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
+            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509")
             choice = raw_input()
             try:
                 if int(choice) == 1:
@@ -157,14 +188,15 @@ def setup_db_lite():
                 print('Invalid Option')
                 pass
         logger.info('DB Auth Type is %s' % authType)
-        while True:
-            username = raw_input("Enter a username or x509 Subject: ")
-            if len(username) > 0:
-                break
-            else:
-                print('No username selected')
-        logger.info('DB Username chosen is %s' % username)
         if authType == 'X509':
+            while True:
+                cert_string = raw_input("Enter a x509 Subject: ")
+                if len(cert_string) > 0:
+                    break
+                else:
+                    print('No subject selected')
+            logger.info('Cert subject submitted is %s' % cert_string)
+
             while True:
                 auth_cert = raw_input("Enter full path to cert used for authentication: ")
                 if len(auth_cert) == 0:
@@ -175,6 +207,7 @@ def setup_db_lite():
                     continue
                 break
             logger.info('Auth Cert path is %s' % auth_cert)
+            '''
             while True:
                 auth_ca = raw_input("Enter full path to ca_certs to be used: ")
                 if len(auth_ca) == 0:
@@ -185,18 +218,31 @@ def setup_db_lite():
                     continue
                 break
             logger.info('Auth CA path is %s' % auth_ca)
+            '''
             try:
-                client = pymongo.MongoClient(ip, int(port),
+                if int(port) == 0:
+                    conn_str = ip
+                else:
+                    conn_str = "%s:%i" % (ip, int(port))
+                client = pymongo.MongoClient(conn_str,
                                              ssl=True,
                                              ssl_certfile=auth_cert,
                                              ssl_cert_reqs=ssl.CERT_REQUIRED,
-                                             ssl_ca_certs=auth_ca)
-                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
+                                             ssl_ca_certs=ssl_ca_certs)
+                client.minerva.authenticate(cert_string, mechanism='MONGODB-X509')
             except:
                 print("Unable to connect to DB")
                 logger.error("Unable to connect to DB")
                 sys.exit()
         elif authType == 'Password':
+            while True:
+                username = raw_input("Enter a username: ")
+                if len(username) > 0:
+                    break
+                else:
+                    print('No username selected')
+            logger.info('DB Username chosen is %s' % username)
+
             while True:
                 print('Enter a password: ')
                 password = getpass.getpass()
@@ -233,20 +279,134 @@ def setup_db_lite():
         useAuth = False
         client = pymongo.MongoClient(ip,int(port))
 
-    user = client.minerva.users.findOne()
-    if len(user) > 0:
-        if not 'SALT' in user:
-            print('User Hashing has changed and will require passwords to be reset')
-            logger.info('User Hashing has changed and will require passwords to be reset')
-            while True:
-                user_name = raw_input("Enter username of admin user to create or modify: ")
-                if len(user_name) == 0:
-                    print('User name not entered')
-                    continue
-                elif len(user_name) < 5:
-                    print('User name too short')
-                    continue
+    if not lite:
+        db = client.minerva
+        collections = db.collection_names()
+        logger.info("Creating collections if they do not exist")
+        if not 'alerts' in collections:
+            db.create_collection('alerts')
+        if not 'filters' in collections:
+            db.create_collection('filters')
+        if not 'flow' in collections:
+            db.create_collection('flow')
+        if not 'dns' in collections:
+            db.create_collection('dns')
+        if not 'certs' in collections:
+            db.create_collection('certs')
+        if not 'watchlist' in collections:
+            db.create_collection('watchlist')
+        if not 'signatures' in collections:
+            db.create_collection('signatures')
+        if not 'sessions' in collections:
+            db.create_collection('sessions')
+        if not 'keys' in collections:
+            db.create_collection('keys')
+        if not 'users' in collections:
+            db.create_collection('users')
+            create_user = True
+        else:
+            create_user = False
+
+        logger.info("Alert search index created is: %s" % '([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")')
+
+        db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
+
+        while True:
+            expiredDays = raw_input("Enter number of days to keep alerts: ")
+            try:
+                expiredDays = int(expiredDays)
                 break
+            except:
+                print('Invalid day option')
+                pass
+        logger.info("Days to keep alerts %i" % expiredDays)
+        expiredSeconds = int(expiredDays) * 86400
+        db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
+
+        logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")')
+
+        db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")
+
+        while True:
+            expiredflowDays = raw_input("Enter number of days to keep flow data: ")
+            try:
+                expiredflowDays = int(expiredflowDays)
+                break
+            except:
+                print('Invalid day option')
+                pass
+
+        logger.info("Days to keep flow data %i" % expiredflowDays)
+        flowexpiredSeconds = int(expiredflowDays) * 86400
+        db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
+
+        logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")')
+
+        db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")
+
+        while True:
+            expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
+            try:
+                expireddnsDays = int(expireddnsDays)
+                break
+            except:
+                print('Invalid day option')
+                pass
+
+        logger.info("Days to keep dns logs: %i" % expireddnsDays)
+        dnsexpiredSeconds = int(expireddnsDays) * 86400
+        db.dns.ensure_index("timestamp",expireAfterSeconds=dnsexpiredSeconds)
+
+        while True:
+            expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
+            if len(expiredTempHours) == 0:
+                expiredTempHours = 24
+                break
+            else:
+                try:
+                    expiredTempHours = int(expiredTempHours)
+                    break
+                except:
+                    print('Invalid Day option')
+                    pass
+
+        logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
+        expiredTempSeconds = expiredTempHours * 3600
+        db.filters.ensure_index("temp_timestamp", expireAfterSeconds=expiredTempSeconds)
+
+        while True:
+            sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
+            try:
+                sessionMinutes = int(sessionMinutes)
+                break
+            except:
+                print('Invalid minutes')
+                pass
+        logger.info("Session timeout %i minutes" % sessionMinutes)
+        sessionTimeout = int(sessionMinutes) * 60
+        db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
+
+        db.keys.ensure_index("timestamp",expireAfterSeconds=3600)
+
+        if not create_user:
+            while True:
+                create_user = raw_input("Create user/reset password? [y/n]")
+                if create_user == 'y' or create_user == 'Y' or create_user == 'n' or create_user == 'N':
+                    break
+                else:
+                    print('Invalid option')
+
+        session_salt = uuid.uuid4().hex
+        session_salt = uuid.uuid4().hex
+        if create_user:
+            while True:
+                user_name = raw_input("Enter username of admin user to create: ")
+                if len(user_name) == 0:
+                    print('No username entered')
+                elif len(user_name) < 4:
+                    print('User name is too short')
+                else:
+                    break
             while True:
                 print('Enter password: ')
                 admin_pw = getpass.getpass()
@@ -259,11 +419,10 @@ def setup_db_lite():
             logger.info("Creating admin user %s" % user_name)
             password_salt = uuid.uuid4().hex
             admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
-            client.minerva.users.update({}, { "$set": { "SALT": uuid.uuid4().hex }}, upsert=True, multi=True )
             if len(list(db.users.find({"USERNAME": user_name }))) > 0:
                 db.users.remove({"USERNAME": user_name})
             db.users.insert(
-            {
+                {
                     "USERNAME" : user_name,
                     "user_admin" : "true",
                     "ENABLED" : "true",
@@ -277,380 +436,41 @@ def setup_db_lite():
                     "server_admin" : "true",
                     "date_created" : datetime.datetime.utcnow(),
                     "PASSWORD_CHANGED": datetime.datetime.utcnow(),
-            })
+                })
 
-    while True:
-        sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
-        try:
-            sessionMinutes = int(sessionMinutes)
-            break
-        except:
-            print('Invalid Option')
-            pass
+    config['Database'] = {}
+    config['Database']['db'] = {}
+    config['Database']['db']['url'] = ip
+    config['Database']['db']['port'] = port
+    config['Database']['db']['useAuth'] = useAuth
 
-    logger.info("Session timeout %s minutes" % sessionMinutes)
+    if useSSL[:1].lower() == 'y':
+        config['Database']['db']['useSSL'] = True
+        config['Database']['db']['ssl_certfile'] = ssl_certfile
+        config['Database']['db']['ssl_ca_certs'] = ssl_ca_certs
+    else:
+        config['Database']['db']['useSSL'] = False
 
-    config['Webserver'] = {}
-    config['Webserver']['db'] = {}
-    config['Webserver']['db']['url'] = ip
-    config['Webserver']['db']['port'] = port
-    config['Webserver']['db']['useAuth'] = useAuth
     if useAuth:
-        config['Webserver']['db']['username'] = username
         if authType == 'X509':
-            config['Webserver']['db']['auth_cert'] = auth_cert
-            config['Webserver']['db']['auth_ca'] = auth_ca
+            config['Database']['db']['x509Subject'] = cert_string
+            config['Database']['db']['auth_cert'] = auth_cert
         elif authType == 'Password':
-            config['Webserver']['db']['password'] = password
-            config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
-        config['Webserver']['db']['AuthType'] = authType
-    config['Webserver']['web'] = {}
-    config['Webserver']['web']['session_timeout'] = sessionMinutes
-    config['Webserver']['events'] = {}
+            config['Database']['db']['username'] = username
+            config['Database']['db']['password'] = password
+            config['Database']['db']['PW_Mechanism'] = PW_Mechanism
+        config['Database']['db']['AuthType'] = authType
+    config['Database']['web'] = {}
+    config['Database']['web']['session_timeout'] = sessionMinutes
+    config['Database']['events'] = {}
 
-def setup_db():
-    import pymongo
-    print("**********************************************************")
-    print("*               Setting up the Database                  *")
-    print("**********************************************************")
-    logger.info("Setting up the Database")
-    while True:
-        ip = raw_input('Please enter database ip: [127.0.0.1] ')
-        if len(ip) == 0:
-            ip = '127.0.0.1'
-            break
-        elif validate_ip(ip):
-            break
-        else:
-            print('Invalid IP')
-    logger.info('Database IP is %s' % ip)
-    while True:
-        port = raw_input('Please enter database port: [27017] ')
-        if len(port) == 0:
-            port = 27017
-            break
-        else:
-            try:
-                port = int(port)
-                break
-            except:
-                print('Invalid port')
-                pass
-    logger.info('Database Port is %i' % int(port))
-    print("****IF AUTHENTICATION METHOD IS CHOSEN, IT MUST BE SETUP PRIOR TO RUNNING SETUP*****")
-    while True:
-        useAuth = raw_input('Use db authentication? Y/N [N] ')
-        if useAuth == 'y' or useAuth == 'Y' or useAuth == 'n' or useAuth == 'N' or len(useAuth) == 0:
-            break
-        else:
-            print('Invalid db auth option')
-    logger.info('Use DB Auth is set to %s' % useAuth)
-    if useAuth == 'y' or useAuth == 'Y':
-        while True:
-            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
-            choice = raw_input()
-            try:
-                if int(choice) == 1:
-                    authType = 'Password'
-                    break
-                elif int(choice) == 2:
-                    authType = 'X509'
-                    break
-            except:
-                print('Invalid Option')
-                pass
-        logger.info('DB Auth Type is %s' % authType)
-        while True:
-            username = raw_input("Enter a username: ")
-            if len(username) > 0:
-                break
-            else: 
-                print('No username entered')
-        logger.info('DB Username chosen is %s' % username)
-        if authType == 'X509':
-            while True:
-                auth_cert = raw_input("Enter full path to cert used for authentication: ")
-                if len(auth_cert) == 0:
-                    print('No Auth cert entered')
-                    continue
-                if not os.path.exists(auth_cert):
-                    print('Auth cert does not exist')
-                    continue
-                break
-            logger.info('Auth Cert path is %s' % auth_cert)
-            while True:
-                auth_ca = raw_input("Enter full path to ca_certs to be used: ")
-                if len(auth_ca) == 0:
-                    print('No CA file entered')
-                    continue
-                if not os.path.exists(auth_ca):
-                    print('CA file doens\'t exist')
-                    continue
-                break
-            logger.info('Auth CA path is %s' % auth_ca)
-            try:
-                client = pymongo.MongoClient(ip, int(port),
-                                             ssl=True,
-                                             ssl_certfile=auth_cert,
-                                             ssl_cert_reqs=ssl.CERT_REQUIRED,
-                                             ssl_ca_certs=auth_ca)
-                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
-            except:
-                print("Unable to connect to DB")
-                logger.error("Unable to connect to DB")
-                sys.exit()
-        elif authType == 'Password':
-            while True:
-                print('Enter a password: ')
-                password = getpass.getpass()
-                print('Re-Enter the password: ')
-                password1 = getpass.getpass()
-                if password == password1:
-                    break
-                else:
-                    print("Passwords do not match")
-            logger.info('DB Password Entered')
-            while True:
-                choice = raw_input("Enter Password Mechanism:\n\t1) SCRAM-SHA-1 [Default MONGODB Option]\n\t2) MONGODB-CR\n")
-                try:
-                    if int(choice) == 1:
-                        PW_Mechanism = "SCRAM-SHA-1"
-                        break
-                    elif int(choice) == 2:
-                        PW_Mechanism = "MONGODB-CR"
-                        break
-                except:
-                    print("Invalid Option")
-                    pass
-            logger.info("DB Password Mechanism chosen is %s" % PW_Mechanism)
-            client = pymongo.MongoClient(ip,int(port))
-            try:
-                client.minerva.authenticate(username, password, mechanism=PW_Mechanism)
-            except:
-                print("Unable to connect to DB")
-                logger.error("Unable to connect to DB")
-                sys.exit()
-        useAuth = True
-    else:
-        logger.info('No DB Auth Chosen')
-        useAuth = False
-        client = pymongo.MongoClient(ip,int(port))
+    if not lite:
+        config['Database']['db']['SESSION_KEY'] = session_salt
+        config['Database']['events']['max_age'] = expiredDays
+        config['Database']['events']['flow_max_age'] = expiredflowDays
+        config['Database']['events']['dns_max_age'] = expireddnsDays
+        config['Database']['events']['temp_filter_age'] = expiredTempHours
 
-    if 'minerva' in client.database_names():
-        logger.info('DB exists')
-        while True:
-            resp = raw_input('Database already exists, do you want to keep it? [N]')
-            if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N' or len(resp) == 0:
-                break
-        if resp == 'Y' or resp == 'y':
-            logger.info('Keeping Current DB')
-            keep_db = True
-        else:
-            logger.info('Dropping Current DB')
-            keep_db = False
-            client.drop_database('minerva')
-    else:
-        keep_db = False
-
-    db = client.minerva
-    collections = db.collection_names()
-    if keep_db:
-        print("Recreating Indexes, this can take some time")
-        logger.info("Recreating Indexes, this can take some time")
-    logger.info("Creating collections if they do not exist")
-    if not 'alerts' in collections:
-        db.create_collection('alerts')
-    else:
-        db.alerts.drop_indexes()
-    if not 'filters' in collections:
-        db.create_collection('filters')
-    else:
-        db.filters.drop_indexes()
-    if not 'flow' in collections:
-        db.create_collection('flow')
-    else:
-        db.flow.drop_indexes()
-    if not 'dns' in collections:
-        db.create_collection('dns')
-    else:
-        db.dns.drop_indexes()
-    if not 'certs' in collections:
-        db.create_collection('certs')
-    if not 'watchlist' in collections:
-        db.create_collection('watchlist')
-    if not 'signatures' in collections:
-        db.create_collection('signatures')
-    if not 'sessions' in collections:
-        db.create_collection('sessions')
-    else:
-        db.sessions.drop_indexes()
-    if not 'keys' in collections:
-        db.create_collection('keys')
-    if not 'users' in collections:
-        db.create_collection('users')
-   
-
-    logger.info("Alert search index created is: %s" % '([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")')
-
-    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
-
-    while True:
-        expiredDays = raw_input("Enter number of days to keep alerts: ")
-        try:
-            expiredDays = int(expiredDays)
-            break
-        except:
-            print('Invalid day option')
-            pass
-    logger.info("Days to keep alerts %i" % expiredDays)
-    expiredSeconds = int(expiredDays) * 86400
-    db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
-
-    logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")')
-
-    db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")
-
-    while True:
-        expiredflowDays = raw_input("Enter number of days to keep flow data: ")
-        try:
-            expiredflowDays = int(expiredflowDays)
-            break
-        except:
-            print('Invalid day option')
-            pass
-
-    logger.info("Days to keep flow data %i" % expiredflowDays)
-    flowexpiredSeconds = int(expiredflowDays) * 86400
-    db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
-
-    logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")')
-
-    db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")
-
-    while True:
-        expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
-        try:
-            expireddnsDays = int(expireddnsDays)
-            break
-        except:
-            print('Invalid day option')
-            pass
-
-    logger.info("Days to keep dns logs: %i" % expireddnsDays)
-    dnsexpiredSeconds = int(expireddnsDays) * 86400
-    db.dns.ensure_index("timestamp",expireAfterSeconds=dnsexpiredSeconds)
-
-    while True:
-        expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
-        if len(expiredTempHours) == 0:
-            expiredTempHours = 24
-            break
-        else:
-            try:
-                expiredTempHours = int(expiredTempHours)
-                break
-            except:
-                print('Invalid Day option')
-                pass
-
-    logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
-    expiredTempSeconds = expiredTempHours * 3600
-    db.filters.ensure_index("temp_timestamp", expireAfterSeconds=expiredTempSeconds)
-
-    while True:
-        sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
-        try:
-            sessionMinutes = int(sessionMinutes)
-            break
-        except:
-            print('Invalid minutes')
-            pass
-    logger.info("Session timeout %i minutes" % sessionMinutes)
-    sessionTimeout = int(sessionMinutes) * 60
-    db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
-
-    db.keys.ensure_index("timestamp",expireAfterSeconds=3600)
-
-    if keep_db:
-        while True:
-            create_user = raw_input("Create user/reset password? [y/n]")
-            if create_user == 'y' or create_user == 'Y' or create_user == 'n' or create_user == 'N':
-                break
-            else:
-                print('Invalid option')
-        if create_user == 'y' or create_user == 'Y':
-            create_user = True
-        else:
-            create_user = False
-
-    else:
-        create_user = True
-
-    session_salt = uuid.uuid4().hex
-    if create_user:
-        while True:
-            user_name = raw_input("Enter username of admin user to create: ")
-            if len(user_name) == 0:
-                print('No username entered')
-            elif len(user_name) < 4:
-                print('User name is too short')
-            else:
-                break
-        while True:
-            print('Enter password: ')
-            admin_pw = getpass.getpass()
-            print('Re-enter password: ')
-            admin_pw2 = getpass.getpass()
-            if admin_pw == admin_pw2:
-                break
-            else:
-                print("Passwords do not match")
-        logger.info("Creating admin user %s" % user_name)
-        password_salt = uuid.uuid4().hex
-        admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
-        if len(list(db.users.find({"USERNAME": user_name }))) > 0:
-            db.users.remove({"USERNAME": user_name})
-        db.users.insert(
-        {
-                "USERNAME" : user_name,
-                "user_admin" : "true",
-                "ENABLED" : "true",
-                "SALT": password_salt,
-                "PASSWORD" : admin_hashedPW,
-                "console" : "true",
-                "date_modified" : datetime.datetime.utcnow(),
-                "sensor_admin" : "true",
-                "responder" : "true",
-                "event_filters": "true",
-                "server_admin" : "true",
-                "date_created" : datetime.datetime.utcnow(),
-                "PASSWORD_CHANGED": datetime.datetime.utcnow(),
-        })
-
-    config['Webserver'] = {}
-    config['Webserver']['db'] = {}
-    config['Webserver']['db']['url'] = ip
-    config['Webserver']['db']['port'] = port
-    config['Webserver']['db']['useAuth'] = useAuth
-    if useAuth:
-        config['Webserver']['db']['username'] = username
-        if authType == 'X509':
-            config['Webserver']['db']['auth_cert'] = auth_cert
-            config['Webserver']['db']['auth_ca'] = auth_ca
-        elif authType == 'Password':
-            config['Webserver']['db']['password'] = password.encode('base64')
-            config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
-        config['Webserver']['db']['AuthType'] = authType
-    #config['Webserver']['db']['SECRET_KEY'] = password_salt 
-    config['Webserver']['db']['SESSION_KEY'] = session_salt
-    config['Webserver']['web'] = {}
-    config['Webserver']['web']['session_timeout'] = sessionMinutes
-    config['Webserver']['events'] = {}
-    config['Webserver']['events']['max_age'] = expiredDays
-    config['Webserver']['events']['flow_max_age'] = expiredflowDays
-    config['Webserver']['events']['dns_max_age'] = expireddnsDays
-    config['Webserver']['events']['temp_filter_age'] = expiredTempHours
- 
 def setup_core():
     if os.path.exists('/usr/lib/python2.7/Minerva'):
         logger.info('Old Minerva python modules are removed')
@@ -725,7 +545,7 @@ def setup_core():
     while True:
         log_size = raw_input("Enter size of logs in MB: [20] ")
         try:
-            if int(log_size) == 0:
+            if len(log_size) == 0:
                 log_size = 1024 * 1024 * 1024 * 20
             else:
                 log_size = int(log_count) * 1024 * 1024 * 1024 
@@ -924,6 +744,9 @@ def setup_server():
 
     logger.info("Min numbers of special characters in password is %i" % int(special_count))
 
+    if not 'Webserver' in config.keys():
+        config['Webserver'] = {}
+        config['Webserver']['web'] = {}
     config['Webserver']['web']['hostname'] = hostname
     config['Webserver']['web']['bindIp'] = bindIp
     config['Webserver']['web']['port'] = webport
@@ -1402,6 +1225,7 @@ def choose_db():
     while True:
         print("\n**************************************************************************")
         print('* Only use if you have an already configured minerva database in mongodb *')
+        print('*    Such as connecting a receiver to an existing setup                  *')
         print("**************************************************************************")
         resp = raw_input('Connect to existing minerva database? [y/n] ')
         if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N':
@@ -1409,9 +1233,9 @@ def choose_db():
         else:
             print('Invalid option')
     if resp == 'y' or resp == 'Y':
-        setup_db_lite()
+        setup_db_new(lite=True)
     else:
-        setup_db()
+        setup_db_new()
 
 
 def main():

@@ -44,34 +44,46 @@ class MinervaConfigs():
         self.conf = config
     def get_db(self):
         import pymongo
-        db_conf = self.conf['Webserver']['db']
+        db_conf = self.conf['Database']['db']
+
+        if int(db_conf['port']) == 0:
+            conn_str = db_conf['url']
+        else:
+            conn_str = "%s:%i" % (db_conf['url'], int(db_conf['port']))
+
         if db_conf['useAuth']:
             if db_conf['AuthType'] == 'Password':
-                client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
-                client.minerva.authenticate(db_conf['username'], db_conf['password'].decode('base64'), mechanism=db_conf['PW_Mechanism'])
+                if db_confg['useSSL']:
+                    client = pymongo.MongoClient(conn_str,
+                                             ssl=True,
+                                             ssl_cert_reqs=ssl.CERT_REQUIRED,
+                                             ssl_ca_certs=ssl_ca_certs)
+                else:
+                    client = pymongo.MongoClient(conn_str)
+                client.minerva.authenticate(db_conf['username'], password=db_conf['password'].decode('base64'), mechanism=db_conf['PW_Mechanism'])
             elif db_conf['AuthType'] == 'X509':
-                client = pymongo.MongoClient(db_conf['url'], int(db_conf['port']),
+                client = pymongo.MongoClient(conn_str,
                                              ssl=True,
                                              ssl_certfile=db_conf['auth_cert'],
                                              ssl_cert_reqs=ssl.CERT_REQUIRED,
-                                             ssl_ca_certs=db_conf['auth_ca'])
-                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
+                                             ssl_ca_certs=db_conf['ssl_ca_certs'])
+                client.minerva.authenticate(db_conf['x509Subject'], mechanism='MONGODB-X509')
         else:
-            client = pymongo.MongoClient(db_conf['url'],int(db_conf['port']))
+            client = pymongo.MongoClient(conn_str)
         return client.minerva
 
     def parse_web_configs(self, new_config):
         config = self.conf
         db = self.get_db()
-        config['Webserver']['db']['url'] = new_config['db_ip']
-        config['Webserver']['db']['port'] = int(new_config['db_port'])
-        config['Webserver']['db']['auth_ca'] = new_config['auth_ca']
-        config['Webserver']['db']['auth_cert'] = new_config['auth_cert']
-        config['Webserver']['db']['PW_Mechanism'] = new_config['pwmechanism']
-        config['Webserver']['db']['username'] = new_config['db_user']
+        config['Database']['db']['url'] = new_config['db_ip']
+        config['Database']['db']['port'] = int(new_config['db_port'])
+        config['Database']['db']['auth_ca'] = new_config['auth_ca']
+        config['Database']['db']['auth_cert'] = new_config['auth_cert']
+        config['Database']['db']['PW_Mechanism'] = new_config['pwmechanism']
+        config['Database']['db']['username'] = new_config['db_user']
         if len(new_config['db_pass']) > 0:
-            config['Webserver']['db']['password'] = new_config['db_pass'].encode('base64')
-        config['Webserver']['db']['AuthType'] = new_config['AuthType']
+            config['Database']['db']['password'] = new_config['db_pass'].encode('base64')
+        config['Database']['db']['AuthType'] = new_config['AuthType']
         config['Webserver']['web']['port'] = int(new_config['web_port'])
         config['Webserver']['web']['hostname'] = str(new_config['web_host'])
         config['Webserver']['web']['bindIp'] = new_config['web_ip']
@@ -96,25 +108,25 @@ class MinervaConfigs():
             config['Webserver']['events']['max_events'] = 15000
         else:
             config['Webserver']['events']['max_events'] = int(new_config['max_events'])
-        config['Webserver']['events']['max_age'] = int(new_config['max_age'])
+        config['Database']['events']['max_age'] = int(new_config['max_age'])
         alertTimeout = int(new_config['max_age']) * 86400
         try:
             db.command("collMod", "alerts", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': alertTimeout})
         except:
             db.alerts.ensure_index("timestamp",expireAfterSeconds=alertTimeout)
-        config['Webserver']['events']['flow_max_age'] = int(new_config['flow_age'])
+        config['Database']['events']['flow_max_age'] = int(new_config['flow_age'])
         flowTimeout = int(new_config['flow_age']) * 86400
         try:
             db.command("collMod", "flow", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': flowTimeout})
         except:
             db.flow.ensure_index("timestamp",expireAfterSeconds=flowTimeout)
-        config['Webserver']['events']['dns_max_age'] = int(new_config['dns_age'])
+        config['Database']['events']['dns_max_age'] = int(new_config['dns_age'])
         dnsTimeout = int(new_config['dns_age']) * 86400
         try:
             db.command("collMod", "dns", index={'keyPattern': {'timestamp':1},'expireAfterSeconds': dnsTimeout})
         except:
             db.dns.ensure_index("timestamp",expireAfterSeconds=dnsTimeout)
-        config['Webserver']['events']['temp_filter_age'] = int(new_config['temp_filter_age'])
+        config['Database']['events']['temp_filter_age'] = int(new_config['temp_filter_age'])
         filterTimeout = int(new_config['temp_filter_age']) * 3600
         try:
             db.command("collMod", "filters", index={'keyPattern': {'temp_timestamp':1},'expireAfterSeconds': filterTimeout})

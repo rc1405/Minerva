@@ -17,19 +17,40 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 #}
+{%- if 'Database' in config %}
+Database:
+  db:
+    url: {{config.Database.db.url}}
+    port: {{config.Database.db.port}}
+    useSSL: {{ config.Database.db.useSSL }}
+    {%- if config.Database.db.useSSL %}
+    ssl_certfile: {{ config.Database.db.ssl_certfile }}
+    ssl_ca_certs: {{ config.Database.db.ssl_ca_certs }}
+    {%- endif %}
+    useAuth: {{config.Database.db.useAuth}}
+    {%- if config.Database.db.useAuth %}
+    AuthType: {{config.Database.db.AuthType}}
+    {%- if config.Database.db.AuthType == 'X509' %}
+    x509Subject: {{ config.Database.db.x509Subject }}
+    auth_cert: {{config.Database.db.auth_cert}}
+    {%- else  %}
+    username: {{config.Database.db.username}}
+    password: {{config.Database.db.password}}
+    PW_Mechanism: {{config.Database.db.PW_Mechanism}}
+    {%- endif %}
+    {%- endif %}
+    {%- if 'session_timeout' in config.Database.web.keys() %}
+    SESSION_KEY: "{{config.Database.db.SESSION_KEY}}"
+    {%- endif %}
+  events:
+    max_age: {{config.Database.events.max_age}}
+    flow_max_age: {{config.Database.events.flow_max_age}}
+    dns_max_age: {{config.Database.events.dns_max_age}}
+    temp_filter_age: {{config.Database.events.temp_filter_age}}
+
+{%- endif %}
 {%- if 'Webserver' in config %}
 Webserver:
-  db:
-    url: {{config.Webserver.db.url}}
-    port: {{config.Webserver.db.port}}
-    useAuth: {{config.Webserver.db.useAuth}}
-    AuthType: {{config.Webserver.db.AuthType}}
-    username: {{config.Webserver.db.username}}
-    password: {{config.Webserver.db.password}}
-    PW_Mechanism: {{config.Webserver.db.PW_Mechanism}}
-    auth_cert: {{config.Webserver.db.auth_cert}}
-    auth_ca: {{config.Webserver.db.auth_ca}}
-    SESSION_KEY: "{{config.Webserver.db.SESSION_KEY}}"
   web:
     hostname: {{config.Webserver.web.hostname}}
     bindIp: {{config.Webserver.web.bindIp}}
@@ -51,10 +72,6 @@ Webserver:
       special_count: {{ config.Webserver.web.password_requirements.special_count }}
   events:
     maxResults: {{config.Webserver.events.maxResults}}
-    max_age: {{config.Webserver.events.max_age}}
-    flow_max_age: {{config.Webserver.events.flow_max_age}}
-    dns_max_age: {{config.Webserver.events.dns_max_age}}
-    temp_filter_age: {{config.Webserver.events.temp_filter_age}}
 {%- endif %}
 {%- if 'Event_Receiver' in config %}
 Event_Receiver:
