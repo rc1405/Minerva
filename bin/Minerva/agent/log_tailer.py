@@ -31,6 +31,7 @@ class TailLog():
         self.pos = 0
         self.pos_inode = 0
         self.pos_size = 0
+        self.core = minerva_core
         self.channels = channels
         self.convert = convert.convert
         self.batchsize = int(batchsize) - 1
@@ -42,6 +43,7 @@ class TailLog():
             pfile.write(write_line)
 
     def tail(self):
+        self.logger = self.core.get_socket(self.channels)
         context = zmq.Context()
         event_receiver = context.socket(zmq.REQ)
         event_receiver.connect(self.channels['events'])
@@ -133,7 +135,7 @@ class TailLog():
                                 if status == "write checkpoint":
                                     self.write_pos(self.pos)
                                     self.logger.send_multipart(['DEBUG', "Agent log tailer %s writing checkpoint" % self.logFile])
-                        else:    
+                        else:
                             self.logger.send_multipart(['DEBUG', "Agent log tailer %s adding event to queue" % self.logFile])
                             event_queue.append(event)
                             queue_check = lfile.tell()

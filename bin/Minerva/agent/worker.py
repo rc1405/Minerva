@@ -30,9 +30,11 @@ class AgentWorker(object):
     def __init__(self, cur_config, minerva_core, channels):
         self.channels = channels
         self.config = cur_config
+        self.core = minerva_core
         self.logger = minerva_core.get_socket(channels)
         self.AESKEY = False
         self.SRVKEY = False
+        self.PRIVKEY = M2Crypto.RSA.load_key_string(str(open(cur_config['client_private'],'r').read()))
 
     def _decrypt_aes(self, payload):
         try:
@@ -40,82 +42,139 @@ class AgentWorker(object):
             events = json.loads(cipher.update(payload.decode('base64')) + cipher.final())
             self.logger.send_multipart(['DEBUG', "Agent worker decrypted AES message"])
             return events
-        except:
+        except Exception as e:
+            print('{}: {}'.format(e.__class__.__name__,e))
+
             self.logger.send_multipart(['ERROR', "Agent worker unable to decrypt AES message"])
             return False
 
+    def _decrypt_rsa(self, enc_payload):
+        print('decrypt rsa')
+        #print(enc_payload.decode('base64'))
+        if enc_payload:
+            dmesg = self.PRIVKEY.private_decrypt(enc_payload.decode('base64'), M2Crypto.RSA.pkcs1_padding)
+            #print(dmesg)
+            self.logger.send_multipart(['DEBUG', "Agent publisher decrypting RSA message"])
+            return json.loads(dmesg)
+        else:
+            self.logger.send_multipart(['ERROR', "Agent publisher unable to decrypt RSA message"])
+            return False
+
+
     def start(self):
+        self.logger = self.core.get_socket(self.channels)
         context = zmq.Context.instance()
 
         work = context.socket(zmq.PULL)
         work.connect(self.channels['worker'])
         self.logger.send_multipart(['DEBUG', "Agent worker listening for events"])
 
-        publisher = context.socket(zmq.REQ)
+        publisher = context.socket(zmq.PUSH)
         publisher.connect(self.channels['pub'])
         self.logger.send_multipart(['DEBUG', "Agent worker connected to publisher"])
 
+        workpub = context.socket(zmq.SUB)
+        workpub.connect(self.channels['worker-pub'])
+        self.logger.send_multipart(['DEBUG', "Agent worker connected to internal pub/sub"])
+        workpub.identity = self.config['sensor_name']
+        workpub.setsockopt(zmq.SUBSCRIBE, "")
+
+        poll = zmq.Poller()
+        poll.register(work, zmq.POLLIN)
+        poll.register(workpub, zmq.POLLIN)
+
         pcapWorker = PCAPprocessor(self.config)
 
-        publisher.send_json({"_function": "AESKEY"})
-        msg = publisher.recv_json()
-        self.AESKEY = msg['key'].decode('base64')
-        self.logger.send_multipart(['DEBUG', "Agent worker received AES key"])
+        #publisher.send_json({"_function": "AESKEY"})
+        #msg = publisher.recv_json()
+        #self.AESKEY = msg['key'].decode('base64')
+        #self.logger.send_multipart(['DEBUG', "Agent worker received AES key"])
 
 
         try:
             while True:
-                sensor, msg = work.recv_multipart()
-                msg = json.loads(msg)
-                self.logger.send_multipart(['DEBUG', "Agent worker received work task"])
-                if '_payload' in msg.keys():
-                    msg = self._decrypt_aes(msg['_payload'])
-                    if not msg:
-                        publisher.send_json({"payload": "reauth"})
-                        self.logger.send_multipart(['DEBUG', "Agent worker requesting new AES key"])
-                        continue
-    
-                if msg['_function'] == 'PCAP':
-                    #print('pcap')
-                    self.logger.send_multipart(['DEBUG', "Agent worker received PCAP Request"])
-                    packets = pcapWorker.process(msg['request'])
-                    attempts = 0
-                    while True:
-                        if packets:
-                            #print('packets')
-                            self.logger.send_multipart(['DEBUG', "Agent worker sending PCAP to console"])
-                            publisher.send_json({
-                                "payload": packets,
-                                "console": msg['console'],
-                                "request_id": msg['request_id'],
-                                "_function": "PCAP"
-                            })
-                        else:
-                            #print('no packets')
-                            self.logger.send_multipart(['DEBUG', "Agent worker sending no PCAP to console"])
-                            publisher.send_json({
-                                "payload": "No Packets Found",
-                                "console": msg['console'],
-                                "request_id": msg['request_id'],
-                                "_function": "PCAP"
-                            })
-                        status = publisher.recv_json()
-                        if status['status'] == 'success':
-                            break
-                        elif attempts >= 2:
-                            self.logger.send_multipart(['DEBUG', "Agent worker PCAP send failed 3 times, giving up"])
-                            break
-                        elif status['status'] == 'failure':
-                            self.logger.send_multipart(['DEBUG', "Agent worker PCAP send failed, retrying"])
-                            attempts += 1
-                            self.AESKEY = status['KEY'].decode('base64')
-        except:
+                sockets = dict(poll.poll(100))
+                if work in sockets:
+                    sensor, msg = work.recv_multipart()
+                    msg = json.loads(msg)
+                    print(sensor)
+                    print(msg)
+                    self.logger.send_multipart(['DEBUG', "Agent worker received work task"])
+                    if '_payload' in msg.keys():
+                        msg = self._decrypt_aes(msg['_payload'])
+                        if not msg:
+                            #publisher.send_json({"payload": "reauth"})
+                            self.logger.send_multipart(['DEBUG', "Agent worker requesting new AES key"])
+                            continue
+                    elif '_message' in msg.keys():
+                        msg = self._decrypt_rsa(msg['_message'])
+                        print(msg)
+                        if not msg:
+                            self.logger.send_multipart(['DEBUG', "Agent worker requesting new AES key"])
+                            continue
+
+                    if msg['_function'] == 'PCAP':
+                        #print('pcap')
+                        self.logger.send_multipart(['DEBUG', "Agent worker received PCAP Request"])
+                        packets = pcapWorker.process(msg['request'])
+                        attempts = 0
+                        while True:
+                            if packets:
+                                #print('packets')
+                                self.logger.send_multipart(['DEBUG', "Agent worker sending PCAP to console"])
+                                publisher.send_json({
+                                    "payload": packets,
+                                    "console": msg['console'],
+                                    "request_id": msg['request_id'],
+                                    "_function": "PCAP"
+                                })
+                            else:
+                                #print('no packets')
+                                self.logger.send_multipart(['DEBUG', "Agent worker sending no PCAP to console"])
+                                publisher.send_json({
+                                    "payload": "No Packets Found",
+                                    "console": msg['console'],
+                                    "request_id": msg['request_id'],
+                                    "_function": "PCAP"
+                                })
+                            '''
+                            #TODO rewrite
+                            if status['status'] == 'success':
+                                break
+                            elif attempts >= 2:
+                                self.logger.send_multipart(['DEBUG', "Agent worker PCAP send failed 3 times, giving up"])
+                                break
+                            elif status['status'] == 'failure':
+                                self.logger.send_multipart(['DEBUG', "Agent worker PCAP send failed, retrying"])
+                                attempts += 1
+                                self.AESKEY = status['KEY'].decode('base64')
+                            '''
+                    elif msg['_function'] == 'events':
+                        self.logger.send_multipart(['DEBUG', "Agent worker Sending Ack to event sender"])
+                        publisher.send_json({
+                            "_function": "events",
+                            "status": msg['status']
+                        })
+                        #status = publisher.recv_json()
+                    elif msg['_function'] == 'auth':
+                        self.logger.send_multipart(['DEBUG', "Agent worker Sending Auth to event sender"])
+                        publisher.send_json(msg)
+                        #status = publisher.recv_json()
+
+                if workpub in sockets:
+                    msg = workpub.recv_json()
+                    print(msg)
+                    if msg['_function'] == 'AESKEY':
+                        self.AESKEY = msg['key'].decode('base64')
+
+        except Exception as e:
+            print('{}: {}'.format(e.__class__.__name__,e))
             self.logger.send_multipart(['DEBUG', "Agent worker shutting down"])
             self.logger.close(linger=1000)
             publisher.close(linger=1000)
             work.close(linger=1000)
             sys.exit()
-    
+
 class PCAPprocessor(object):
     def __init__(self, config):
         self.config = config
@@ -126,7 +185,7 @@ class PCAPprocessor(object):
             tmp_file = self.carver.parse_alert(src_ip=options['src_ip'], src_port=options['src_port'], dest_ip=options['dest_ip'], dest_port=options['dest_port'], proto=options['proto'], event_time=options['event_time'])
         elif options['request_type'] == 'flow':
             tmp_file = self.carver.parse_flow(src_ip=options['src_ip'], src_port=options['src_port'], dest_ip=options['dest_ip'], dest_port=options['dest_port'], proto=options['proto'], start_time=options['start_time'], end_time=options['end_time'])
-            
+
         if tmp_file == 'No Packets Found':
             return False
 

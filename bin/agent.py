@@ -99,7 +99,8 @@ def worker(cur_config, minerva_core, channels):
                     p.join()
                     worker_procs.append(worker)
                     log_client.send_multipart(['ERROR', 'Worker crashed, restarting'])
-    except:
+    except Exception as e:
+        print('{}: {}'.format(e.__class__.__name__,e))
         log_client.send_multipart(['DEBUG', 'Worker Management Thread Shutting Down'])
         for i in worker_procs:
             i.terminate()
@@ -132,6 +133,7 @@ if __name__ == '__main__':
 
     channels = {
         "worker": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "worker-pub": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
         "pub": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
         "events": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
         "logger": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
