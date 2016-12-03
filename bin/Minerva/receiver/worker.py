@@ -53,6 +53,7 @@ class EventWorker(Process):
         self.sig_file = sig_file
         self.certs = db.certs
         self.keys = db.keys
+        self.channels['context'] = zmq.Context()
 
     def get_name(self):
         return "Process %s" % self.name
@@ -96,22 +97,27 @@ class EventWorker(Process):
             return False
 
     def _encrypt_rsa(self, cert, payload):
+        #print(cert)
         CERT = M2Crypto.X509.load_cert_string(str(cert))
         PUBKEY = CERT.get_pubkey()
         RSA = PUBKEY.get_rsa()
         try:
+       
             self.logger.send_multipart(['DEBUG','Worker RSA encryption success'])
             enc_payload = RSA.public_encrypt(payload, M2Crypto.RSA.pkcs1_padding).encode('base64')
+            #print(enc_payload)
             return enc_payload
-        except:
+        except Exception as e:
+            print(e)
             self.logger.send_multipart(['DEBUG','Worker RSA encryption success'])
             return False
 
     def run(self):
+        self.logger = self.core.get_socket(self.channels)
         self.channels['context'] = zmq.Context()
-        work = self.channels['context'].socket(zmq.DEALER)
+        work = self.channels['context'].socket(zmq.PULL)
         work_recv = work.recv_multipart
-        work_send = work.send_multipart
+        #work_send = work.send_multipart
 
         for p in self.channels['receiver'].keys():
             #print("Connected to %s" % self.channels['receiver'][p])
@@ -121,6 +127,7 @@ class EventWorker(Process):
 
         publisher = self.channels['context'].socket(zmq.PUSH)
         publisher.connect(self.channels['pub'])
+        work_send = publisher.send_multipart
 
         self.logger.send_multipart(['DEBUG','Worker Connected to publisher'])
 
@@ -146,22 +153,33 @@ class EventWorker(Process):
             try:
                 ID, msg = work_recv()
                 msg = json_loads(msg)
+                #print(ID, msg)
                 try:
                     if msg['_function'] == 'auth':
                         self.logger.send_multipart(['DEBUG','Worker received auth from %s' % ID])
                         is_auth = auth_check(ID, msg['_cert'])
                         work_send([ID, json.dumps({
-                            "_function": "auth",
                             "_cert": self.PUBCERT,
-                            "_message": self._encrypt_rsa(msg['_cert'], is_auth)
-                        })])
+                            "_message": self._encrypt_rsa(msg['_cert'], json.dumps({
+                                "_function": "auth",
+                                "AESKEY": is_auth
+                        }))})])
+                        self.logger.send_multipart(['DEBUG','Worker sent auth to publisher'])
                 except KeyError:
                     #print('checking auth')
                     is_auth = auth_check(ID, msg['_cert'])
                     if is_auth:
                         denc_msg = self._decrypt_aes(is_auth, msg['_payload'])
+                        #print(denc_msg)
                         try:
                             if denc_msg['_function'] == 'events':
+                                work_send([ID, json.dumps({
+                                    "_message": self._encrypt_rsa(msg['_cert'], json_dumps({
+                                       "_function": "events",
+                                       "status": "success"
+                                    })),
+                                })])
+
                                 self.logger.send_multipart(['DEBUG','Worker Recieived events from %s' % ID])
                                 watch_events = inserter(ID, denc_msg['events'], watcher.filter_check)
                                 self.logger.close(linger=1000)
@@ -174,12 +192,14 @@ class EventWorker(Process):
                                         #self.logger.send_multipart(['DEBUG','Worker has %i watchlist events from %s' % (len(watch_alerts), ID)])
                                         #watch_events = inserter('receiver', watch_alerts, watcher.filter_check)
                                 self.logger.send_multipart(['DEBUG','Worker is sending back ack to %s' % ID])
+                                '''
                                 work_send([ID, json.dumps({
-                                    "_payload": self._encrypt_rsa(msg['_cert'], json_dumps({
+                                    "_message": self._encrypt_rsa(msg['_cert'], json_dumps({
                                        "_function": "events",
                                        "status": "success"
                                     })),
                                 })])
+                                '''
                                 self.logger.send_multipart(['DEBUG','Worker has sent back ack to %s' % ID])
                                 if watch_alerts:
                                     self.logger.send_multipart(['DEBUG','Worker has %i watchlist events from %s' % (len(watch_alerts), ID)])
@@ -189,7 +209,7 @@ class EventWorker(Process):
                             elif denc_msg['_function'] == 'PCAP':
                                 if denc_msg['_action'] == 'request':
                                     self.logger.send_multipart(['DEBUG','Worker received PCAP reqeust for %s' % str(denc_msg['target'])])
-                                    publisher.send_json({
+                                    publisher.send_multipart([denc_msg['target'], json.dumps({
                                          "mid": denc_msg['target'], 
                                          "_payload": { 
                                              "action": "request",
@@ -199,27 +219,27 @@ class EventWorker(Process):
                                              "_function": "PCAP",
                                          },
                                          "_function": "PCAP",
-                                    })
-                                    work_send([ID, json.dumps({
-                                        "_function": "ack",
                                     })])
+                                    #work_send([ID, json.dumps({
+                                        #"_function": "ack",
+                                    #})])
                                 elif denc_msg['_action'] == 'reply':
                                     self.logger.send_multipart(['DEBUG','Worker received PCAP reply from %s' % ID])
-                                    publisher.send_json({
+                                    publisher.send_multipart([denc_msg['console'], json.dumps({
                                          "mid": denc_msg['console'], 
                                          "_payload": self._encrypt_aes_web(json_dumps(denc_msg)),
                                          "request_id": denc_msg['request_id'],
                                          "_function": "PCAP",
-                                    })
-                                    work_send([ID, json.dumps({
-                                        "_function": "ack",
                                     })])
+                                    #work_send([ID, json.dumps({
+                                        #"_function": "ack",
+                                    #})])
                             elif denc_msg['_function'] == '_RECV_UPDATE':
                                 self.logger.send_multipart(['DEBUG','Worker received watchlist update notification'])
                                 receiver.send("UPDATE_YARA")
-                                work_send([ID, json.dumps({
-                                    "_function": "ack",
-                                })])
+                                #work_send([ID, json.dumps({
+                                    #"_function": "ack",
+                                #})])
 
                             else:
                                 self.logger.send_multipart(['DEBUG','Worker received unrecognized function from %s' % ID])
@@ -241,10 +261,11 @@ class EventWorker(Process):
                             "_cert": self.PUBCERT
                         })])
 
-            #except Exception as e:
-                #print('{}: {}'.format(e.__class__.__name__,e))
-                #continue
+            except Exception as e:
+                print('{}: {}'.format(e.__class__.__name__,e))
+                sys.exit()
 
+            '''
             except ValueError:
                 self.logger.send_multipart(['DEBUG','Worker encountered ValueError exception from %s' % ID])
                 pass
@@ -255,6 +276,7 @@ class EventWorker(Process):
                 self.logger.send_multipart(['DEBUG','Shutting down worker'])
                 #raise
                 sys.exit()
+            '''
 
 class MongoInserter(object):
     def __init__(self, minerva_core, channels):

@@ -42,11 +42,11 @@ class EventReceiver(Process):
         #print('listening to %s' % pname)
         ip, port = self.pname.split('-')
 
-        server = context.socket(zmq.ROUTER)
+        server = context.socket(zmq.PULL)
         server.bind('tcp://%s:%s' % (ip, port))
         log_client.send_multipart(['DEBUG', "Receiver listening for messages on tcp://%s:%s" % (ip, port)])
 
-        workers = context.socket(zmq.DEALER)
+        workers = context.socket(zmq.PUSH)
         log_client.send_multipart(['DEBUG', "Receiver binded workers to %s" % self.channels['receiver']["%s-%s" % (ip, port)]])
         workers.bind(self.channels['receiver']["%s-%s" % (ip, port)])
 
@@ -54,6 +54,7 @@ class EventReceiver(Process):
 
         try:
             zmq.proxy(server, workers)
+            #zmq.device(zmq.STREAMER, server, workers)
             server.close()
             workers.close()
         except:
@@ -67,6 +68,7 @@ class EventPublisher(Process):
         Process.__init__(self)
         db = minerva_core.get_db()
         self.logger = minerva_core.get_socket(channels)
+        self.core = minerva_core
         #TODO Update CERTS
         self.certs = db.certs
         self.channels = channels
@@ -109,6 +111,7 @@ class EventPublisher(Process):
             return False
 
     def run(self):
+        self.logger = self.core.get_socket(self.channels)
         context = zmq.Context()
         sender = context.socket(zmq.PUB)
 
@@ -125,36 +128,43 @@ class EventPublisher(Process):
         try:
             while True:
                 if receiver.poll(500):
-                    msg = receiver.recv_json()
-                    ID = str(msg['mid'])
-                    if msg['_function'] == 'PCAP':
-                        try:
-                            if msg['_payload']['action'] == "request":
-                                self.logger.send_multipart(['DEBUG','Publisher Received PCAP Request for %s' % ID])
-                                payload = {
-                                    "_function": "PCAP",
-                                    "action": "request",
-                                    "console": msg['_payload']['console'],
-                                    "request_id": msg['_payload']['request_id'],
-                                    "request": msg['_payload']['request']
-                                }
-                                enc_payload = self._encrypt_aes(ID, json.dumps(payload))
-                                if enc_payload:
-                                    sender.send_multipart([ID, json.dumps({
-                                        "mid": msg['mid'],
-                                        "_payload": enc_payload
-                                    })])
-                                else:
-                                    self.logger.send_multipart(['DEBUG','Publisher Unable to encrypt request for %s, sending reauth' % ID])
-                                    event_queue.append([msg['mid'], payload])
-                                    sender.send_multipart([ID, json.dumps({
-                                        "mid": msg['mid'],
-                                        "_function": "auth",
-                                        "_cert": self.PUBCERT
-                                    })])
-                        except TypeError:
-                            self.logger.send_multipart(['DEBUG','Publisher Received PCAP Reply for %s' % str(msg['mid'])])
-                            sender.send_multipart([str(msg['mid']), json.dumps(msg)])
+                    ID, msg = receiver.recv_multipart()
+                    msg = json.loads(msg)
+                    print(msg)
+                    try:
+                        if msg['_function'] == 'PCAP':
+                            try:
+                                if msg['_payload']['action'] == "request":
+                                    self.logger.send_multipart(['DEBUG','Publisher Received PCAP Request for %s' % ID])
+                                    payload = {
+                                        "_function": "PCAP",
+                                        "action": "request",
+                                        "console": msg['_payload']['console'],
+                                        "request_id": msg['_payload']['request_id'],
+                                        "request": msg['_payload']['request']
+                                    }
+                                    enc_payload = self._encrypt_aes(ID, json.dumps(payload))
+                                    if enc_payload:
+                                        sender.send_multipart([ID, json.dumps({
+                                            "mid": msg['mid'],
+                                            "_payload": enc_payload
+                                        })])
+                                    else:
+                                        self.logger.send_multipart(['DEBUG','Publisher Unable to encrypt request for %s, sending reauth' % ID])
+                                        event_queue.append([msg['mid'], payload])
+                                        sender.send_multipart([ID, json.dumps({
+                                            "mid": msg['mid'],
+                                            "_function": "auth",
+                                            "_cert": self.PUBCERT
+                                        })])
+                            except TypeError:
+                                self.logger.send_multipart(['DEBUG','Publisher Received PCAP Reply for %s' % str(msg['mid'])])
+                                sender.send_multipart([str(msg['mid']), json.dumps(msg)])
+                        elif msg['_function'] == 'auth':
+                            self.logger.send_multipart(['DEBUG','Sending Auth for %s' % str(ID)])
+                            sender.send_multipart([ID, json.dumps(msg)])
+                    except KeyError:
+                        sender.send_multipart([ID, json.dumps(msg)])
                     
                 if len(event_queue) > 0:
                     for e in event_queue:
@@ -166,7 +176,10 @@ class EventPublisher(Process):
                                 "_payload": enc_payload
                             })])
                             event_queue.remove(e)
-        except:
+        #except:
+        except Exception as e:
+            print('{}: {}'.format(e.__class__.__name__,e))
+
             sender.close()
             receiver.close()
             self.logger.send_multipart(['INFO', "Publisher is shutting down"])
