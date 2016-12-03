@@ -152,6 +152,8 @@ if __name__ == '__main__':
     pub_listener.start()
     log_client.send_multipart(['DEBUG', 'Starting Receiver Publishing Process'])
 
+    time.sleep(2)
+
     worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
     worker_main.start()
     log_client.send_multipart(['DEBUG', 'Starting Worker Thread Manager'])
