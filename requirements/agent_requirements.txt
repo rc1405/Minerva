@@ -5,3 +5,4 @@ pytz
 dpkt
 pypcap
 zmq
+jinja2
