@@ -117,14 +117,8 @@ class AgentPublisher(object):
             print(msg)
             try:
                 if msg['_function'] == 'auth':
-                    #server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
-                    #pub_key = server_cert.get_pubkey()
-                    #rsa_key = pub_key.get_rsa()
-                    #self.SRVKEY = rsa_key
                     try:
                         self.logger.send_multipart(['DEBUG', "Agent publisher received auth reply from receiver"])
-                        #aes = self._decrypt_rsa(msg['_message'])
-                        #if aes:
                         self.AESKEY = msg['AESKEY'].strip().decode('base64')
                         self.logger.send_multipart(['DEBUG', "Agent publisher successfully decrypted auth key"])
                         workpub.send_json({"_function": "AESKEY", "key": msg['AESKEY'].strip()})
@@ -139,16 +133,6 @@ class AgentPublisher(object):
             except KeyError:
                 self.logger.send_multipart(['DEBUG', "Agent publisher received error processing auth reply"])
                 continue
-
-        #key_request = False
-        #key_req_ct = 0
-        #try:
-            #AESKEY = self._decrypt_rsa(msg['_message'])
-            #if AESKEY:
-                #self.AESKEY = AESKEY.decode('base64')
-            #self.logger.send_multipart(['DEBUG', "Agent publisher authorization started"])
-        #except KeyError:
-            #self.logger.send_multipart(['DEBUG', "Agent publisher is not authorized"])
 
         last_sent = int(time.time())
         worker_count = 0
@@ -212,10 +196,6 @@ class AgentPublisher(object):
                    else:
                        try:
                            if msg['_function'] == 'auth':
-                               #server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
-                               #pub_key = server_cert.get_pubkey()
-                               #rsa_key = pub_key.get_rsa()
-                               #self.SRVKEY = rsa_key
                                try:
                                    self.logger.send_multipart(['DEBUG', "Agent publisher received auth request from receiver"])
                                    #aes = self._decrypt_rsa(msg['_message'])
@@ -223,6 +203,36 @@ class AgentPublisher(object):
                                    self.AESKEY = msg['AESKEY'].decode('base64')
                                    event_waiting = False
                                    '''
+
+
+
+                    elif msg['_function'] == '_PCAPreturn':
+                        self.logger.send_multipart(['DEBUG', "Agent worker Sending PCAP status to sender"])
+                        publisher.send_json(msg)
+                                   
+                if workpub in sockets:
+                    msg = workpub.recv_json()
+                    print(msg)     
+                    if msg['_function'] == 'AESKEY':
+                        self.AESKEY = msg['key'].decode('base64')
+                    elif msg['_function'] == 'PCAP':
+                        if msg['_status'] == 'request':
+                            if not msg['request_id'] in pcap_requests.keys():
+                                pcap_requests[msg['request_id']] = False
+                        elif msg['_status'] == 'success':
+                            try:   
+                                del pcap_requests[msg['request_id']]
+                            except KeyError:
+                                pass
+                        elif msg['_status'] == 'resend':
+                            try:   
+                                if pcap_requests[msg['request_id']]:
+                                    publisher.send_json(pcap_requests[msg['request_id']])
+                            except KeyError:
+                                pass
+
+
+
                                    NEEDS to be fixed
                                    if sending_pcap:
                                        worker.send_json({"status": "failure", "KEY": aes.strip()})

@@ -90,6 +90,8 @@ class AgentWorker(object):
         #self.AESKEY = msg['key'].decode('base64')
         #self.logger.send_multipart(['DEBUG', "Agent worker received AES key"])
 
+        pcap_requests = {}
+
 
         try:
             while True:
@@ -137,6 +139,12 @@ class AgentWorker(object):
                                     "request_id": msg['request_id'],
                                     "_function": "PCAP"
                                 })
+                            pcap_requests[msg['request_id']] = {
+                                    "payload": packets,
+                                    "console": msg['console'],
+                                    "request_id": msg['request_id'],
+                                    "_function": "PCAP"
+                                }
                             '''
                             #TODO rewrite
                             if status['status'] == 'success':
@@ -160,12 +168,30 @@ class AgentWorker(object):
                         self.logger.send_multipart(['DEBUG', "Agent worker Sending Auth to event sender"])
                         publisher.send_json(msg)
                         #status = publisher.recv_json()
+                    elif msg['_function'] == '_PCAPreturn':
+                        self.logger.send_multipart(['DEBUG', "Agent worker Sending PCAP status to sender"])
+                        publisher.send_json(msg)
 
                 if workpub in sockets:
                     msg = workpub.recv_json()
                     print(msg)
                     if msg['_function'] == 'AESKEY':
                         self.AESKEY = msg['key'].decode('base64')
+                    elif msg['_function'] == 'PCAP':
+                        if msg['_status'] == 'request':
+                            if not msg['request_id'] in pcap_requests.keys():
+                                pcap_requests[msg['request_id']] = False
+                        elif msg['_status'] == 'success':
+                            try:
+                                del pcap_requests[msg['request_id']]
+                            except KeyError:
+                                pass
+                        elif msg['_status'] == 'resend':
+                            try:
+                                if pcap_requests[msg['request_id']]:
+                                    publisher.send_json(pcap_requests[msg['request_id']])
+                            except KeyError:
+                                pass
 
         except Exception as e:
             print('{}: {}'.format(e.__class__.__name__,e))
