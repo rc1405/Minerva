@@ -102,19 +102,10 @@ def checkCert(cur_config, minerva_core):
             "cert": open(cur_config['certs']['server_cert'],'r').read(), 
             "key": open(cur_config['certs']['private_key']).read() 
         } )
-        for i in cur_config['listen_ip']:
-            for p in cur_config['listen_ip'][i]['rec_ports']:
-                certdb.update({"SERVER": "receiver"}, { "$push": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
+    for i in cur_config['listen_ip']:
+        for p in cur_config['listen_ip'][i]['rec_ports']:
+            certdb.update({"SERVER": "receiver"}, { "$addToSet": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
 
-    else:
-        if 'receivers' in results[0].keys():
-            receivers = results[0]['receivers']
-        else:
-            receivers = []
-        for i in cur_config['listen_ip']:
-            for p in cur_config['listen_ip'][i]['rec_ports']:
-                if not "%s-%i" % (i, p) in receivers:
-                    certdb.update({"SERVER": "receiver"}, { "$push": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
     return
 
 
