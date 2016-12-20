@@ -79,34 +79,37 @@ class HandleRequests(object):
             return False
 
     def send_request(self, request):
-        req_id = str(uuid.uuid4())
-        context = zmq.Context()
-        sender = context.socket(zmq.DEALER)
-        sender.identity = "%s|-_%s" % (self.name, req_id)
-        receiver = context.socket(zmq.SUB)
+        req_id = str(uuid.uuid4()) # Create random 128-bit UUID
+        context = zmq.Context() # zmq socket
+        sender = context.socket(zmq.PUSH) # socket type - DEALER
+        sender.identity = "%s|-_%s" % (self.name, req_id) # sender ID 'webserver-_UUID'
+        receiver = context.socket(zmq.SUB) # socket type - SUB 
 
-        receiver.identity = self.name
-        receiver.setsockopt(zmq.SUBSCRIBE, "%s|-_%s" % (self.name, req_id))
-
+        receiver.identity = self.name # webserver
+        receiver.setsockopt(zmq.SUBSCRIBE, "%s|-_%s" % (self.name, req_id)) # setsockopt - Default socket options for new sockets created by this context
+# socket type = SUBSCRIBE
+# Establishes a new message filter on 'receiver' SUB socket that will only subscribe to (self.name, req_id)
         receivers = {}
 
+        '''GREEN LINE'''
         results = self.certs.find_one({"type": "receiver"})
         if not results:
             return 'error'
         for r in results['receivers']:
-            receivers[r] = context.socket(zmq.DEALER)
+            receivers[r] = context.socket(zmq.PUSH)
             receivers[r].identity = "%s|-_%s" % (self.name, str(r))
             ip, recv_port, sub_port = r.split('-')
             sender.connect('tcp://%s:%s' % (ip, recv_port))
             receivers[r].connect('tcp://%s:%s' % (ip, recv_port))
             receiver.connect('tcp://%s:%s' % (ip, sub_port))
 
+
         sender.send_json({
             "_function": "auth",
             "_cert": self.PUBCERT
         })
 
-        msg = sender.recv_json()
+        msg = receiver.recv_json()
         server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
         pub_key = server_cert.get_pubkey()
         rsa_key = pub_key.get_rsa()
@@ -131,19 +134,19 @@ class HandleRequests(object):
                 })),
                 "_cert": self.PUBCERT
             })
+        '''END OF GREEN LINE'''
 
         start_time = int(time.time())
         threshold = int(self.conf['Webserver']['web']['pcap_timeout'])
 
         msg = False
         while int(time.time()) - start_time < threshold:
+            '''BLUE LINE'''
             if receiver.poll(1000):
                 mid, msg = receiver.recv_multipart()
                 msg = json.loads(msg)
                 break
-            for i in receivers:
-                if receivers[i].poll(500):
-                    rmsg = receivers[i].recv_json()
+            '''END OF BLUE LINE'''
 
         if msg:
             denc_msg = self._decrypt_aes(msg['_payload'])
@@ -200,7 +203,6 @@ class HandleRequests(object):
         options = {}
         options['src_ip'] = orig_alert['src_ip']
         options['src_port'] = orig_alert['src_port']
-        options['dest_ip'] =orig_alert['dest_ip']
         options['dest_port'] = orig_alert['dest_port']
         options['proto'] = orig_alert['proto']
         options['start_time'] = orig_alert['netflow']['start'].strftime('%s')
