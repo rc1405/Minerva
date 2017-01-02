@@ -35,7 +35,6 @@ class MinervaSignatures(object):
         db = minerva_core.get_db()
         self.signatures = db.signatures
         self.alerts = db.alerts
-        self.classtypes = []
         self.ruleSizeLimit = 10
         self.ruleFileLimit = 100
 
@@ -73,24 +72,8 @@ class MinervaSignatures(object):
                 classtype = ''
             else:
                 classtype = classtype[0]
-            if not classtype in self.classtypes:
-                self.classtypes.append(classtype)
             self.signatures.update({"sig_id": sid, "gen_id": gid, "rev": rev}, { "$set": {"sig_id": sid, "gen_id": gid, "rev": rev, "classtype": classtype, "signature": row.strip(), "type": "signature" }}, upsert=True )
         return good_sigs, bad_sigs
-
-    def update_classtypes(self):
-        cur_types = []
-        current_classtypes = list(self.signatures.aggregate([{"$match": { "type": "classtype"}},{"$project": { "classtype": "$classtype"}}]))
-
-        for i in current_classtypes:
-            cur_types.append(i['classtype'])
-
-        for c in self.classtypes:
-            if not c in cur_types:
-                cur_types.append(c)
-
-        for n in cur_types:
-            self.signatures.update({"type": "classtype", "classtype": n },{ "$set": { "classtype": n }}, upsert=True)
 
     def unzip_signatures(self, rule_file):
         file_count = 0
@@ -139,16 +122,10 @@ class MinervaSignatures(object):
             elif file_name_tmp[-1] == 'rules':
                 file_count = 1
                 good_sigs, bad_sigs = self.parse_signatures(initial_file.file.readlines())
-            self.update_classtypes()
         return file_count, good_sigs, bad_sigs
 
     def get_classtypes(self):
-        classification = [] 
-        classtypes = list(self.signatures.find({"type": "classtype"}))
-        for i in classtypes:
-            if len(i['classtype']) > 0:
-                classification.append(i['classtype'])
-        return classification
+        return self.signatures.distinct("classtype")
 
     def get_signature(self, events):
         all_signatures = {}
