@@ -39,7 +39,6 @@ class EventReceiver(Process):
         context = zmq.Context()
         log_client = self.minerva_core.get_socket(self.channels)
         log_client.send_multipart(['DEBUG','Starting Event Listener %s' % self.pname])
-        #print('listening to %s' % pname)
         ip, port = self.pname.split('-')
 
         server = context.socket(zmq.PULL)
@@ -54,7 +53,6 @@ class EventReceiver(Process):
 
         try:
             zmq.proxy(server, workers)
-            #zmq.device(zmq.STREAMER, server, workers)
             server.close()
             workers.close()
         except:
@@ -88,7 +86,7 @@ class EventPublisher(Process):
 
     def _encrypt_aes(self, target, payload, key=None):
         if key is None:
-            aeskey = self.keys.find_one({"SERVER": target})
+            aeskey = self.keys.find_one({"SERVER": target.split('|-_')[0]})
             if aeskey:
                 aeskey = aeskey['KEY'].decode('base64')
             else:
@@ -111,6 +109,21 @@ class EventPublisher(Process):
             return False
 
     def run(self):
+
+        db = self.core.get_db()
+        self.certs = db.certs
+        self.keys = db.keys
+        keys = db.certs.find_one({"type": "receiver"})
+        webcert = db.certs.find_one({"type": "webserver"})
+        if webcert:
+            webcert = M2Crypto.X509.load_cert_string(str(webcert['CERT']))
+            pubkey = webcert.get_pubkey()
+            self.WEBKEY = pubkey.get_rsa()
+        else:
+            self.WEBKEY = False
+        key = keys['key']
+        self.PUBCERT = keys['cert']
+        self.PRIVKEY = M2Crypto.RSA.load_key_string(str(key))
         self.logger = self.core.get_socket(self.channels)
         context = zmq.Context()
         sender = context.socket(zmq.PUB)
@@ -130,7 +143,6 @@ class EventPublisher(Process):
                 if receiver.poll(500):
                     ID, msg = receiver.recv_multipart()
                     msg = json.loads(msg)
-                    print(msg)
                     try:
                         if msg['_function'] == 'PCAP':
                             try:
@@ -146,7 +158,7 @@ class EventPublisher(Process):
                                     enc_payload = self._encrypt_aes(ID, json.dumps(payload))
                                     if enc_payload:
                                         sender.send_multipart([ID, json.dumps({
-                                            "mid": msg['mid'],
+                                            "mid": ID,
                                             "_payload": enc_payload
                                         })])
                                     else:
@@ -176,9 +188,8 @@ class EventPublisher(Process):
                                 "_payload": enc_payload
                             })])
                             event_queue.remove(e)
-        #except:
         except Exception as e:
-            print('{}: {}'.format(e.__class__.__name__,e))
+            #print('{}: {}'.format(e.__class__.__name__,e))
 
             sender.close()
             receiver.close()
