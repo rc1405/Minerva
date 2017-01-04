@@ -55,10 +55,9 @@ class HandleRequests(object):
     def _decrypt_rsa(self, enc_payload):
         if enc_payload:
             dmesg = self.PRIVKEY.private_decrypt(enc_payload.decode('base64'), M2Crypto.RSA.pkcs1_padding)
-            return dmesg
+            return json.loads(dmesg)
         else:
             return False
-
 
     def _decrypt_aes(self, payload):
         try:
@@ -79,22 +78,20 @@ class HandleRequests(object):
             return False
 
     def send_request(self, request):
-        req_id = str(uuid.uuid4()) # Create random 128-bit UUID
-        context = zmq.Context() # zmq socket
-        sender = context.socket(zmq.PUSH) # socket type - DEALER
-        sender.identity = "%s|-_%s" % (self.name, req_id) # sender ID 'webserver-_UUID'
-        receiver = context.socket(zmq.SUB) # socket type - SUB 
+        req_id = str(uuid.uuid4())
+        context = zmq.Context()
+        sender = context.socket(zmq.PUSH)
+        sender.identity = "%s|-_%s" % (self.name, req_id)
+        receiver = context.socket(zmq.SUB)
 
-        receiver.identity = self.name # webserver
-        receiver.setsockopt(zmq.SUBSCRIBE, "%s|-_%s" % (self.name, req_id)) # setsockopt - Default socket options for new sockets created by this context
-# socket type = SUBSCRIBE
-# Establishes a new message filter on 'receiver' SUB socket that will only subscribe to (self.name, req_id)
+        receiver.identity = self.name
+        receiver.setsockopt(zmq.SUBSCRIBE, "%s|-_%s" % (self.name, req_id))
         receivers = {}
 
-        '''GREEN LINE'''
         results = self.certs.find_one({"type": "receiver"})
         if not results:
             return 'error'
+
         for r in results['receivers']:
             receivers[r] = context.socket(zmq.PUSH)
             receivers[r].identity = "%s|-_%s" % (self.name, str(r))
@@ -103,30 +100,33 @@ class HandleRequests(object):
             receivers[r].connect('tcp://%s:%s' % (ip, recv_port))
             receiver.connect('tcp://%s:%s' % (ip, sub_port))
 
-
         sender.send_json({
+            "_id": "%s|-_%s" % (self.name, req_id),
             "_function": "auth",
             "_cert": self.PUBCERT
         })
 
-        msg = receiver.recv_json()
+        if receiver.poll(250000):
+            ID, msg = receiver.recv_multipart()
+        else:
+            return "No Response from sensor"
+
         server_cert = M2Crypto.X509.load_cert_string(str(msg['_cert']))
         pub_key = server_cert.get_pubkey()
         rsa_key = pub_key.get_rsa()
         self.SRVKEY = rsa_key
         AESKEY = self._decrypt_rsa(msg['_message'])
         if AESKEY:
-            self.AESKEY = AESKEY.decode('base64')
+            self.AESKEY = AESKEY['AESKEY'].decode('base64')
         else:
             return "Bad Key Exchange"
 
         for k in receivers.keys():
             receivers[k].send_json({
-                "mid": self.name,
+                "_id": "%s|-_%s" % (self.name, req_id),
                 "_payload": self._encrypt_aes(json.dumps({
                     "_function": "PCAP",
                     "_action": "request",
-                    #"console": self.name,
                     "console": "%s|-_%s" % (self.name, req_id),
                     "request_id": req_id,
                     "request": request,
@@ -134,39 +134,43 @@ class HandleRequests(object):
                 })),
                 "_cert": self.PUBCERT
             })
-        '''END OF GREEN LINE'''
 
         start_time = int(time.time())
         threshold = int(self.conf['Webserver']['web']['pcap_timeout'])
 
         msg = False
         while int(time.time()) - start_time < threshold:
-            '''BLUE LINE'''
             if receiver.poll(1000):
                 mid, msg = receiver.recv_multipart()
                 msg = json.loads(msg)
                 break
-            '''END OF BLUE LINE'''
 
-        if msg:
-            denc_msg = self._decrypt_aes(msg['_payload'])
+        if kmsg:
+            denc_msg = self._decrypt_aes(kmsg['_payload'])
             if not denc_msg:
                 sender.send_json({
+                    "_id": "%s|-_%s" % (self.name, req_id),
                     "_function": "auth",
                     "_cert": self.PUBCERT
                 })
 
-                msg = sender.recv_json()
-                AESKEY = self._decrypt_rsa(msg['_message'])
+                if receiver.poll(250000):
+                    ID, kmsg = receiver.recv_multipart()
+                else:
+                    return "No Response from sensor"
+
+                AESKEY = self._decrypt_rsa(kmsg['_message'])
                 if AESKEY:
-                    self.AESKEY = AESKEY.decode('base64')
+                    self.AESKEY = AESKEY['AESKEY'].decode('base64')
                     denc_msg = self._decrypt_aes(msg['_payload'])
                     if not denc_msg:
                         return "Error Decoding Msg"
                 else:
                     return "Unable to decode msg"
+
             if denc_msg['payload'] == 'No Packets Found':
                 return 'No Packets Found'
+
             tmp_file = SpooledTemporaryFile(mode='wb')
             tmp_file.write(denc_msg['payload'].decode('base64'))
             tmp_file.seek(0)
