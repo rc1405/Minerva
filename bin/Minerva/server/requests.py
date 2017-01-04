@@ -108,6 +108,7 @@ class HandleRequests(object):
 
         if receiver.poll(250000):
             ID, msg = receiver.recv_multipart()
+            msg = json.loads(msg)
         else:
             return "No Response from sensor"
 
@@ -138,11 +139,11 @@ class HandleRequests(object):
         start_time = int(time.time())
         threshold = int(self.conf['Webserver']['web']['pcap_timeout'])
 
-        msg = False
+        kmsg = False
         while int(time.time()) - start_time < threshold:
             if receiver.poll(1000):
-                mid, msg = receiver.recv_multipart()
-                msg = json.loads(msg)
+                mid, kmsg = receiver.recv_multipart()
+                kmsg = json.loads(kmsg)
                 break
 
         if kmsg:
@@ -156,6 +157,7 @@ class HandleRequests(object):
 
                 if receiver.poll(250000):
                     ID, kmsg = receiver.recv_multipart()
+                    kmsg = json.loads(kmsg)
                 else:
                     return "No Response from sensor"
 
