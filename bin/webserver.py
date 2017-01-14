@@ -34,8 +34,6 @@ from Minerva.server import alert_console, alert_flow, sensors, Users, HandleRequ
 
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
-#env.filters['iso_to_utc'] = iso_to_utc
-#env.filters['datetime_to_iso'] = datetime_to_iso
 
 class Minerva(object):
     def __init__(self, minerva_core):
@@ -67,7 +65,6 @@ class Minerva(object):
                 elif 'PasswordReset' in permissions:
                     raise cherrypy.HTTPRedirect("/profile")
                 else:
-                    print(permissions)
                     raise cherrypy.HTTPError(403)
             else:
                 return '<script type="text/javascript">window.alert("Invalid Username or Pasword");location="/login";</script>'
@@ -731,7 +728,7 @@ class Minerva(object):
 
             else:
                 context_dict = {}
-                context_dict['config'] = self.configs
+                context_dict['config'] = self.minerva_core.conf
                 context_dict['form'] = 'server_admin'
                 context_dict['permissions'] = perm_return
                 tmp = env.get_template('config.jinja')
@@ -1192,7 +1189,6 @@ def checkCert(cur_config, minerva_core):
     else:
         cert = results['CERT']
         if cert != open(cur_config['certs']['webserver_cert'],'r').read():
-            print('Cert Changed')
             certdb.update({"SERVER": "webserver"},{ 
                 "$set": { 
                     "CERT": open(cur_config['certs']['webserver_cert'],'r').read(),

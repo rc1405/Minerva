@@ -46,8 +46,59 @@ minerva.config = {};
     });
   };
 
+  app.HideAuth = function() {
+    if ($("#useAuth").is(':checked')) {
+      $("#AuthType").parent().parent().removeClass('hidden');
+      $("#db_cert_subj").parent().parent().removeClass('hidden');
+      $("#db_user").parent().parent().removeClass('hidden');
+      $("#db_pass").parent().parent().removeClass('hidden');
+      $("#pwmechanism").parent().parent().removeClass('hidden');
+      $("#auth_cert").parent().parent().removeClass('hidden');
+      app.AuthType();
+    } else {
+      $("#useSSL").attr("checked", false);
+      app.HideSSL();
+      $("#AuthType").parent().parent().addClass('hidden');
+      $("#db_cert_subj").parent().parent().addClass('hidden');
+      $("#db_user").parent().parent().addClass('hidden');
+      $("#db_pass").parent().parent().addClass('hidden');
+      $("#pwmechanism").parent().parent().addClass('hidden');
+      $("#auth_cert").parent().parent().addClass('hidden');
+    };
+  };
+
+  app.HideSSL = function() {
+    if ($("#useSSL").is(':checked')) {
+      $("#ssl_ca").parent().parent().removeClass('hidden');
+      $("#ssl_cert").parent().parent().removeClass('hidden');
+      $("#useAuth").attr("checked", true);
+      app.HideAuth();
+    } else {
+      $("#ssl_ca").parent().parent().addClass('hidden');
+      $("#ssl_cert").parent().parent().addClass('hidden');
+    };
+  };
+
+  app.AuthType = function() {
+    if ($("#AuthType").val() == 'X509') {
+      $("#db_cert_subj").parent().parent().removeClass('hidden');
+      $("#db_user").parent().parent().addClass('hidden');
+      $("#db_pass").parent().parent().addClass('hidden');
+      $("#pwmechanism").parent().parent().addClass('hidden');
+      $("#auth_cert").parent().parent().removeClass('hidden');
+    } else {
+      $("#db_cert_subj").parent().parent().addClass('hidden');
+      $("#db_user").parent().parent().removeClass('hidden');
+      $("#db_pass").parent().parent().removeClass('hidden');
+      $("#pwmechanism").parent().parent().removeClass('hidden');
+      $("#auth_cert").parent().parent().addClass('hidden');
+    };
+  };
   // bind events
   //
   app.nav.on('click', '.minerva-saveConf', app.saveConfig);
+  $("#useAuth").change(app.HideAuth); 
+  $("#useSSL").change(app.HideSSL); 
+  $("#AuthType").change(app.AuthType); 
 
 })(jQuery, minerva.config);

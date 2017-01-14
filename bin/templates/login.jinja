@@ -14,10 +14,8 @@
   <body style="background-color:lightblue">
 
     <div class="container">
-    {% if motd %}
-    <pre>
-    {{motd}}
-    </pre>
+    {% if motd and motd|length > 5 %}
+    {{motd.decode('base64')}}
     {% endif %}
       <form class="form-signin" method="post" action="/login">
         <h2 class="form-signin-heading">Please sign in</h2>

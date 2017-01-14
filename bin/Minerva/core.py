@@ -77,13 +77,19 @@ class MinervaConfigs():
         db = self.get_db()
         config['Database']['db']['url'] = new_config['db_ip']
         config['Database']['db']['port'] = int(new_config['db_port'])
-        config['Database']['db']['auth_ca'] = new_config['auth_ca']
         config['Database']['db']['auth_cert'] = new_config['auth_cert']
         config['Database']['db']['PW_Mechanism'] = new_config['pwmechanism']
         config['Database']['db']['username'] = new_config['db_user']
+        config['Database']['db']['useSSL'] = new_config['useSSL']
+        config['Database']['db']['ssl_certfile'] = new_config['ssl_cert']
+        config['Database']['db']['ssl_ca_certs'] = new_config['ssl_ca']
+        config['Database']['db']['x509Subject'] = new_config['db_cert_subj']
+
         if len(new_config['db_pass']) > 0:
             config['Database']['db']['password'] = new_config['db_pass'].encode('base64')
         config['Database']['db']['AuthType'] = new_config['AuthType']
+        if len(new_config['web_motd']) > 0:
+            config['Webserver']['web']['motd'] = new_config['web_motd'].encode('base64')
         config['Webserver']['web']['port'] = int(new_config['web_port'])
         config['Webserver']['web']['hostname'] = str(new_config['web_host'])
         config['Webserver']['web']['bindIp'] = new_config['web_ip']
@@ -105,9 +111,9 @@ class MinervaConfigs():
         except:
             db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionSeconds)
         if int(new_config['max_events']) > 15000:
-            config['Webserver']['events']['max_events'] = 15000
+            config['Webserver']['events']['maxResults'] = 15000
         else:
-            config['Webserver']['events']['max_events'] = int(new_config['max_events'])
+            config['Webserver']['events']['maxResults'] = int(new_config['max_events'])
         config['Database']['events']['max_age'] = int(new_config['max_age'])
         alertTimeout = int(new_config['max_age']) * 86400
         try:
