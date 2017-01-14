@@ -12,6 +12,36 @@ import hashlib
 import platform
 import re
 
+def check_core():
+    try:
+        import M2Crypto
+        logger.error('%s is installed' % 'M2Crypto')
+    except:
+        print('M2Crypto not installed')
+        logger.error('M2Crypto not installed')
+        sys.exit()
+    try:
+        import zmq
+        logger.info('%s is installed' % 'pytz')
+    except:
+        print('pytz not installed')
+        logger.error('pytz not installed')
+        sys.exit()
+    try:
+        import yaml
+        logger.info('%s is installed' % 'pyyaml')
+    except:
+        print('PyYAmL not installed')
+        logger.error('PyYAmL not installed')
+        sys.exit()
+    try:
+        import pytz
+        logger.info('%s is installed' % 'pytz')
+    except:
+        print('pytz not installed')
+        logger.error('pytz not installed')
+        sys.exit()
+
 def check_server():
     try:
         import pymongo
@@ -19,13 +49,6 @@ def check_server():
     except:
         print('Pymongo not installed')
         logger.info('Pymongo not installed')
-        sys.exit()
-    try:
-        import M2Crypto
-        logger.error('%s is installed' % 'M2Crypto')
-    except:
-        print('M2Crypto not installed')
-        logger.error('M2Crypto not installed')
         sys.exit()
     try:
         import cherrypy
@@ -42,63 +65,14 @@ def check_server():
         logger.error('Jinja2 not installed')
         sys.exit()
     try:
-        import yaml
-        logger.info('%s is installed' % 'pyyaml')
-    except:
-        print('PyYAmL not installed')
-        logger.error('PyYAmL not installed')
-        sys.exit()
-    try:
         import dateutil
         logger.info('%s is installed' % 'dateutil')
     except:
         print('python-dateutil not installed')
         logger.error('python-dateutil not installed')
         sys.exit()
-    try:
-        import pytz
-        logger.info('%s is installed' % 'pytz')
-    except:
-        print('pytz not installed')
-        logger.error('pytz not installed')
-        sys.exit()
-
-def check_agent():
-    try:
-        import M2Crypto
-        logger.info('%s is installed' % 'M2Crypto')
-    except:
-        print('M2Crypto not installed')
-        logger.error('M2Crypto not installed')
-        sys.exit()
-    try:
-        import yaml
-        logger.info('%s is installed' % 'pyyaml')
-    except:
-        print('PyYAmL not installed')
-        sys.exit()
-    try:
-        import pytz
-        logger.info('%s is installed' % 'pytz')
-    except:
-        print('pytz not installed')
-        logger.error('pytz not installed')
 
 def check_receiver():
-    try:
-        import yaml
-        logger.info('%s is installed' % 'pyyaml')
-    except:
-        print('PyYAmL not installed')
-        logger.error('PyYAmL not installed')
-        sys.exit()
-    try:
-        import M2Crypto
-        logger.info('%s is installed' % 'M2Crypto')
-    except:
-        print('M2Crypto not installed')
-        logger.error('M2Crypto not installed')
-        sys.exit()
     try:
         import pymongo
         logger.info('%s is installed' % 'pymongo')
@@ -107,17 +81,11 @@ def check_receiver():
         logger.error('Pymongo not installed')
         sys.exit()
     try:
-        import pytz
-        logger.info('%s is installed' % 'pytz')
+        import yara
+        logger.info('%s is installed' % 'yara-python')
     except:
-        print('pytz not installed')
-        logger.error('pytz not installed')
-    try:
-        import numpy
-        logger.info('%s is installed' % 'numpy')
-    except:
-        print('numpy not installed')
-        logger.error('numpy not installed')
+        print('yara-pyhon not installed')
+        logger.error('yara-python not installed')
         sys.exit()
     try:
         import netaddr
@@ -137,46 +105,81 @@ def validate_ip(ipaddress):
     else:
         return False
 
-def setup_db_lite():
+def map_indexes(ind):
+    return ind['name']
+
+def setup_db_new(lite=False):
+    INDEX_VER = 101
     import pymongo
+    print("IMPORTANT: If using a sharded cluster, shard keys must be setup before running this script")
     print("Setting Up Receiver DB connection")
     logger.info("Setting Up Receiver DB connection")
     
     while True:
-        ip = raw_input('Please enter database ip: [127.0.0.1] ')
+        ip = raw_input('Please enter database IP or mongodb connection string: [127.0.0.1] ')
         if len(ip) == 0:
             ip = '127.0.0.1'
-            break
-        elif validate_ip(ip):
-            break
-        else:
-            print('Invalid IP Adress')
-    logger.info("DB Ip is set to %s" % ip)
+        break
+    logger.info("DB Connection string set to %s" % ip)
 
     while True:
-        port = raw_input('Please enter database port: [27017] ')
-        if len(port) == 0:
-            port = 27017
+        use_port = raw_input('Would you like to specify a port? [Y/N] Select N to use connection string only ')
+        if use_port[:1].lower() == 'y':
+            while True:
+                port = raw_input('Please enter database port: [27017] ')
+                if len(port) == 0:
+                    port = 27017
+                    break
+                else:
+                    try:
+                        port = int(port)
+                        break
+                    except:
+                        print('Invalid port')
+                        pass
+            logger.info("DB Port is set to %i" % int(port))
+            break
+        elif use_port[:1].lower() == 'n':
+            port = 0
+            logger.info("No port specified")
             break
         else:
-            try:
-                port = int(port)
+            print("invalid selection")
+
+    while True:
+        useSSL = raw_input('Use SSL to connect to the DB? [Y/N]')
+        if len(useSSL) == 0:
+            print("No input detected")
+            continue
+        if useSSL[:1].lower() == 'y':
+            while True:
+                ssl_certfile = raw_input('Specify the cert file to use: ')
+                if len(ssl_certfile) == 0 or not os.path.exists(ssl_certfile):
+                    print("Error: Cert file does not exist")
+                    continue 
                 break
-            except:
-                print('Invalid port')
-                pass
-    logger.info("DB Port is set to %i" % int(port))
+            while True:
+                ssl_ca_certs = raw_input('Specify the CACerts file to use: ')
+                if len(ssl_ca_certs) == 0 or not os.path.exists(ssl_ca_certs):
+                    print("Error: Cert file does not exist")
+                    continue
+                break
+            break
+        elif useSSL[:1].lower() == 'n':
+            break
+        else:
+            print("Invalid selection")
 
     while True:
         useAuth = raw_input('Use db authentication? Y/N [N] ')
-        if useAuth == 'y' or use_auth == 'Y' or use_auth == 'n' or use_auth == 'N' or len(use_auth) == 0:
+        if useAuth.lower() == 'y' or use_auth.lower() == 'n' or len(use_auth) == 0:
             break
         else:
             print('Invalid db auth option')
     logger.info('Use DB Auth is set to %s' % useAuth)
-    if useAuth == 'y' or useAuth == 'Y':
+    if useAuth.lower() == 'y':
         while True:
-            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
+            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509")
             choice = raw_input()
             try:
                 if int(choice) == 1:
@@ -189,14 +192,15 @@ def setup_db_lite():
                 print('Invalid Option')
                 pass
         logger.info('DB Auth Type is %s' % authType)
-        while True:
-            username = raw_input("Enter a username: ")
-            if len(username) > 0:
-                break
-            else:
-                print('No username selected')
-        logger.info('DB Username chosen is %s' % username)
         if authType == 'X509':
+            while True:
+                cert_string = raw_input("Enter a x509 Subject: ")
+                if len(cert_string) > 0:
+                    break
+                else:
+                    print('No subject selected')
+            logger.info('Cert subject submitted is %s' % cert_string)
+
             while True:
                 auth_cert = raw_input("Enter full path to cert used for authentication: ")
                 if len(auth_cert) == 0:
@@ -207,28 +211,30 @@ def setup_db_lite():
                     continue
                 break
             logger.info('Auth Cert path is %s' % auth_cert)
-            while True:
-                auth_ca = raw_input("Enter full path to ca_certs to be used: ")
-                if len(auth_ca) == 0:
-                    print('No path specified')
-                    continue
-                if not os.path.exists(auth_ca):
-                    print('Cert does not exist')
-                    continue
-                break
-            logger.info('Auth CA path is %s' % auth_ca)
             try:
-                client = pymongo.MongoClient(ip, int(port),
+                if int(port) == 0:
+                    conn_str = ip
+                else:
+                    conn_str = "%s:%i" % (ip, int(port))
+                client = pymongo.MongoClient(conn_str,
                                              ssl=True,
                                              ssl_certfile=auth_cert,
                                              ssl_cert_reqs=ssl.CERT_REQUIRED,
-                                             ssl_ca_certs=auth_ca)
-                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
+                                             ssl_ca_certs=ssl_ca_certs)
+                client.minerva.authenticate(cert_string, mechanism='MONGODB-X509')
             except:
                 print("Unable to connect to DB")
                 logger.error("Unable to connect to DB")
                 sys.exit()
         elif authType == 'Password':
+            while True:
+                username = raw_input("Enter a username: ")
+                if len(username) > 0:
+                    break
+                else:
+                    print('No username selected')
+            logger.info('DB Username chosen is %s' % username)
+
             while True:
                 print('Enter a password: ')
                 password = getpass.getpass()
@@ -265,267 +271,42 @@ def setup_db_lite():
         useAuth = False
         client = pymongo.MongoClient(ip,int(port))
 
-    user = client.minerva.users.findOne()
-    if len(user) > 0:
-        if not 'SALT' in user:
-            print('User Hashing has changed and will require passwords to be reset')
-            logger.info('User Hashing has changed and will require passwords to be reset')
-            while True:
-                user_name = raw_input("Enter username of admin user to create or modify: ")
-                if len(user_name) == 0:
-                    print('User name not entered')
-                    continue
-                elif len(user_name) < 5:
-                    print('User name too short')
-                    continue
-                break
-            while True:
-                print('Enter password: ')
-                admin_pw = getpass.getpass()
-                print('Re-enter password: ')
-                admin_pw2 = getpass.getpass()
-                if admin_pw == admin_pw2:
-                    break
-                else:
-                    print("Passwords do not match")
-            logger.info("Creating admin user %s" % user_name)
-            password_salt = uuid.uuid4().hex
-            admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
-            client.minerva.users.update({}, { "$set": { "SALT": uuid.uuid4().hex }}, upsert=True, multi=True )
-            if len(list(db.users.find({"USERNAME": user_name }))) > 0:
-                db.users.remove({"USERNAME": user_name})
-            db.users.insert(
-            {
-                    "USERNAME" : user_name,
-                    "user_admin" : "true",
-                    "ENABLED" : "true",
-                    "SALT": password_salt,
-                    "PASSWORD" : admin_hashedPW,
-                    "console" : "true",
-                    "date_modified" : datetime.datetime.utcnow(),
-                    "sensor_admin" : "true",
-                    "responder" : "true",
-                    "event_filters": "true",
-                    "server_admin" : "true",
-                    "date_created" : datetime.datetime.utcnow(),
-                    "PASSWORD_CHANGED": datetime.datetime.utcnow(),
-            })
-
-    while True:
-        sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
-        try:
-            sessionMinutes = int(sessionMinutes)
-            break
-        except:
-            print('Invalid Option')
-            pass
-
-    logger.info("Session timeout %s minutes" % sessionMinutes)
-
-    config['Webserver'] = {}
-    config['Webserver']['db'] = {}
-    config['Webserver']['db']['url'] = ip
-    config['Webserver']['db']['port'] = port
-    config['Webserver']['db']['useAuth'] = useAuth
-    if useAuth:
-        config['Webserver']['db']['username'] = username
-        if authType == 'X509':
-            config['Webserver']['db']['auth_cert'] = auth_cert
-            config['Webserver']['db']['auth_ca'] = auth_ca
-        elif authType == 'Password':
-            config['Webserver']['db']['password'] = password
-            config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
-        config['Webserver']['db']['AuthType'] = authType
-    config['Webserver']['web'] = {}
-    config['Webserver']['web']['session_timeout'] = sessionMinutes
-    config['Webserver']['events'] = {}
-
-def setup_db():
-    import pymongo
-    print("**********************************************************")
-    print("*               Setting up the Database                  *")
-    print("**********************************************************")
-    logger.info("Setting up the Database")
-    while True:
-        ip = raw_input('Please enter database ip: [127.0.0.1] ')
-        if len(ip) == 0:
-            ip = '127.0.0.1'
-            break
-        elif validate_ip(ip):
-            break
+    if not lite:
+        db = client.minerva
+        collections = db.collection_names()
+        logger.info("Creating collections if they do not exist")
+        if not 'alerts' in collections:
+            db.create_collection('alerts')
+        if not 'filters' in collections:
+            db.create_collection('filters')
+        if not 'flow' in collections:
+            db.create_collection('flow')
+        if not 'dns' in collections:
+            db.create_collection('dns')
+        if not 'certs' in collections:
+            db.create_collection('certs')
+        if not 'watchlist' in collections:
+            db.create_collection('watchlist')
+        if not 'signatures' in collections:
+            db.create_collection('signatures')
+        if not 'sessions' in collections:
+            db.create_collection('sessions')
+        if not 'keys' in collections:
+            db.create_collection('keys')
+        if not 'users' in collections:
+            db.create_collection('users')
+            create_user = True
         else:
-            print('Invalid IP')
-    logger.info('Database IP is %s' % ip)
-    while True:
-        port = raw_input('Please enter database port: [27017] ')
-        if len(port) == 0:
-            port = 27017
-            break
-        else:
-            try:
-                port = int(port)
-                break
-            except:
-                print('Invalid port')
-                pass
-    logger.info('Database Port is %i' % int(port))
-    print("****IF AUTHENTICATION METHOD IS CHOSEN, IT MUST BE SETUP PRIOR TO RUNNING SETUP*****")
-    while True:
-        useAuth = raw_input('Use db authentication? Y/N [N] ')
-        if useAuth == 'y' or useAuth == 'Y' or useAuth == 'n' or useAuth == 'N' or len(useAuth) == 0:
-            break
-        else:
-            print('Invalid db auth option')
-    logger.info('Use DB Auth is set to %s' % useAuth)
-    if useAuth == 'y' or useAuth == 'Y':
-        while True:
-            print("Pick an Authentication Type\n\t1) Username/Password\n\t2) X509\n")
-            choice = raw_input()
-            try:
-                if int(choice) == 1:
-                    authType = 'Password'
-                    break
-                elif int(choice) == 2:
-                    authType = 'X509'
-                    break
-            except:
-                print('Invalid Option')
-                pass
-        logger.info('DB Auth Type is %s' % authType)
-        while True:
-            username = raw_input("Enter a username: ")
-            if len(username) > 0:
-                break
-            else: 
-                print('No username entered')
-        logger.info('DB Username chosen is %s' % username)
-        if authType == 'X509':
-            while True:
-                auth_cert = raw_input("Enter full path to cert used for authentication: ")
-                if len(auth_cert) == 0:
-                    print('No Auth cert entered')
-                    continue
-                if not os.path.exists(auth_cert):
-                    print('Auth cert does not exist')
-                    continue
-                break
-            logger.info('Auth Cert path is %s' % auth_cert)
-            while True:
-                auth_ca = raw_input("Enter full path to ca_certs to be used: ")
-                if len(auth_ca) == 0:
-                    print('No CA file entered')
-                    continue
-                if not os.path.exists(auth_ca):
-                    print('CA file doens\'t exist')
-                    continue
-                break
-            logger.info('Auth CA path is %s' % auth_ca)
-            try:
-                client = pymongo.MongoClient(ip, int(port),
-                                             ssl=True,
-                                             ssl_certfile=auth_cert,
-                                             ssl_cert_reqs=ssl.CERT_REQUIRED,
-                                             ssl_ca_certs=auth_ca)
-                client.minerva.authenticate(db_conf['username'], mechanism='MONGODB-X509')
-            except:
-                print("Unable to connect to DB")
-                logger.error("Unable to connect to DB")
-                sys.exit()
-        elif authType == 'Password':
-            while True:
-                print('Enter a password: ')
-                password = getpass.getpass()
-                print('Re-Enter the password: ')
-                password1 = getpass.getpass()
-                if password == password1:
-                    break
-                else:
-                    print("Passwords do not match")
-            logger.info('DB Password Entered')
-            while True:
-                choice = raw_input("Enter Password Mechanism:\n\t1) SCRAM-SHA-1 [Default MONGODB Option]\n\t2) MONGODB-CR\n")
-                try:
-                    if int(choice) == 1:
-                        PW_Mechanism = "SCRAM-SHA-1"
-                        break
-                    elif int(choice) == 2:
-                        PW_Mechanism = "MONGODB-CR"
-                        break
-                except:
-                    print("Invalid Option")
-                    pass
-            logger.info("DB Password Mechanism chosen is %s" % PW_Mechanism)
-            client = pymongo.MongoClient(ip,int(port))
-            try:
-                client.minerva.authenticate(username, password, mechanism=PW_Mechanism)
-            except:
-                print("Unable to connect to DB")
-                logger.error("Unable to connect to DB")
-                sys.exit()
-        useAuth = True
-    else:
-        logger.info('No DB Auth Chosen')
-        useAuth = False
-        client = pymongo.MongoClient(ip,int(port))
+            create_user = False
 
-    if 'minerva' in client.database_names():
-        logger.info('DB exists')
-        while True:
-            resp = raw_input('Database already exists, do you want to keep it? [N]')
-            if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N' or len(resp) == 0:
-                break
-        if resp == 'Y' or resp == 'y':
-            logger.info('Keeping Current DB')
-            keep_db = True
-        else:
-            logger.info('Dropping Current DB')
-            keep_db = False
-            client.drop_database('minerva')
-    else:
-        keep_db = False
+        alert_indexes = map(map_indexes, db.alerts.list_indexes())
+        for i in alert_indexes:
+            if i == 'timestamp_1' or i[:12] == 'alert-search' or i[:13] == 'alert-expired':
+                db.alerts.drop_index(i)
 
-    db = client.minerva
-    collections = db.collection_names()
-    if keep_db:
-        print("Recreating Indexes, this can take some time")
-        logger.info("Recreating Indexes, this can take some time")
-    logger.info("Creating collections if they do not exist")
-    if not 'alerts' in collections:
-        db.create_collection('alerts')
-    else:
-        db.alerts.drop_indexes()
-    if not 'filters' in collections:
-        db.create_collection('filters')
-    else:
-        db.filters.drop_indexes()
-    if not 'flow' in collections:
-        db.create_collection('flow')
-    else:
-        db.flow.drop_indexes()
-    if not 'dns' in collections:
-        db.create_collection('dns')
-    else:
-        db.dns.drop_indexes()
-    if not 'certs' in collections:
-        db.create_collection('certs')
-    if not 'watchlist' in collections:
-        db.create_collection('watchlist')
-    if not 'signatures' in collections:
-        db.create_collection('signatures')
-    if not 'sessions' in collections:
-        db.create_collection('sessions')
-    else:
-        db.sessions.drop_indexes()
-    if not 'sensors' in collections:
-        db.create_collection('sensors')
-    if not 'users' in collections:
-        db.create_collection('users')
-   
+        logger.info("Alert search index created is: %s" % '([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")')
 
-    logger.info("Alert search index created is: %s" % '([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")')
-
-    db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-index")
-
+        db.alerts.create_index([("MINERVA_STATUS", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("alert.severity", pymongo.DESCENDING),("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("alert.signature", pymongo.ASCENDING),("alert.category", pymongo.ASCENDING),("alert.signature_id", pymongo.ASCENDING),("alert.rev", pymongo.ASCENDING),("alert.gid", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="alert-search-%i" % INDEX_VER)
 
     while True:
         expiredDays = raw_input("Enter number of days to keep alerts: ")
@@ -536,12 +317,19 @@ def setup_db():
             print('Invalid day option')
             pass
     logger.info("Days to keep alerts %i" % expiredDays)
-    expiredSeconds = int(expiredDays) * 86400
-    db.alerts.ensure_index("timestamp",expireAfterSeconds=expiredSeconds)
 
-    logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch", pymongo.ASCENDING),("netflow.stop_epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)])')
+    if not lite:
+        expiredSeconds = int(expiredDays) * 86400
+        db.alerts.ensure_index("timestamp",name="alert-expired-%i" % INDEX_VER, expireAfterSeconds=expiredSeconds)
 
-    db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start_epoch", pymongo.ASCENDING),("netflow.stop_epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)])
+        flow_indexes = map(map_indexes, db.flow.list_indexes())
+        for i in flow_indexes:
+            if i == 'timestamp_1' or i[:11] == 'flow-search' or i[:12] == 'flow-expired':
+                db.flow.drop_index(i)
+
+        logger.info("Flow search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-index")')
+
+        db.flow.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("netflow.start", pymongo.ASCENDING),("netflow.end", pymongo.ASCENDING),("sensor", pymongo.ASCENDING)],name="flow-search-%i" % INDEX_VER)
 
     while True:
         expiredflowDays = raw_input("Enter number of days to keep flow data: ")
@@ -553,12 +341,19 @@ def setup_db():
             pass
 
     logger.info("Days to keep flow data %i" % expiredflowDays)
-    flowexpiredSeconds = int(expiredflowDays) * 86400
-    db.flow.ensure_index("timestamp",expireAfterSeconds=flowexpiredSeconds)
 
-    logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")')
+    if not lite:
+        flowexpiredSeconds = int(expiredflowDays) * 86400
+        db.flow.ensure_index("timestamp",name="flow-expired-%i" % INDEX_VER,expireAfterSeconds=flowexpiredSeconds)
 
-    db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("epoch", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")
+        dns_indexes = map(map_indexes, db.dns.list_indexes())
+        for i in dns_indexes:
+            if i == 'timestamp_1' or i[:10] == 'dns-search' or i[:11] == 'dns-expired':
+                db.dns.drop_index(i)
+
+        logger.info("DNS search index created is: %s " % '([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-index")')
+
+        db.dns.create_index([("src_ip", pymongo.ASCENDING),("src_port", pymongo.ASCENDING),("dest_ip", pymongo.ASCENDING),("dest_port", pymongo.ASCENDING),("proto", pymongo.ASCENDING),("timestamp", pymongo.ASCENDING),("sensor", pymongo.ASCENDING),("dns.type", pymongo.ASCENDING),("dns.rrtype", pymongo.ASCENDING),("dns.rcode", pymongo.ASCENDING),("dns.rrname", pymongo.ASCENDING),("dns.rdata", pymongo.ASCENDING)],name="dns-search-%i" % INDEX_VER)
 
     while True:
         expireddnsDays = raw_input("Enter number of days to keep dns logs: ")
@@ -569,9 +364,15 @@ def setup_db():
             print('Invalid day option')
             pass
 
-    logger.info("Days to keep dns logs: %i" % expireddnsDays)
-    dnsexpiredSeconds = int(expireddnsDays) * 86400
-    db.dns.ensure_index("timestamp",expireAfterSeconds=dnsexpiredSeconds)
+    if not lite:
+        logger.info("Days to keep dns logs: %i" % expireddnsDays)
+        dnsexpiredSeconds = int(expireddnsDays) * 86400
+        db.dns.ensure_index("timestamp",name="dns-expired-%i" % INDEX_VER, expireAfterSeconds=dnsexpiredSeconds)
+
+        filters_indexes = map(map_indexes, db.filters.list_indexes())
+        for i in filters_indexes:
+            if i == 'temp_timestamp_1' or i[:12] == 'temp-expired':
+                db.filters.drop_index(i)
 
     while True:
         expiredTempHours = raw_input("Enter number of hours to temporary event filters: [24] ")
@@ -587,8 +388,15 @@ def setup_db():
                 pass
 
     logger.info("Hours to keep temporary Event Filters is %i" % expiredTempHours)
-    expiredTempSeconds = expiredTempHours * 3600
-    db.filters.ensure_index("temp_timestamp", expireAfterSeconds=expiredTempSeconds)
+
+    if not lite:
+        expiredTempSeconds = expiredTempHours * 3600
+        db.filters.ensure_index("temp_timestamp", name="temp-expired-%i" % INDEX_VER, expireAfterSeconds=expiredTempSeconds)
+
+        session_indexes = map(map_indexes, db.sessions.list_indexes())
+        for i in session_indexes:
+            if i == 'last_accessed_1' or i[:15] == 'session-expired':
+                db.sessions.drop_index(i)
 
     while True:
         sessionMinutes = raw_input("Enter number of minutes until each console session times out: ")
@@ -599,89 +407,102 @@ def setup_db():
             print('Invalid minutes')
             pass
     logger.info("Session timeout %i minutes" % sessionMinutes)
-    sessionTimeout = int(sessionMinutes) * 60
-    db.sessions.ensure_index("last_accessed",expireAfterSeconds=sessionTimeout)
 
-    if keep_db:
-        while True:
-            create_user = raw_input("Create user/reset password? [y/n]")
-            if create_user == 'y' or create_user == 'Y' or create_user == 'n' or create_user == 'N':
-                break
-            else:
-                print('Invalid option')
-        if create_user == 'y' or create_user == 'Y':
-            create_user = True
-        else:
-            create_user = False
+    if not lite:
+        sessionTimeout = int(sessionMinutes) * 60
+        db.sessions.ensure_index("last_accessed",name="session-expired-%i" % INDEX_VER, expireAfterSeconds=sessionTimeout)
 
+        key_indexes = map(map_indexes, db.keys.list_indexes())
+        for i in key_indexes:
+            if i == 'timestamp_1' or i[:11] == 'key-expired':
+                db.keys.drop_index(i)
+        db.keys.ensure_index("timestamp",name="key-expired-%i" % INDEX_VER,expireAfterSeconds=3600)
+
+        if not create_user:
+            while True:
+                create_user = raw_input("Create user/reset password? [y/n]")
+                if create_user == 'y' or create_user == 'Y' or create_user == 'n' or create_user == 'N':
+                    break
+                else:
+                    print('Invalid option')
+
+        session_salt = uuid.uuid4().hex
+        session_salt = uuid.uuid4().hex
+        if create_user:
+            while True:
+                user_name = raw_input("Enter username of admin user to create: ")
+                if len(user_name) == 0:
+                    print('No username entered')
+                elif len(user_name) < 4:
+                    print('User name is too short')
+                else:
+                    break
+            while True:
+                print('Enter password: ')
+                admin_pw = getpass.getpass()
+                print('Re-enter password: ')
+                admin_pw2 = getpass.getpass()
+                if admin_pw == admin_pw2:
+                    break
+                else:
+                    print("Passwords do not match")
+            logger.info("Creating admin user %s" % user_name)
+            password_salt = uuid.uuid4().hex
+            admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
+            if len(list(db.users.find({"USERNAME": user_name }))) > 0:
+                db.users.remove({"USERNAME": user_name})
+            db.users.insert(
+                {
+                    "USERNAME" : user_name,
+                    "user_admin" : "true",
+                    "ENABLED" : "true",
+                    "SALT": password_salt,
+                    "PASSWORD" : admin_hashedPW,
+                    "console" : "true",
+                    "date_modified" : datetime.datetime.utcnow(),
+                    "sensor_admin" : "true",
+                    "responder" : "true",
+                    "event_filters": "true",
+                    "server_admin" : "true",
+                    "date_created" : datetime.datetime.utcnow(),
+                    "PASSWORD_CHANGED": datetime.datetime.utcnow(),
+                })
+
+    config['Database'] = {}
+    config['Database']['db'] = {}
+    config['Database']['db']['url'] = ip
+    config['Database']['db']['port'] = port
+    config['Database']['db']['useAuth'] = useAuth
+
+    if useSSL[:1].lower() == 'y':
+        config['Database']['db']['useSSL'] = True
+        config['Database']['db']['ssl_certfile'] = ssl_certfile
+        config['Database']['db']['ssl_ca_certs'] = ssl_ca_certs
     else:
-        create_user = True
+        config['Database']['db']['useSSL'] = False
 
-    session_salt = uuid.uuid4().hex
-    if create_user:
-        while True:
-            user_name = raw_input("Enter username of admin user to create: ")
-            if len(user_name) == 0:
-                print('No username entered')
-            elif len(user_name) < 4:
-                print('User name is too short')
-            else:
-                break
-        while True:
-            print('Enter password: ')
-            admin_pw = getpass.getpass()
-            print('Re-enter password: ')
-            admin_pw2 = getpass.getpass()
-            if admin_pw == admin_pw2:
-                break
-            else:
-                print("Passwords do not match")
-        logger.info("Creating admin user %s" % user_name)
-        password_salt = uuid.uuid4().hex
-        admin_hashedPW = hashlib.sha512(str(admin_pw) + str(password_salt)).hexdigest()
-        if len(list(db.users.find({"USERNAME": user_name }))) > 0:
-            db.users.remove({"USERNAME": user_name})
-        db.users.insert(
-        {
-                "USERNAME" : user_name,
-                "user_admin" : "true",
-                "ENABLED" : "true",
-                "SALT": password_salt,
-                "PASSWORD" : admin_hashedPW,
-                "console" : "true",
-                "date_modified" : datetime.datetime.utcnow(),
-                "sensor_admin" : "true",
-                "responder" : "true",
-                "event_filters": "true",
-                "server_admin" : "true",
-                "date_created" : datetime.datetime.utcnow(),
-                "PASSWORD_CHANGED": datetime.datetime.utcnow(),
-        })
-
-    config['Webserver'] = {}
-    config['Webserver']['db'] = {}
-    config['Webserver']['db']['url'] = ip
-    config['Webserver']['db']['port'] = port
-    config['Webserver']['db']['useAuth'] = useAuth
     if useAuth:
-        config['Webserver']['db']['username'] = username
         if authType == 'X509':
-            config['Webserver']['db']['auth_cert'] = auth_cert
-            config['Webserver']['db']['auth_ca'] = auth_ca
+            config['Database']['db']['x509Subject'] = cert_string
+            config['Database']['db']['auth_cert'] = auth_cert
         elif authType == 'Password':
-            config['Webserver']['db']['password'] = password.encode('base64')
-            config['Webserver']['db']['PW_Mechanism'] = PW_Mechanism
-        config['Webserver']['db']['AuthType'] = authType
-    #config['Webserver']['db']['SECRET_KEY'] = password_salt 
-    config['Webserver']['db']['SESSION_KEY'] = session_salt
+            config['Database']['db']['username'] = username
+            config['Database']['db']['password'] = password
+            config['Database']['db']['PW_Mechanism'] = PW_Mechanism
+        config['Database']['db']['AuthType'] = authType
+    config['Webserver'] = {}
     config['Webserver']['web'] = {}
     config['Webserver']['web']['session_timeout'] = sessionMinutes
-    config['Webserver']['events'] = {}
-    config['Webserver']['events']['max_age'] = expiredDays
-    config['Webserver']['events']['flow_max_age'] = expiredflowDays
-    config['Webserver']['events']['dns_max_age'] = expireddnsDays
-    config['Webserver']['events']['temp_filter_age'] = expiredTempHours
- 
+    config['Database']['events'] = {}
+
+    if not lite:
+        config['Database']['db']['SESSION_KEY'] = session_salt
+
+    config['Database']['events']['max_age'] = expiredDays
+    config['Database']['events']['flow_max_age'] = expiredflowDays
+    config['Database']['events']['dns_max_age'] = expireddnsDays
+    config['Database']['events']['temp_filter_age'] = expiredTempHours
+
 def setup_core():
     if os.path.exists('/usr/lib/python2.7/Minerva'):
         logger.info('Old Minerva python modules are removed')
@@ -695,6 +516,76 @@ def setup_core():
     else:
         shutil.copytree('Minerva','/usr/lib/python2.7/Minerva')
     logger.info('Minerva python modules are installed')
+    print("**********************************************************")
+    print("                Setting Up Logger                        *")
+    print("**********************************************************")
+    logger.info("Setting up the logger")
+    while True:
+        print("**********************************************************")
+        print("  Choose Logging Level:                                  *")
+        print("     1)  Normal  - Default                               *")
+        print("     2)  Debug                                           *")
+        print("**********************************************************")
+        log_level = raw_input("> ")
+        if len(log_level) == 0:
+            log_level = 'INFO'
+            break
+        else:
+            try:
+                if int(log_level) == 1:
+                    log_level = 'INFO'
+                    break
+                elif int(log_level) == 2:
+                    log_level = 'DEBUG'
+                    break
+                else:
+                    print("Invalid Option")
+            except:
+                print("Invalid Option")
+    logger.info("Log level set to %s" % log_level)
+    config['Logger'] = {}
+    config['Logger']['level'] = log_level
+    while True:
+        print("**********************************************************")
+        print("  Choose Logging directory:                              *")
+        print("**********************************************************")
+        log_directory = raw_input("> ")
+        if not os.path.exists(log_directory):
+            log_cont = raw_input("Path does not exist.  Add anyways? [Y/N] ")
+            if log_cont.upper() == 'Y':
+                break
+            elif log_cont.upper() == 'N':
+                continue
+            else:
+                print('Invalid Option')
+                continue
+        break
+    logger.info("Log directory set to %s" % log_directory)
+    config['Logger']['directory'] = log_directory
+    while True:
+        log_count = raw_input("Enter number of logs to retain: [2] ")
+        try:
+            if len(log_count) == 0:
+                log_count = 2
+            else:
+                log_count = int(log_count)
+            break
+        except:
+            print("Invalid selection")
+    logger.info("Log retention is %i" % log_count)
+    config['Logger']['count'] = log_count
+    while True:
+        log_size = raw_input("Enter size of logs in MB: [20] ")
+        try:
+            if len(log_size) == 0:
+                log_size = 1024 * 1024 * 1024 * 20
+            else:
+                log_size = int(log_count) * 1024 * 1024 * 1024 
+            break
+        except:
+            print("Invalid selection")
+    logger.info("Log size set to %i bytes" % log_size)
+    config['Logger']['size'] = log_size
 
 def setup_server():
     print("**********************************************************")
@@ -901,6 +792,7 @@ def setup_server():
     config['Webserver']['web']['password_requirements']['upper_count'] = upper_count
     config['Webserver']['web']['password_requirements']['digit_count'] = digit_count
     config['Webserver']['web']['password_requirements']['special_count'] = special_count
+    config['Webserver']['events'] = {}
     config['Webserver']['events']['maxResults'] = maxResults
     #os.makedirs(os.path.join(install_path,'bin/templates'))
     #os.makedirs(os.path.join(install_path,'bin/static'))
@@ -924,9 +816,9 @@ def setup_receiver():
     logger.info("Setting up the event receiver")
     listen_ips = {}
     print("**********************************************************")
-    print("* The next IP and Port is what will listen for events    *")
-    print("*   This is the combination that will be required for    *")
-    print("*   setting up Agent Forwarders.                         *")
+    print("* The next IP and Ports are for received events and      *")
+    print("*   requesting PCAP. These combinations will be required *")
+    print("*   for setting up Agent Forwarders.                     *")
     print("**********************************************************")
     while True:
         while True:
@@ -935,10 +827,20 @@ def setup_receiver():
                 break
             else:
                 print('Invalid IP')
-        logger.info("Adding listener ip %s" % listen_ip)
+        logger.info("Adding ip %s" % listen_ip)
         listen_ips[listen_ip] = {}
-        listen_ips[listen_ip]['ports'] = []
+        listen_ips[listen_ip]['recv_ports'] = []
         while True:
+            while True:
+                pub_port = raw_input("Enter port to publish requests on: ")
+                try:
+                    pub_port = int(pub_port)
+                    break
+                except:
+                    print('Invalid Port')
+                    pass
+            logger.info("Adding pub port %i" % pub_port)
+            listen_ips[listen_ip]['pub_port'] = pub_port
             while True:
                 listen_port = raw_input("Enter port to listen on: ")
                 try:
@@ -947,8 +849,8 @@ def setup_receiver():
                 except:
                     print('Invalid Port')
                     pass
-            logger.info("Adding listener port %i" % int(listen_port))
-            listen_ips[listen_ip]['ports'].append(int(listen_port))
+            logger.info("Adding recv port %i" % int(listen_port))
+            listen_ips[listen_ip]['recv_ports'].append(int(listen_port))
             while True:
                 resp = raw_input("Do you want to add more ports? [y/n] ")
                 if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N':
@@ -957,8 +859,6 @@ def setup_receiver():
                     print('Invalid Option')
             if resp == 'n' or resp == 'N':
                 break
-        listen_ips[listen_ip]['receive_threads'] = int(raw_input("How many threads do you want to process events? "))
-        logger.info("Setting receive threads at %i" % listen_ips[listen_ip]['receive_threads'])
         while True:
             resp1 = raw_input("Do you want to add another IP? [y/n] ")
             if resp1 == 'y' or resp1 == 'Y' or resp1 == 'n' or resp1 == 'N':
@@ -968,66 +868,8 @@ def setup_receiver():
         if resp == 'n' or resp == 'N':
             break
 
-    use_redis = 'yes'
     while True:
-        event_key = raw_input("What Redis key do you want to use for events? [minerva-receiver] ")
-        if len(event_key) == 0:
-            event_key = 'minerva-receiver'
-        break
-    while True:
-        filter_key = raw_input("What Redis key do you want to use for filters? [minerva-filters] ")
-        if len(filter_key) == 0:
-            filter_key = 'minerva-filters'
-        break
-    while True:
-        filtercheck_key = raw_input("What Redis key do you want to use for filter management? [minerva-filters-check] ")
-        if len(filtercheck_key) == 0:
-            filtercheck_key = 'minerva-filters-check'
-        break
-    while True:
-        watchlist_key = raw_input("What Redis key do you want to use for watchlists? [minerva-watchlist] ")
-        if len(watchlist_key) == 0:
-            watchlist_key = 'minerva-watchlist'
-        break
-    while True:
-        watchcheck_key = raw_input("What Redis key do you want to use watchlist management? [minerva-watch-check] ")
-        if len(watchcheck_key) == 0:
-            watchcheck_key = 'minerva-watch-check'
-        break
-
-    while True:
-        redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-        if len(redis_server) == 0:
-            redis_server = '127.0.0.1'
-        break
-    while True:
-        redis_port = raw_input("Enter redis port: [6379] ")
-        if len(redis_port) == 0:
-            redis_port = 6379
-            break
-        else:
-            try:
-                redis_port = int(redis_port)
-                break
-            except:
-                print('Bad Redis Port Number')
-
-    while True:
-        listener_timeout = raw_input("Enter number of seconds to timeout on a single receive thread: [20] ")
-        if len(listener_timeout) == 0:
-            listener_timeout = 20
-            break
-        else:
-            try:
-                listener_timeout = int(listener_timeout)
-                break
-            except:
-                print('Invalid timeout')
-                pass
-    logger.info("Setting listener timeout at %i seconds" % int(listener_timeout))
-
-    while True:
-        ins_threads = raw_input("Enter number of processes you want to insert alerts: [4] ")
+        ins_threads = raw_input("Enter number of worker processes: [4] ")
         if len(ins_threads) == 0:
             ins_threads = 4
             break
@@ -1041,35 +883,7 @@ def setup_receiver():
     logger.info("Setting inserter threads to %i" % int(ins_threads))
 
     while True:
-        ins_batch = raw_input("Enter max number of events to insert at a time: [500] ")
-        if len(ins_batch) == 0:
-            ins_batch = 500
-            break
-        else:
-            try:
-                ins_batch = int(ins_batch)
-                break
-            except:
-                print('Invalid batch count')
-                pass
-    logger.info("Setting max events to insert to %i" % int(ins_batch))
-
-    while True:
-        ins_wait = raw_input("Enter max seconds to wait before inserting events: [20] ")
-        if len(ins_wait) == 0:
-            ins_wait = 20
-            break
-        else:
-            try:
-                ins_wait = int(ins_wait)
-                break
-            except:
-                print('Invalid wait time')
-                pass
-    logger.info("Setting max seconds before inserting to %i seconds" % int(ins_wait))
-
-    while True:
-        filter_wait = raw_input("Enter number of seconds before reloading event filters: [3600] ")
+        filter_wait = raw_input("Enter number of seconds before reloading event filters and watchlist: [3600] ")
         if len(filter_wait) == 0:
             filter_wait = 3600
             break
@@ -1078,7 +892,7 @@ def setup_receiver():
                 filter_wait = int(filter_wait)
                 break
             except:
-                print('Invalid time')
+                print('Invalid entry')
                 pass
     logger.info("Setting filter reload time to %i seconds" % int(filter_wait))
 
@@ -1091,85 +905,13 @@ def setup_receiver():
     logger.info("Certificate path set to %s" % rec_cert)
     logger.info("Private key path set to %s" % rec_key)
 
-    print("***********************************************************")
-    print("*  The next IP/port will be used to process pcap requests *")
-    print("*    from the webserver.  This will only be used for      *")
-    print("*    webserver communications                             *")
-    print("***********************************************************")
-    while True:
-        pcap_ip = raw_input("Enter IP Address to listen for pcap requests from the webserver: ")
-        if validate_ip(pcap_ip):
-            break
-        else:
-            print('Invalid IP')
-    logger.info("PCAP listening IP set to %s" % pcap_ip)
-
-    while True:
-        pcap_port = raw_input("Enter Port of Receiver to list for pcap requests for: [10009] ")
-        if len(pcap_port) == 0:
-            pcap_port = 10009
-            break
-        else:
-            try:
-                pcap_port = int(pcap_port)
-                break
-            except:
-                print('Invalid port number')
-                pass
-    logger.info("PCAP listening port set to %i" % int(pcap_port))
-
-    while True:
-        pcap_threads = raw_input("Enter number of threads to process pcap requests: [4] ")
-        if len(pcap_threads) == 0:
-            pcap_threads = 4
-            break
-        else:
-            try:
-                pcap_threads = int(pcap_threads)
-                break
-            except:
-                print('Invalid thread count')
-                pass
-    logger.info("Threads processing PCAP requests set to %i" % int(pcap_threads))
-
-    while True:
-        pcap_timeout = raw_input("Enter number of seconds to wait for a pcap request, Should be the same as webserver value: [300] ")
-        if len(pcap_timeout) == 0:
-            pcap_timeout = 300
-            break
-        else:
-            try:
-                pcap_timeout = int(pcap_timeout)
-                break
-            except:
-                print('Invalid timeout')
-                pass
-    logger.info("PCAP Request timeout set to %i seconds" % int(pcap_timeout))
-
     config['Event_Receiver'] = {}
     config['Event_Receiver']['listen_ip'] = listen_ips
-    config['Event_Receiver']['listener_timeout'] = listener_timeout
-    config['Event_Receiver']['insertion_threads'] = int(ins_threads)
-    config['Event_Receiver']['insertion_batch'] = int(ins_batch)
-    config['Event_Receiver']['insertion_wait'] = int(ins_wait)
-    config['Event_Receiver']['filter_wait'] = int(filter_wait)
-    config['Event_Receiver']['redis'] = {}
-    config['Event_Receiver']['redis']['enabled'] = use_redis
-    config['Event_Receiver']['redis']['event_key'] = event_key
-    config['Event_Receiver']['redis']['filter_key'] = filter_key
-    config['Event_Receiver']['redis']['filtercheck_key'] = filtercheck_key
-    config['Event_Receiver']['redis']['watchlist_key'] = watchlist_key
-    config['Event_Receiver']['redis']['watchcheck_key'] = watchcheck_key
-    config['Event_Receiver']['redis']['server'] = redis_server
-    config['Event_Receiver']['redis']['port'] = redis_port
+    config['Event_Receiver']['worker_threads'] = int(ins_threads)
+    config['Event_Receiver']['watchlist_update'] = int(filter_wait)
     config['Event_Receiver']['certs'] = {}
     config['Event_Receiver']['certs']['server_cert'] = rec_cert
     config['Event_Receiver']['certs']['private_key'] = rec_key
-    config['Event_Receiver']['PCAP'] = {}
-    config['Event_Receiver']['PCAP']['ip'] = pcap_ip
-    config['Event_Receiver']['PCAP']['port'] = pcap_port
-    config['Event_Receiver']['PCAP']['threads'] = pcap_threads
-    config['Event_Receiver']['PCAP']['timeout'] = pcap_timeout
     shutil.copy('receiver.py',os.path.join(install_path,'bin'))
 
 def setup_agent():
@@ -1195,93 +937,36 @@ def setup_agent():
     logger.info("Client certificate path set to %s" % client_cert)
     logger.info("Client private key path set to %s" % client_key)
 
-    while True:
-        use_redis = raw_input("Do you want to use Redis as your message broken (Recommended)? [y/n]")
-        redis_mod = False
-        if use_redis == 'y':
-            try:
-                import redis
-                redis_mod = True
-            except:
-                print("Redis Chosen but missing python-redis module")
-                logger.info("Redis Chosen but missing redis module")
-                sys.exit()
-            use_redis = 'yes'
-            while True:
-                redis_key = raw_input("What Redis key do you want to use? [minerva-agent] ")
-                if len(redis_key) == 0:
-                    redis_key = 'minerva-agent'
-                break
-            while True:
-                redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-                if len(redis_server) == 0:
-                    redis_server = '127.0.0.1'
-                break
-            while True:
-                redis_port = raw_input("Enter redis port: [6379] ")
-                if len(redis_port) == 0:
-                    redis_port = 6379
-                    break
-                else:
-                    try:
-                        redis_port = int(redis_port)
-                        break
-                    except:
-                        print('Bad Redis Port Number')
-            break
-        else:
-            use_redis = 'no'
-            redis_key = ''   
-            redis_server = ''
-            redis_port = ''
-
     logfiles = {}
     while True:
         while True:
-            ltype = raw_input("Enter alert type of log file: (suricata_eve, suricata-redis-channel, suricata-redis-list, snort_alert): ")
-            if ltype in ['suricata-redis-channel','suricata-redis-list']:
-                if use_redis == 'yes':
-                    while True:
-                        use_main_redis = raw_input("Same host (%s) and port (%i) information? [yes/no] " % (redis_server, redis_port))
-                        if len(use_main_redis) == 0:
-                            use_main_redis = 'yes'
-                            break
-                        elif use_main_redis in ['y','Y','yes','YES']:
-                            use_main_redis = 'yes'
-                            break
-                        elif use_main_redis in ['n','N','no','NO']:
-                            use_main_redis = 'no'
-                            break
-                        else:
-                            print('Invalid option')
-                else:
-                    use_main_redis = 'no'
-                    try:
-                        import redis
-                    except:
-                        print("Redis Chosen but missing python-redis module")
-                        logger.info("Redis Chosen but missing redis module")
-                        sys.exit()
+            ltype = raw_input("Enter alert type of log file: (suricata_eve, suricata-redis-list, snort_alert): ")
+            if ltype == 'suricata-redis-list':
+                try:
+                    import redis
+                except:
+                    print("Redis Chosen but missing python-redis module")
+                    logger.info("Redis Chosen but missing redis module")
+                    sys.exit()
 
-                if use_redis == 'no' or use_main_redis == 'no':
-                    while True:
-                        redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
-                        if len(redis_server) == 0:
-                            redis_server = '127.0.0.1'
-                        break
-                    while True:
-                        redis_port = raw_input("Enter redis port: [6379] ")
-                        if len(redis_port) == 0:
-                            redis_port = 6379
-                            break
-                        else:
-                            try:
-                                redis_port = int(redis_port)
-                                break
-                            except:
-                                print('Bad Redis Port Number')
                 while True:
-                    redis_channel = raw_input("Enter Redis Channel or Key for Suricata: ")
+                    redis_server = raw_input("Enter redis host or ip: [127.0.0.1] ")
+                    if len(redis_server) == 0:
+                        redis_server = '127.0.0.1'
+                    break
+                while True:
+                    redis_port = raw_input("Enter redis port: [6379] ")
+                    if len(redis_port) == 0:
+                        redis_port = 6379
+                        break
+                    else:
+                        try:
+                            redis_port = int(redis_port)
+                            break
+                        except:
+                            print('Bad Redis Port Number')
+                while True:
+                    redis_channel = raw_input("Enter Redis Key for Suricata: ")
                     if len(redis_channel) > 0:
                         break
                     else:
@@ -1308,13 +993,11 @@ def setup_agent():
         logger.info("Log file type is %s" % ltype)
         logfiles[lfile] = {}
         logfiles[lfile]['type'] = ltype
-        if ltype in ['suricata-redis-channel','suricata-redis-list']:
+        if ltype == 'suricata-redis-list':
             logger.info("Redis channel is %s" % redis_channel)
             logfiles[lfile]['channel'] = redis_channel
-            logfiles[lfile]['use_main'] = use_main_redis
-            if use_main_redis == 'no':
-                logfiles[lfile]['server'] = redis_server
-                logfiles[lfile]['port'] = redis_port
+            logfiles[lfile]['server'] = redis_server
+            logfiles[lfile]['port'] = redis_port
         else:
             while True:
                 pfile = raw_input("Enter full pathname of position file: ")
@@ -1341,23 +1024,47 @@ def setup_agent():
 
     print("*****************************************************************")
     print("* The Receiver IP And Port is where events will be forwarded to *")
+    print("*   and where the agent will listen for PCAP requests           *")
     print("*****************************************************************")
+    receivers = {}
     while True:
-        destination = raw_input("Enter IP address of receiver to send to: ")
-        if validate_ip(destination):
-            break
-        else:
-            print('Invalid IP')
-    logger.info("Receiver destination of %s set" % destination)
+        while True:
+            destination = raw_input("Enter IP address of receiver to send to: ")
+            if validate_ip(destination):
+                break
+            else:
+                print('Invalid IP')
+        logger.info("Receiver destination of %s added" % destination)
+        receivers[destination] = {}
+        receivers[destination]['pub_ports'] = []
 
-    while True:
-        dest_port = raw_input("Enter destination port to send to: ")
-        try:
-            dest_port = int(dest_port)
-            break
-        except:
-            print('Invalid Port')
-    logger.info("Receiver port of %s set" % dest_port)
+        while True:
+            while True:
+                dest_port = raw_input("Enter destination port to send to: ")
+                try:
+                    dest_port = int(dest_port)
+                    break
+                except:
+                    print('Invalid Port')
+            logger.info("Receiver port of %s added" % dest_port)
+            receivers[destination]['pub_ports'].append(dest_port)
+            more_ports = raw_input("Would you like to add more ports? [Y/N]")
+            if more_ports.upper() == 'N':
+                break
+
+        while True:
+            sub_port = raw_input("Enter receiver port to listen for requests: ")
+            try:
+                sub_port = int(sub_port)
+                break
+            except:
+                print('Invalid Port')
+        logger.info("Sub port of %s added" % sub_port)
+        receivers[destination]['sub_port'] = sub_port
+
+        more_dest = raw_input("Would you like to add more receivers? [Y/N]")
+        if more_dest.upper() == 'N':
+            break    
 
     while True:
         send_batch = raw_input("Enter max # of events to send at once: [500] ")
@@ -1400,10 +1107,6 @@ def setup_agent():
                 print('Invalid fail time')
                 pass
     logger.info("Max fail time between sending events after a failure is set to %i" % int(fail_wait))
-
-
-
-
 
     print("**********************************************************")
     print("*          Configuring Agent PCAP Requests               *")
@@ -1505,32 +1208,6 @@ def setup_agent():
         logger.info("PCAP temp dir doesn't exist, creating it")
         os.makedirs(temp_directory)
 
-    print("***************************************************************")
-    print("*  This next IP and port is the what the agent will listen to *")
-    print("*    for pcap requests from the receiver                      *")
-    print("***************************************************************")
-    while True:
-        listener_ip = raw_input("Enter ip address to listen for requests on: ")
-        if validate_ip(listener_ip):
-            break
-        else:
-            print('Invalid IP Entered')
-    logger.info("PCAP Listener bound to %s" % listener_ip)
-
-    while True:
-        listener_port = raw_input("Enter port to listen for requests on: [10010] ")
-        if len(listener_port) == 0:
-            listener_port = 10010
-            break
-        else:
-            try:
-                listener_port = int(listener_port)
-                break
-            except:
-                print('Invalid port')
-                pass
-    logger.info("PCAP Listener port set to %i" % int(listener_port))
-
     while True:
         listener_threads = raw_input("Enter number of threads to process requests: [4] ")
         if len(listener_threads) == 0:
@@ -1549,19 +1226,11 @@ def setup_agent():
     config['Agent_forwarder']['sensor_name'] = sensor_name
     config['Agent_forwarder']['client_cert'] = client_cert
     config['Agent_forwarder']['client_private'] = client_key
-    config['Agent_forwarder']['redis'] = {}
-    config['Agent_forwarder']['redis']['enabled'] = use_redis
-    config['Agent_forwarder']['redis']['key'] = redis_key
-    config['Agent_forwarder']['redis']['server'] = redis_server
-    config['Agent_forwarder']['redis']['port'] = redis_port
     config['Agent_forwarder']['logfiles'] = logfiles
-    config['Agent_forwarder']['target_addr'] = {}
-    config['Agent_forwarder']['target_addr']['server_cert'] = server_cert
-    config['Agent_forwarder']['target_addr']['destination'] = destination
-    config['Agent_forwarder']['target_addr']['port'] = int(dest_port)
-    config['Agent_forwarder']['target_addr']['send_batch'] = int(send_batch)
-    config['Agent_forwarder']['target_addr']['send_wait'] = int(send_wait)
-    config['Agent_forwarder']['target_addr']['fail_wait'] = int(fail_wait)
+    config['Agent_forwarder']['destinations'] = receivers
+    config['Agent_forwarder']['send_batch'] = int(send_batch)
+    config['Agent_forwarder']['send_wait'] = int(send_wait)
+    config['Agent_forwarder']['fail_wait'] = int(fail_wait)
     config['Agent_forwarder']['pcap'] = {}
     config['Agent_forwarder']['pcap']['max_packets'] = max_packets
     config['Agent_forwarder']['pcap']['max_size'] = max_size
@@ -1571,10 +1240,7 @@ def setup_agent():
     config['Agent_forwarder']['pcap']['suffix'] = suffix
     config['Agent_forwarder']['pcap']['pcap_directory'] = pcap_directory
     config['Agent_forwarder']['pcap']['temp_directory'] = temp_directory
-    config['Agent_forwarder']['listener'] = {}
-    config['Agent_forwarder']['listener']['ip'] = listener_ip
-    config['Agent_forwarder']['listener']['port'] = listener_port
-    config['Agent_forwarder']['listener']['threads'] = listener_threads
+    config['Agent_forwarder']['worker_threads'] = listener_threads
     shutil.copy('agent.py',os.path.join(install_path,'bin'))
 
 def write_config():
@@ -1582,7 +1248,6 @@ def write_config():
     env = Environment(loader=FileSystemLoader('templates'))
     tmp = env.get_template('minerva.jinja')
     conf_file = open(os.path.join(install_path,'etc/minerva.yaml'),'w')
-    conf_write = tmp.render(config)
     conf_file.writelines(tmp.render({ "config": config }))
     conf_file.close()
 
@@ -1590,6 +1255,7 @@ def choose_db():
     while True:
         print("\n**************************************************************************")
         print('* Only use if you have an already configured minerva database in mongodb *')
+        print('*    Such as connecting a receiver to an existing setup                  *')
         print("**************************************************************************")
         resp = raw_input('Connect to existing minerva database? [y/n] ')
         if resp == 'y' or resp == 'Y' or resp == 'n' or resp == 'N':
@@ -1597,9 +1263,9 @@ def choose_db():
         else:
             print('Invalid option')
     if resp == 'y' or resp == 'Y':
-        setup_db_lite()
+        setup_db_new(lite=True)
     else:
-        setup_db()
+        setup_db_new()
 
 
 def main():
@@ -1666,13 +1332,13 @@ def main():
             print("Unable to make directory %s, check permissions and try again" % location)
             logger.error("Unable to make directory %s, check permissions and try again" % location)
             sys.exit()
+    
+    check_core()
     if int(install_type) == 1:
         check_server()
-        check_agent()
         check_receiver()
         choose_db()
         setup_server()
-        setup_core()
         setup_receiver()
         setup_agent()
     elif int(install_type) == 2:
@@ -1680,22 +1346,22 @@ def main():
         check_receiver()
         choose_db()
         setup_server()
-        setup_core()
         setup_receiver()
     elif int(install_type) == 3:
         check_server()
         choose_db()
         setup_server()
-        setup_core()
     elif int(install_type) == 4:
         check_receiver()
         choose_db()
-        setup_core()
         setup_receiver()
     elif int(install_type) == 5:
-        check_agent()
-        setup_core()
         setup_agent()
+    elif int(install_type) == 6:
+        choose_db()
+        setup_server()
+    setup_core()
+
     logger.info('Writing Config to disk')
     write_config()
     logger.info('********************************************************************************************************')

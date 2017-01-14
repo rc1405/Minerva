@@ -29,7 +29,7 @@ import pymongo
 class Users(object):
 
     def __init__(self, minerva_core):
-        db_conf = minerva_core.conf['Webserver']['db']
+        db_conf = minerva_core.conf['Database']['db']
         db = minerva_core.get_db()
         #self.salt = db_conf['SECRET_KEY']
         self.users = db.users

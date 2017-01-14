@@ -1,0 +1,3 @@
+*.pyc
+bin/setup.log
+.git_old/

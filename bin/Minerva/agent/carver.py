@@ -26,7 +26,7 @@ from tempfile import NamedTemporaryFile
 import dpkt
 import pcap
 
-class carvePcap(object):
+class PCAPCarver(object):
     def __init__(self, config):
         self.config = config['pcap']
 
@@ -49,7 +49,7 @@ class carvePcap(object):
         open_pcap_file = pcap.pcap(pcap_file)
         open_pcap_file.setfilter(protocols[options['proto']])
         for ts, pkt in open_pcap_file:
-            if ts < int(event_time):
+            if ts < int(event_time) - 300:
                 continue
             if ts > int(thres_time):
                 return 'END', count

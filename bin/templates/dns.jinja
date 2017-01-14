@@ -58,14 +58,14 @@
                   <label>Start</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="start" type="text" class="form-control input-sm" data-field="datetime" {% if orig_search %}value="{{orig_search.start_epoch|epoch_to_datetime}}"{% endif %}/>
+                  <input name="start" type="text" class="form-control input-sm" data-field="datetime" {% if orig_search %}value="{{orig_search.start_time.strftime('%m-%d-%Y %H:%M:%S')}}"{% endif %}/>
                   <div id="dt_start"></div>
                 </div>          
                 <div class="col-xs-1">
                   <label>Stop</label>
                 </div>
                 <div class="col-xs-2">
-                  <input name="stop" type="text" class="form-control input-sm" data-field="datetime" {% if orig_search %}value="{{orig_search.stop_epoch|epoch_to_datetime}}"{% endif %}/>
+                  <input name="stop" type="text" class="form-control input-sm" data-field="datetime" {% if orig_search %}value="{{orig_search.stop_time.strftime('%m-%d-%Y %H:%M:%S')}}"{% endif %}/>
                   <div id="dt_stop"></div>
                 </div>
                 <div class="col-xs-1">
@@ -222,7 +222,7 @@
           {% for item in items_found %}
             {% set sn = item.document %}
             <tr data-id="{{item.ID}}">
-              <td class="text-center">{{ sn.timestamp|iso_to_utc }}</td>
+              <td class="text-center">{{ sn.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
               <td class="text-center">{{ sn.sensor }}</td>
               <td class="text-center">{{ sn.proto }}</td>
               <td class="text-center">{{ sn.src_ip }}</td>

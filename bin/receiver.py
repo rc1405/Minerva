@@ -22,62 +22,64 @@
 import os
 import time
 import sys
-import ssl
 import platform
-import json
 import subprocess
-from multiprocessing import Process, active_children, Lock
-from socket import socket, AF_INET, SOCK_STREAM
+import uuid
 
-import redis
-import M2Crypto
-import pymongo
-from pytz import timezone
-from dateutil.parser import parse
+from multiprocessing import Process, active_children, Lock
+from tempfile import NamedTemporaryFile
+
+import zmq
 
 from Minerva import core
-from Minerva.receiver import MongoInserter, AlertProcessor, PCAPprocessor, EventListener
-
-class putEvent(object):
-    def __init__(self, cur_config):
-        self.cur_config = cur_config
-        self.putter = self.redisEvents
-        self.r = redis.StrictRedis(host=cur_config['redis']['server'], port=cur_config['redis']['port'])
-        self.key = cur_config['redis']['event_key']
-
-    def redisEvents(self, event):
-        self.r.rpush(self.key, json.dumps(event))
-
+from Minerva.receiver import EventReceiver, EventPublisher, EventWorker, Watchlist
             
-def insert_data(minerva_core, process_lock, processor=False):
+def worker(minerva_core, cur_config, channels):
+    context = zmq.Context.instance()
+    log_client = minerva_core.get_socket(channels)
+    server = context.socket(zmq.PULL)
+    server.bind(channels['worker_main'])
+    update_lock = Lock()
+    watchlist = Watchlist()
+    action_fh, sig_fh = watchlist.update_yara(minerva_core, log_client)
+    worker_procs = []
+    do_update = False
     try:
-        if not processor:
-            while not process_lock.acquire(block=False):
-                time.sleep(2)
-            process_lock.release()
-        else:
-            process_lock.acquire()
-        inserter = MongoInserter(minerva_core, processor, process_lock)
-        inserter.insert_redis()
-    except:
-        return
-
-def receiver(minerva_core, pname, event_method):
-    try:
-        ip, port = pname.split('-')
-        listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['listen_ip'][ip]['receive_threads']))
-        proc = AlertProcessor(minerva_core, event_method)
-        listener.listener(pname, proc.process)
-    except:
-        return
-
-def pcap_receiver(minerva_core, pname):
-    try:
-        listener = EventListener(minerva_core, int(minerva_core.conf['Event_Receiver']['PCAP']['threads']))
-        proc = PCAPprocessor(minerva_core)
-        listener.listener(pname, proc.process)
-    except:
-        return
+        for wp in range(0,int(cur_config['worker_threads'])):
+            log_client.send_multipart(['DEBUG', 'Started Worker #%i' % wp])
+            worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+            worker.start()
+            worker_procs.append(worker)
+        while True:
+            for p in worker_procs:
+                if not p.is_alive():
+                    worker_procs.remove(p)
+                    worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+                    worker.start()
+                    p.join()
+                    worker_procs.append(worker)
+                    log_client.send_multipart(['ERROR', 'Worker thread crashed, restarting'])
+            if not do_update:
+                if server.poll(1000):
+                    server.recv()
+                    do_update = True
+            else: 
+                log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update started'])
+                update_lock.acquire()
+                watchlist.update_yara(minerva_core, log_client, action=action_fh, sig=sig_fh)
+                update_lock.release()
+                do_update = False
+                log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update finished'])
+            time.sleep(1)
+    except Exception as e:
+        print('{}: {}'.format(e.__class__.__name__,e))
+        log_client.send_multipart(['INFO', 'Receiver Workers Shutting down'])
+        for w in worker_procs:
+            w.terminate()
+        action_fh.close()
+        sig_fh.close()
+        server.close()
+        sys.exit()
 
 def genKey(cur_config, minerva_core):
     if not os.path.exists(os.path.dirname(cur_config['certs']['server_cert'])):
@@ -90,75 +92,118 @@ def genKey(cur_config, minerva_core):
 def checkCert(cur_config, minerva_core):
     db = minerva_core.get_db()
     certdb = db.certs
-    results = list(certdb.find({"type": "receiver", "ip": cur_config['PCAP']['ip'] }))
+    results = list(certdb.find({"type": "receiver" }))
     if len(results) == 0:
-        certdb.insert({"type": "receiver", "ip": cur_config['PCAP']['ip'], "cert": open(cur_config['certs']['server_cert'],'r').read() } )
-    else:
-        cert = results[0]['cert']
-        if cert != open(cur_config['certs']['server_cert'],'r').read():
-            print('Cert Changed')
-            certdb.update({"type": "receiver", "ip": cur_config['PCAP']['ip'] },{ "$set": { "cert": open(cur_config['certs']['server_cert'],'r').read() }})
+        if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
+            genKey(cur_config, minerva_core)
+        certdb.insert({
+            "SERVER": "receiver", 
+            "type": "receiver", 
+            "cert": open(cur_config['certs']['server_cert'],'r').read(), 
+            "key": open(cur_config['certs']['private_key']).read() 
+        } )
+    for i in cur_config['listen_ip']:
+        for p in cur_config['listen_ip'][i]['rec_ports']:
+            certdb.update({"SERVER": "receiver"}, { "$addToSet": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
+
     return
 
 
-def main():
+if __name__ == '__main__':
     minerva_core = core.MinervaConfigs()
     config = minerva_core.conf
     cur_config = config['Event_Receiver']
-    if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
-        genKey(cur_config, minerva_core)
+ 
+    base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+    channels = {
+        "worker": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "worker_main": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "pub": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "logger": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "receiver": {},
+    }
+
+
+    for i in cur_config['listen_ip']:
+        for p in cur_config['listen_ip'][i]['rec_ports']:
+            name = "%s-%s" % (i,p)
+            channels['receiver']["%s-%s" % (i,p)] = "ipc://%s/%s" % (base_dir, str(uuid.uuid4()))
+
     checkCert(cur_config, minerva_core)
-    event_method = putEvent(cur_config)
-    event_push = event_method.putter
+
     active_processes = []
-    log_procs = []
-    pcap_name = "%s-%s" % (cur_config['PCAP']['ip'], str(cur_config['PCAP']['port']))
-    pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
-    pcap_listener.start()
-    filter_processor = False
-    process_lock = Lock()
-    for lp in range(0,int(cur_config['insertion_threads'])):
-        if not filter_processor:
-            filter_processor = 'logger%s' % str(lp)
-            log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core,process_lock), kwargs=({'processor': True,}))
-        else:
-            log_proc = Process(name='logger' + str(lp), target=insert_data, args=(minerva_core,process_lock),)
-        log_proc.start()
-        log_procs.append(log_proc)
+
+    log_proc = core.MinervaLog(config, channels, 'receiver')
+    log_proc.start()
+
+    log_client = minerva_core.get_socket(channels)
+
+    pub_listener = EventPublisher(minerva_core, channels, cur_config)
+    pub_listener.start()
+    log_client.send_multipart(['DEBUG', 'Starting Receiver Publishing Process'])
+
+    time.sleep(2)
+
+    worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
+    worker_main.start()
+    log_client.send_multipart(['DEBUG', 'Starting Worker Thread Manager'])
+
+    worker_lock = Lock()
+
     try:
         for i in cur_config['listen_ip']:
-            for p in cur_config['listen_ip'][i]['ports']:
+            for p in cur_config['listen_ip'][i]['rec_ports']:
                 name = "%s-%s" % (i,p)
-    	        pr = Process(name=name, target=receiver, args=((minerva_core, name, event_method)))
+
+                pr = EventReceiver(name, minerva_core, channels)
                 pr.start()
+
                 active_processes.append(pr)
+                log_client.send_multipart(['DEBUG', 'Starting Receiver %s' % name])
+        log_client.send_multipart(['INFO', 'Receiver Processes Started'])
         while True:
             for p in active_processes:
                 if not p.is_alive():
                     active_processes.remove(p)
-                    pr = Process(name=p.name, target=receiver, args=((minerva_core, p.name, event_method)))
+                    p.join()
+                    pr = EventReceiver(p.name, minerva_core, channels)
+                    p.join()
                     pr.start()
                     active_processes.append(pr)
-            for lp in log_procs:
-                if not lp.is_alive():
-                    lp.terminate()
-                    log_procs.remove(lp)
-                    if lp.name == filter_processor:
-                        log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core,process_lock), kwargs=({'processor': True,}))
-                    else:
-                        log_proc = Process(name=lp.name, target=insert_data, args=(minerva_core,process_lock),)
-                    log_proc.start()
-                    log_procs.append(log_proc)
-            if not pcap_listener.is_alive():
-                pcap_listener.join()
-                pcap_listener = Process(name=pcap_name, target=pcap_receiver, args=(minerva_core, pcap_name))
-                pcap_listener.start()
+                    log_client.send_multipart(['ERROR', 'Receiver %s crashed, restarting' % p.name])
+            if not pub_listener.is_alive():
+                pub_listener.join()
+                pub_listener = EventPublisher(minerva_core, channels, cur_config)
+                pub_listener.start()
+                log_client.send_multipart(['ERROR', 'Receiver Publishing Process crashed, restarting'])
+            if not worker_main.is_alive():
+                worker_main.join()
+                worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
+                worker_main.start()
+                log_client.send_multipart(['ERROR', 'Worker Thread Manager crashed, restarting'])
+            if not log_proc.is_alive():
+                log_proc.join()
+                log_proc = core.MinervaLog(config, channels)
+                log_proc.start()
+                log_client.send_multipart(['ERROR', 'Logging Process crashed, restarting'])
             time.sleep(1)
     except:
+        log_client.send_multipart(['INFO', 'Receiver Processes Shutting down'])
         for p in active_processes:
             p.terminate()
-        for l in log_procs:
-            l.terminate()
-        pcap_listener.terminate()
+            log_client.send_multipart(['DEBUG', 'Terminating Process %s' % p.name])
+        pub_listener.terminate()
+        log_client.send_multipart(['DEBUG', 'Terminating Receiver Publishing Process'])
+        worker_main.terminate()
+        log_client.send_multipart(['DEBUG', 'Terminating Worker Thread Manager'])
+        for i in channels['receiver']:
+            if os.path.exists(channels['receiver'][i][6:]):
+                os.remove(channels['receiver'][i][6:])
+        del channels['receiver']
+        for i in channels.keys():
+            if os.path.exists(channels[i][6:]):
+                os.remove(channels[i][6:])
+        log_client.send_multipart(['DEBUG', 'Terminating Logging Thread'])
+        log_client.send_multipart(['KILL', 'Stop Logger thread'])
         sys.exit()
-main()

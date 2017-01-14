@@ -37,7 +37,6 @@ class alert_console(object):
     def map_alerts(self, item):
         ret_dict = {}
         ret_dict['ID'] = item.pop('_id')
-        ret_dict['epoch'] = item.pop('epoch')
         ret_dict['document'] = item
         return ret_dict
 
@@ -200,82 +199,28 @@ class alert_console(object):
                 event_search['MINERVA_STATUS'] = request['status']
 
             if len(request['start']) > 0:
-                start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
+                start_time = datetime.datetime.strptime(request['start'], '%m-%d-%Y %H:%M:%S')
 
             else:
-                start_epoch = 0
+                start_time = datetime.datetime.utcnow() - datetime.timedelta(seconds=600)
 
             if len(request['stop']) > 0:
-                stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+                stop_time = datetime.datetime.strptime(request['stop'], '%m-%d-%Y %H:%M:%S')
 
             else:
-                stop_epoch = 0
-
-            if start_epoch == 0 and stop_epoch == 0:
-                start_epoch = time.time() - 600
-                stop_epoch = time.time()
-
-            elif start_epoch == 0 and stop_epoch > 0:
-                start_epoch = stop_epoch - 600
-
-            elif start_epoch > 0 and stop_epoch == 0:
-                if (start_epoch + 600) > time.time():
-                    stop_epoch = time.time()
-
-                else:
-                    stop_epoch = start_epoch + 600
+                stop_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=600)
 
         else:
             event_search = request
-            stop_epoch = event_search.pop('stop_epoch')
-            start_epoch = event_search.pop('start_epoch')
-
-        '''results_found = self.alerts.aggregate([ { "$match":
-            { "$and": [
-                event_search,
-                    { "$and": [
-                        { "epoch": { "$gt": start_epoch }},
-                        { "epoch": { "$lt": stop_epoch }},
-                    ] },
-                ]}
-            },
-            { "$project": { 
-                "ID": "$_id", 
-                "severity": "$alert.severity", 
-                "epoch": "$epoch", 
-                "document": {
-                    "timestamp": "$timestamp", 
-                    "src_ip": "$src_ip", 
-                    "src_port": "$src_port", 
-                    "proto": "$proto", 
-                    "alert": { 
-                        "signature": "$alert.signature", 
-                        "category": "$alert.category", 
-                        "severity": "$alert.severity", 
-                        "signature_id": "$alert.signature_id", 
-                        "rev": "$alert.rev", 
-                        "gid": "$alert.gid"
-                    }, 
-                    "sensor": "$sensor", 
-                    "dest_ip": "$dest_ip", 
-                    "dest_port": "$dest_port",
-                    "MINERVA_STATUS": "$MINERVA_STATUS"
-                    }
-                }
-            },
-            { "$sort": { 
-                "ID": 1 
-                }
-            }, 
-            { "$limit": self.sizeLimit }
-            ])'''
+            stop_time = event_search.pop('stop_time')
+            start_time = event_search.pop('start_time')
 
         results = self.alerts.find(
             { "$and": [
                 event_search,
                 { "$and": [
-                    { "epoch": { "$gt": start_epoch }},
-                    { "epoch": { "$lt": stop_epoch }},
+                    { "timestamp": { "$gt": start_time }},
+                    { "timestamp": { "$lt": stop_time }},
                 ]},
               ]}
             ).sort([("_id", pymongo.ASCENDING)]).limit(self.sizeLimit)
@@ -283,7 +228,7 @@ class alert_console(object):
         numFound = results.count()
         results_found = map(self.map_alerts, results)
 
-        event_search['start_epoch'] = start_epoch
-        event_search['stop_epoch'] = stop_epoch
+        event_search['start_time'] = start_time
+        event_search['stop_time'] = stop_time
 
         return numFound, results_found, event_search

@@ -5,10 +5,9 @@ python-dateutil
 M2Crypto
 cherrypy
 pytz
-hashlib
 markupsafe
 dpkt
 pypcap
-numpy
 netaddr
-redis
+pyzmq
+yara-python

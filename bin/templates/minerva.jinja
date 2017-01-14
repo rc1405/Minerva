@@ -17,19 +17,39 @@
 
     Author: Ryan M Cote <minervaconsole@gmail.com>
 #}
-{%- if 'Webserver' in config %}
-Webserver:
+{%- if 'Database' in config %}
+Database:
   db:
-    url: {{config.Webserver.db.url}}
-    port: {{config.Webserver.db.port}}
-    useAuth: {{config.Webserver.db.useAuth}}
-    AuthType: {{config.Webserver.db.AuthType}}
-    username: {{config.Webserver.db.username}}
-    password: {{config.Webserver.db.password}}
-    PW_Mechanism: {{config.Webserver.db.PW_Mechanism}}
-    auth_cert: {{config.Webserver.db.auth_cert}}
-    auth_ca: {{config.Webserver.db.auth_ca}}
-    SESSION_KEY: "{{config.Webserver.db.SESSION_KEY}}"
+    url: {{config.Database.db.url}}
+    port: {{config.Database.db.port}}
+    useSSL: {{ config.Database.db.useSSL }}
+    {%- if config.Database.db.useSSL %}
+    ssl_certfile: {{ config.Database.db.ssl_certfile }}
+    ssl_ca_certs: {{ config.Database.db.ssl_ca_certs }}
+    {%- endif %}
+    useAuth: {{config.Database.db.useAuth}}
+    {%- if config.Database.db.useAuth %}
+    AuthType: {{config.Database.db.AuthType}}
+    {%- if config.Database.db.AuthType == 'X509' %}
+    x509Subject: {{ config.Database.db.x509Subject }}
+    auth_cert: {{config.Database.db.auth_cert}}
+    {%- else  %}
+    username: {{config.Database.db.username}}
+    password: {{config.Database.db.password}}
+    PW_Mechanism: {{config.Database.db.PW_Mechanism}}
+    {%- endif %}
+    {%- endif %}
+    SESSION_KEY: "{{config.Database.db.SESSION_KEY}}"
+  events:
+    max_age: {{config.Database.events.max_age}}
+    flow_max_age: {{config.Database.events.flow_max_age}}
+    dns_max_age: {{config.Database.events.dns_max_age}}
+    temp_filter_age: {{config.Database.events.temp_filter_age}}
+
+{%- endif %}
+{%- if 'Webserver' in config %}
+{%- if config.Webserver.web.keys() |length > 1 %}
+Webserver:
   web:
     hostname: {{config.Webserver.web.hostname}}
     bindIp: {{config.Webserver.web.bindIp}}
@@ -39,6 +59,7 @@ Webserver:
     certs:
       webserver_cert: {{config.Webserver.web.certs.webserver_cert}}
       webserver_key: {{config.Webserver.web.certs.webserver_key}}
+    motd: {{config.Webserver.web.motd}}
     session_timeout: {{config.Webserver.web.session_timeout}}
     password_requirements:
       password_tries: {{config.Webserver.web.password_requirements.password_tries}}
@@ -50,75 +71,52 @@ Webserver:
       special_count: {{ config.Webserver.web.password_requirements.special_count }}
   events:
     maxResults: {{config.Webserver.events.maxResults}}
-    max_age: {{config.Webserver.events.max_age}}
-    flow_max_age: {{config.Webserver.events.flow_max_age}}
-    dns_max_age: {{config.Webserver.events.dns_max_age}}
-    temp_filter_age: {{config.Webserver.events.temp_filter_age}}
+{%- endif %}
 {%- endif %}
 {%- if 'Event_Receiver' in config %}
 Event_Receiver:
   listen_ip:
     {%- for ip in config.Event_Receiver.listen_ip.keys() %}
     {{ip}}:
-         ports:
-             {%- for port in config.Event_Receiver.listen_ip[ip]['ports'] %}
+         pub_port: {{config.Event_Receiver.listen_ip[ip]['pub_port']}}
+         rec_ports:
+             {%- for port in config.Event_Receiver.listen_ip[ip]['recv_ports'] %}
              - {{port}}
              {%- endfor %}
-         receive_threads: {{config.Event_Receiver.listen_ip[ip]['receive_threads']}}
          {%- endfor %}
-  listener_timeout: {{config.Event_Receiver.listener_timeout}}
-  insertion_threads: {{config.Event_Receiver.insertion_threads}}
-  insertion_batch: {{config.Event_Receiver.insertion_batch}}
-  insertion_wait: {{config.Event_Receiver.insertion_wait}}
-  filter_wait: {{config.Event_Receiver.filter_wait}}
-  redis:
-    enabled: {{config.Event_Receiver.redis.enabled}}
-    event_key: {{config.Event_Receiver.redis.event_key}}
-    filter_key: {{config.Event_Receiver.redis.filter_key}}
-    filtercheck_key: {{config.Event_Receiver.redis.filtercheck_key}}
-    watchlist_key: {{config.Event_Receiver.redis.watchlist_key}}
-    watchcheck_key: {{config.Event_Receiver.redis.watchcheck_key}}
-    server: {{config.Event_Receiver.redis.server}}
-    port: {{config.Event_Receiver.redis.port}}
+  worker_threads: {{config.Event_Receiver.worker_threads}}
+  watchlist_update_sec: {{config.Event_Receiver.watchlist_update}}
   certs:
     server_cert: {{config.Event_Receiver.certs.server_cert}}
     private_key: {{config.Event_Receiver.certs.private_key}}
-  PCAP:
-    ip: {{config.Event_Receiver.PCAP.ip}}
-    port: {{ config.Event_Receiver.PCAP.port}}
-    threads: {{ config.Event_Receiver.PCAP.threads}}
-    timeout: {{ config.Event_Receiver.PCAP.timeout}}
 {%- endif %}
 {%- if 'Agent_forwarder' in config %}
 Agent_forwarder:
   sensor_name: {{config.Agent_forwarder.sensor_name}}
   client_cert: {{config.Agent_forwarder.client_cert}}
   client_private: {{config.Agent_forwarder.client_private}}
-  redis:
-    enabled: {{config.Agent_forwarder.redis.enabled}}
-    key: {{config.Agent_forwarder.redis.key}}
-    server: {{config.Agent_forwarder.redis.server}}
-    port: {{config.Agent_forwarder.redis.port}}
   logfiles:
     {%- for lf in config.Agent_forwarder.logfiles %}
     {{lf}}:
-      {% for i in config.Agent_forwarder.logfiles[lf].keys() %}
+      {%- for i in config.Agent_forwarder.logfiles[lf].keys() %}
       {{i}}: {{config.Agent_forwarder.logfiles[lf][i]}}
-      {% endfor %}
-      {#type: {{config.Agent_forwarder.logfiles[lf]['type']}}
-      {% if config.Agent_forwarder.logfiles[lf]['type'] in ['suricata-redis-channel','suricata-redis-list'] %}
-      channel: {{config.Agent_forwarder.logfiles[lf]['channel']}}
-      {% else %}
-      position_file: {{config.Agent_forwarder.logfiles[lf]['position_file']}}
-      {% endif %}#}
+      {%- endfor %}
     {%- endfor %}
-  target_addr:
-    server_cert: {{config.Agent_forwarder.target_addr.server_cert}}
-    destination: {{config.Agent_forwarder.target_addr.destination}}
-    port: {{config.Agent_forwarder.target_addr.port}}
-    send_batch: {{config.Agent_forwarder.target_addr.send_batch}}
-    send_wait: {{config.Agent_forwarder.target_addr.send_wait}}
-    fail_wait: {{config.Agent_forwarder.target_addr.fail_wait}}
+  subscriptions:
+    {% for dest in config.Agent_forwarder.destinations.keys() %}
+    {{dest}}: {{config.Agent_forwarder.destinations[dest]['sub_port']}}
+    {%- endfor %}
+  publishers:
+    {%- for dest in config.Agent_forwarder.destinations.keys() %}
+    {{dest}}:
+        {%- for port in config.Agent_forwarder.destinations[dest]['pub_ports'] %}
+        - {{port}}
+        {%- endfor %}
+    {%- endfor %}
+  send_batch: {{config.Agent_forwarder.send_batch}}
+  send_wait: {{config.Agent_forwarder.send_wait}}
+  fail_wait: {{config.Agent_forwarder.fail_wait}}
+  worker_threads: {{ config.Agent_forwarder.worker_threads }}
   pcap:
     max_packets: {{config.Agent_forwarder.pcap.max_packets}}
     max_size: {{config.Agent_forwarder.pcap.max_size}}
@@ -128,8 +126,9 @@ Agent_forwarder:
     suffix: {{ config.Agent_forwarder.pcap.suffix}}
     pcap_directory: {{ config.Agent_forwarder.pcap.pcap_directory }}
     temp_directory: {{ config.Agent_forwarder.pcap.temp_directory }}
-  listener:
-    ip: {{ config.Agent_forwarder.listener.ip }}
-    port: {{ config.Agent_forwarder.listener.port }}
-    threads: {{ config.Agent_forwarder.listener.threads }}
 {%- endif %}
+Logger:
+  logDir: {{config.Logger.directory}}
+  level: {{config.Logger.level}}
+  maxSize: {{config.Logger.size}}
+  maxCount: {{config.Logger.count}}

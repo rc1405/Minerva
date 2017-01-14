@@ -26,11 +26,17 @@ import pymongo
 class sensors(object):
     def __init__(self, minerva_core):
         db = minerva_core.get_db()
-        self.collection = db.sensors
+        self.collection = db.certs
         self.sizeLimit = minerva_core.conf['Webserver']['events']['maxResults']
 
+    def map_sensors(self, sensor):
+        ID = sensor.pop('_id')
+        sensor['ID'] = ID
+        return sensor
+
     def get_sensors(self):
-        items_found = self.collection.aggregate([{ "$match": { "STATUS": { "$in": ["NOT_APPROVED","CERT_CHANGED","APPROVED","_DENIED","RECEIVER_CHANGED","IP_CHANGED"]} } }, { "$project": { "ID": "$_id", "STATUS": "$STATUS", "document": "$$ROOT" }},{ "$sort": { "STATUS": -1 }},{ "$limit": self.sizeLimit } ] )
+        items_found = map(self.map_sensors, self.collection.find({"type": "sensor"} ).sort([("STATUS", pymongo.DESCENDING)]).limit(self.sizeLimit))
+
         return items_found
     def update(self, sensors, action):
         for s in sensors:

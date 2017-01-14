@@ -87,3 +87,26 @@ See examples/example_agent.service for a sample systemd service file
 
 ###How To Access
 Now that Minerva-IDS is up in running, open up your web browser and navigate to https://$SERVER_IP:$SERVER_PORT  where $SERVER_IP and $SERVER_PORT are the webserver inputs specified during setup.  Chrome and Firefox have been tested, all others are not supported.
+
+##MongoDB Cluster Setup
+###Required Shard Keys if using a MongoDB Sharded Setup
+####alerts
+{ _id: "hashed" }
+####flow
+{ _id: "hashed" }
+####dns
+{ _id: "hashed" }
+####certs
+{ "SERVER": "hashed" }
+####keys
+{ "SERVER": "hashed" }
+####filters
+{ _id: "hashed" }
+####users
+{ "USERNAME": "hashed" }
+####sessions
+{ "session_id": "hashed" }
+####watchlist
+ { "type": "hashed" }
+####signatures
+{ "sig_id": 1, "gen_id": 1, "rev": 1 }

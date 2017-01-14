@@ -20,6 +20,7 @@
 
 import bson
 import time
+import datetime
 
 import pymongo
 
@@ -37,39 +38,101 @@ class alert_flow(object):
         results_found = []
 
         for ID in IDs:
-            results = self.alerts.aggregate([ { "$match": { "_id": bson.objectid.ObjectId(ID) }}, { "$project": { "document": "$$ROOT"}}])
+            orig_alert = self.alerts.find_one({ "_id": bson.objectid.ObjectId(ID) })
+           
+            try:
+                decoded_packets = orig_alert['payload'].decode('base64')
+            except:
+                try:
+                    decoded_packets = orig_alert['packet'].decode('base64')
+                except:
+                    decoded_packets = False
+            if decoded_packets:
+                hex_dump = []
+                hex_packet = ""
+                asc = ''
+                for i in range(1, len(decoded_packets), 1):
+                    if 1 == i % 32:
+                        hex_dump.append( hex_packet +  "     " + asc + "\n")
+                        hex_packet = "%04X: " % (i-1)
+                        asc = ''
+                    pos = ord(decoded_packets[i-1:i])
+                    hex_packet = hex_packet + "%02X " % pos
+                    if pos >= 32 and pos <=126:
+                        asc = asc + str(decoded_packets[i-1:i])
+                    else:
+                        asc = asc + "."
+                end_int = i
+                if len(hex_packet) > 0:
+                    if len(decoded_packets) > 31:
+                        end_int += 1
+                        while 1 != end_int % 32:
+                            hex_packet = hex_packet + "   "
+                            end_int += 1
+                    hex_dump.append(hex_packet + "     " + asc + "\n")
+                orig_alert['hex'] = hex_dump            
+            else:
+                orig_alert['hex'] = []
+
             flow_results = []
 
-            for orig_alert in results:
-                src_ip = orig_alert['document']['src_ip']
-                src_port = orig_alert['document']['src_port']
-                dest_ip =orig_alert['document']['dest_ip']
-                dest_port = orig_alert['document']['dest_port']
-                proto = orig_alert['document']['proto']
-                epoch = orig_alert['document']['epoch']
-                start_epoch = int(epoch) - 300
-                stop_epoch = int(epoch) + 300
+            src_ip = orig_alert['src_ip']
+            try:
+                src_port = orig_alert['src_port']
+                dest_port = orig_alert['dest_port']
+                dest_ip =orig_alert['dest_ip']
+                proto = orig_alert['proto']
+                timestamp = orig_alert['timestamp']
+                start_time = timestamp - datetime.timedelta(seconds=300)
+                stop_time = timestamp + datetime.timedelta(seconds=300)
                 flow_results = self.flow.aggregate([ { "$match": 
-                        { "$and": [
-                        { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
-                        { "$or": [
-                        { "$and": [
-                        { "netflow.start_epoch": { "$gt": start_epoch }},
-                        { "netflow.start_epoch": { "$lt": stop_epoch }},
-                        ] },
-                        { "$and": [
-                        {"netflow.stop_epoch": { "$gt": start_epoch }},
-                        {"netflow.stop_epoch": { "$lt": stop_epoch }},
-                        ] },
-                        { "$and": [
-                        {"netflow.start_epoch": { "$lt": start_epoch }},
-                        {"netflow.stop_epoch": { "$gt": stop_epoch }},
-                        ]}
-                        ]}
-                        ]}}, 
-                        { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+                    { "$and": [
+                    { "src_ip": src_ip, "src_port": src_port, "dest_ip": dest_ip, "dest_port": dest_port, "proto": proto },
+                    { "$or": [
+                    { "$and": [
+                    { "netflow.start": { "$gt": start_time }},
+                    { "netflow.start": { "$lt": stop_time }},
+                    ] },
+                    { "$and": [
+                    {"netflow.end": { "$gt": start_time }},
+                    {"netflow.end": { "$lt": stop_time }},
+                    ] },
+                    { "$and": [
+                    {"netflow.start": { "$lt": start_time }},
+                    {"netflow.end": { "$gt": stop_time }},
+                    ]}
+                    ]}
+                    ]}}, 
+                    { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
 
-                results_found.append({ 'id': ID, 'sessions': flow_results, 'origin': orig_alert })
+            except KeyError:
+                dest_ip =orig_alert['dest_ip']
+                proto = orig_alert['proto']
+                timestamp = orig_alert['timestamp']
+                start_time = timestamp - datetime.timedelta(seconds=300)
+                stop_time = timestamp + datetime.timedelta(seconds=300)
+                flow_results = self.flow.aggregate([ { "$match":
+                    { "$and": [
+                    { "src_ip": src_ip, "dest_ip": dest_ip, "proto": proto },
+                    { "$or": [
+                    { "$and": [
+                    { "netflow.start": { "$gt": start_time }},
+                    { "netflow.start": { "$lt": stop_time }},
+                    ] },
+                    { "$and": [
+                    {"netflow.end": { "$gt": start_time }},
+                    {"netflow.end": { "$lt": stop_time }},
+                    ] },
+                    { "$and": [
+                    {"netflow.start": { "$lt": start_time }},
+                    {"netflow.end": { "$gt": stop_time }},
+                    ]}
+                    ]}
+                    ]}},
+                    { "$project": { "ID": "$_id", "document": "$$ROOT"}},{ "$sort": { "ID": 1 }}, { "$limit": self.sizeLimit }])
+
+            results_found.append({ 'id': ID, 'sessions': flow_results, 'origin': orig_alert })
+
 
         return results_found
         
@@ -138,51 +201,37 @@ class alert_flow(object):
                         return 'Protocol not found', event_search
 
             if len(request['start']) > 0:
-                 start_epoch = time.mktime(time.strptime(request['start'], '%m-%d-%Y %H:%M:%S'))
+                start_time = datetime.datetime.strptime(request['start'], '%m-%d-%Y %H:%M:%S')
 
             else:
-                 start_epoch = 0
-                 
+                start_time = datetime.datetime.utcnow() - datetime.timedelta(seconds=600)
+
             if len(request['stop']) > 0:
-                 stop_epoch = time.mktime(time.strptime(request['stop'], '%m-%d-%Y %H:%M:%S'))
+                stop_time = datetime.datetime.strptime(request['stop'], '%m-%d-%Y %H:%M:%S')
 
             else:
-                 stop_epoch = 0
-             
-            if start_epoch == 0 and stop_epoch == 0:
-                 start_epoch = time.time() - 600
-                 stop_epoch = time.time()
-
-            elif start_epoch == 0 and stop_epoch > 0:
-                 start_epoch = stop_epoch - 600
-
-            elif start_epoch > 0 and stop_epoch == 0:
-                 if (start_epoch + 600) > time.time():
-                     stop_epoch = time.time()
-
-                 else:
-                     stop_epoch = start_epoch + 600
+                stop_time = datetime.datetime.utcnow() + datetime.timedelta(seconds=600)
 
         else:
             event_search = request
-            stop_epoch = event_search.pop('stop_epoch')
-            start_epoch = event_search.pop('start_epoch')
+            stop_time = event_search.pop('stop_time')
+            start_time = event_search.pop('start_time')
                      
         results = self.flow.find(
           { '$and': [
              event_search,
              { '$or': [
                 { '$and': [
-                  { 'netflow.start_epoch': { '$gt': start_epoch }},
-                  { 'netflow.start_epoch': { '$lt': stop_epoch }}
+                  { 'netflow.start': { '$gt': start_time }},
+                  { 'netflow.start': { '$lt': stop_time }}
                 ]},
                 { '$and': [
-                  { 'netflow.stop_epoch': { '$gt': start_epoch }},
-                  { 'netflow.stop_epoch': { '$lt': stop_epoch }}
+                  { 'netflow.end': { '$gt': start_time }},
+                  { 'netflow.end': { '$lt': stop_time }}
                 ]},
                 { '$and': [
-                  { 'netflow.start_epoch': { '$lt': start_epoch }},
-                  { 'netflow.stop_epoch': { '$gt': stop_epoch }}
+                  { 'netflow.start': { '$lt': start_time }},
+                  { 'netflow.end': { '$gt': stop_time }}
                 ]}
             ]}
           ]}).sort([("_id", pymongo.ASCENDING)]).limit(self.sizeLimit)
@@ -190,8 +239,8 @@ class alert_flow(object):
         numFound = results.count()
         results_found = map(self.map_flow, results)
         
-        event_search['start_epoch'] = start_epoch
-        event_search['stop_epoch'] = stop_epoch
+        event_search['start_time'] = start_time
+        event_search['stop_time'] = stop_time
         
         return numFound, results_found, event_search
 

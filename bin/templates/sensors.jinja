@@ -59,7 +59,7 @@
             <th>Time Created</th>
             <th>Last Modified</th>
             <th>Sensor</th>
-            <th>Sensor IP</th>
+            <th>Last Event</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -78,14 +78,18 @@
 	</table><br />
 	<strong>No Results Found</strong>
 	{% else %}
-        {% set status_class = { "_DENIED": "minerva-danger", "IP_CHANGED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGED": "minerva-warning", "RECEIVER_CHANGED": "minerva-warning", "APPROVED": "minerva-success" } %}
+        {% set status_class = { "_DENIED": "minerva-danger", "IP_CHANGED": "minerva-danger", "NOT_APPROVED": "minerva-alert", "CERT_CHANGED": "minerva-warning", "CERT_COPIED": "minerva-warning", "RECEIVER_CHANGED": "minerva-warning", "APPROVED": "minerva-success" } %}
         <tbody>
 	{% for item in items_found %}
         <tr class={{status_class[item.STATUS]}} data-id="{{item.ID}}">
-        <td>{{ item.document.time_created|iso_to_utc}}</td>
-        <td>{{ item.document.last_modified|iso_to_utc}}</td>
-        <td>{{ item.document.SERVER }}</td>
-        <td>{{ item.document.IP }}</td>
+        <td>{{ item.time_created.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+        <td>{{ item.last_modified.strftime('%Y-%m-%d %H:%M:%S')}}</td>
+        <td>{{ item.SERVER }}</td>
+        {% if 'last_event' in item.keys() %}
+        <td>{{ item.last_event.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        {% else %}
+        <td></td>
+        {% endif %}
         <td>{{ item.STATUS }}</td></tr>
 	{% endfor %}
         </tbody>

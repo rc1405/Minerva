@@ -26,8 +26,8 @@ def _convertJSON(entry, sensor):
     try:
         new_entry = json.loads(entry)
 
-    except:
-        raise "Invalid JSON"
+    except ValueError:
+        return False
 
     new_entry['sensor'] = sensor
     new_entry['MINERVA_STATUS'] = 'OPEN'
@@ -40,21 +40,24 @@ class ConvertEve():
     def convert(self, entry):
         new_entry =  _convertJSON(entry, self.sensor)
 
-        if new_entry['event_type'] == 'flow':
-            flow = new_entry.pop('flow')
-            new_entry['netflow'] = flow
-            new_entry['logType'] = 'flow'
-
-        elif new_entry['event_type'] == 'alert':
-            new_entry['logType'] = 'alert'
-
-        elif new_entry['event_type'] == 'netflow':
-            new_entry['logType'] = 'flow'
-
-        elif new_entry['event_type'] == 'dns':
-            new_entry['logType'] = 'dns'
-
-        else:
+        try:
+            if new_entry['event_type'] == 'flow':
+                flow = new_entry.pop('flow')
+                new_entry['netflow'] = flow
+                new_entry['logType'] = 'flow'
+    
+            elif new_entry['event_type'] == 'alert':
+                new_entry['logType'] = 'alert'
+    
+            elif new_entry['event_type'] == 'netflow':
+                new_entry['logType'] = 'flow'
+    
+            elif new_entry['event_type'] == 'dns':
+                new_entry['logType'] = 'dns'
+    
+            else:
+                return False
+        except TypeError:
             return False
 
         return new_entry

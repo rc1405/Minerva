@@ -19,9 +19,20 @@
 '''
 
 import time
+import datetime
 
 from pytz import timezone
 from dateutil.parser import parse
+
+def datetime_to_iso(timestamp):
+    try:
+        return datetime.datetime.strftime("%m-%d-%Y %H:%M:%S",  timestamp)
+    except:
+        try:
+            ts = parse(timestamp)
+            return datetime.datetime.strftime("%m-%d-%Y %H:%M:%S", ts)
+        except:
+            return timestamp
 
 '''Function to convert timestamp from iso format to UTC'''
 def iso_to_utc(timestamp):
@@ -33,7 +44,8 @@ def iso_to_utc(timestamp):
 
     except:
        try:
-          ts = time.strftime("%a %b %d %H:%M:%S %Y", time.gmtime(float(timestamp)))
+          #ts = time.strftime("%a %b %d %H:%M:%S %Y", time.gmtime(float(timestamp)))
+          ts = time.strftime("%m-%d-%Y %H:%M:%S", time.gmtime(float(timestamp)))
           return ts
 
        except:
