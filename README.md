@@ -1,8 +1,6 @@
-# Development Branch!  Beta Build 1
-
 # Release Notes:
 
-## Version 0.2:
+## Version 2:
 * Complete overhaul of receiver and transport.  
     * Eliminated raw sockets and moved to utilizing ZeroMQ
     * Clean up of unneeded transformations and additions
