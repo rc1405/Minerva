@@ -442,8 +442,8 @@ class Minerva(object):
             raise cherrypy.HTTPError(403)
 
 
-    @cherrypy.expose
-    @cherrypy.tools.json_in()
+    #@cherrypy.expose
+    #@cherrypy.tools.json_in()
     def dns(self, **kwargs):
         user = Users(self.minerva_core)
 
