@@ -172,7 +172,7 @@ def setup_db_new(lite=False):
 
     while True:
         useAuth = raw_input('Use db authentication? Y/N [N] ')
-        if useAuth.lower() == 'y' or use_auth.lower() == 'n' or len(use_auth) == 0:
+        if useAuth.lower() == 'y' or useAuth.lower() == 'n' or len(useAuth) == 0:
             break
         else:
             print('Invalid db auth option')
