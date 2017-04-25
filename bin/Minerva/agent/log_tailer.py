@@ -51,7 +51,7 @@ class TailLog():
         event_queue = []
         queue_check = 0
         try:
-            def reset_file():
+            def reset_file(lfile):
                 self.logger.send_multipart(['DEBUG', "Agent log tailer resetting checkpoint for %s" % self.logFile])
                 lfile.close()
                 lfile = open(self.logFile,'r')
@@ -110,7 +110,7 @@ class TailLog():
                         act_inode = stat.st_ino
                         act_size = stat.st_size
                         if pos_inode != act_inode or act_size < pos_size:
-                            pos_inode, pos_size, pos = reset_file()
+                            pos_inode, pos_size, pos = reset_file(lfile)
                             cur_inode = pos_inode
                             cur_size = pos_size
                             count = 0
@@ -159,7 +159,7 @@ class TailLog():
                                 self.logger.send_multipart(['DEBUG', "Agent log tailer %s event queue emptied, writing checkpoint" % self.logFile])
                                 #print('event_queue flushed')
             else:
-                elf.logger.send_multipart(['ERROR', "Agent log tailer cannot open %s, file doesnt exist" % self.logFile])
+                self.logger.send_multipart(['ERROR', "Agent log tailer cannot open %s, file doesnt exist" % self.logFile])
         except:
             self.logger.send_multipart(['DEBUG', "Agent log tailer %s is closing" % self.logFile])
             sys.exit()
