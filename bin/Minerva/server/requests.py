@@ -204,7 +204,7 @@ class HandleRequests(object):
 
     def flowPCAP(self, events):
         #TODO Add loop around events
-        results = self.flow.find_one({ "_id": bson.objectid.ObjectId(events[0]) })
+        orig_alert = self.flow.find_one({ "_id": bson.objectid.ObjectId(events[0]) })
 
         options = {}
         options['src_ip'] = orig_alert['src_ip']
