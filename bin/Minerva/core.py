@@ -57,7 +57,7 @@ class MinervaConfigs():
                     client = pymongo.MongoClient(conn_str,
                                              ssl=True,
                                              ssl_cert_reqs=ssl.CERT_REQUIRED,
-                                             ssl_ca_certs=ssl_ca_certs)
+                                             ssl_ca_certs=db_conf['ssl_ca_certs'])
                 else:
                     client = pymongo.MongoClient(conn_str)
                 client.minerva.authenticate(db_conf['username'], password=db_conf['password'].decode('base64'), mechanism=db_conf['PW_Mechanism'])
