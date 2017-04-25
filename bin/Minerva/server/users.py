@@ -249,6 +249,7 @@ class Users(object):
 
             if oldhash == results[0]['PASSWORD']:
                 user_salt = uuid.uuid4().hex
+                newhash = hashlib.sha512(str(new_pw) + user_salt).hexdigest()
                 self.users.update({"USERNAME": username}, { "$set": { "PASSWORD": newhash, "pass_failed": 0, "PASSWORD_CHANGED": datetime.datetime.utcnow(), "SALT": user_salt }})
 
                 return "success"
