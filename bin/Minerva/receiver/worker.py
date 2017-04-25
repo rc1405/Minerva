@@ -29,9 +29,10 @@ import pymongo
 from pymongo.errors import BulkWriteError
 import zmq
 import yara
+import ujson
 #import threading
 import os
-from multiprocessing import Process
+from multiprocessing import Process, Event
 
 from pytz import timezone
 from dateutil.parser import parse
@@ -55,20 +56,30 @@ class EventWorker(Process):
         self.certs = db.certs
         self.keys = db.keys
         self.channels['context'] = zmq.Context()
+        self.stop = Event()
 
     def get_name(self):
-        return "Process %s" % self.name
+        return "Process {}".format(self.name)
+    
+    def refresh(self):
+        self.stop.set()
 
     def _decrypt_rsa(self, cert, enc_payload):
         CERT = M2Crypto.X509.load_cert_string(str(cert))
         PUBKEY = CERT.get_pubkey()
         RSA = PUBKEY.get_rsa()
         try:
-            dmesg = self.PRIVKEY.private_decrypt(enc_payload.decode('base64'), M2Crypto.RSA.pkcs1_padding).decode('base64')
+            dmesg = self.PRIVKEY.private_decrypt(
+                enc_payload.decode('base64'),
+                M2Crypto.RSA.pkcs1_padding).decode('base64')
+            
             dmesg = json.loads(dmesg)
             self.logger.send_multipart(['DEBUG','Worker RSA decryption success'])
         except:
-            self.logger.send_multipart(['DEBUG','Worker RSA decryption failure'])
+            self.logger.send_multipart([
+                'DEBUG',
+                'Worker RSA decryption failure for {}'.format(target)
+            ])
             return False
         return dmesg
 
@@ -78,9 +89,19 @@ class EventWorker(Process):
             self.logger.send_multipart(['DEBUG','Worker Webserver AES key exists'])
             aes_key = aes_key['KEY'].decode('base64')
         except:
-            self.logger.send_multipart(['DEBUG','Worker Webserver AES key does not exists, generating one'])
+            self.logger.send_multipart([
+                'DEBUG',
+                'Worker Webserver AES key does not exists, generating one'
+            ])
+            
             aes_key = os.urandom(32).encode('base64')
-            self.keys.update_one({"SERVER": "webserver"},{"$set": { "KEY": aes_key }}, upsert=True)
+            self.keys.update_one({
+                "SERVER": "webserver"
+                },{
+                "$set": { 
+                    "KEY": aes_key 
+                }
+            }, upsert=True)
 
         cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=aes_key, iv=aes_key, op=1)
         enc_payload = cipher.update(payload) + cipher.final()
@@ -114,12 +135,15 @@ class EventWorker(Process):
         self.logger = self.core.get_socket(self.channels)
         self.channels['context'] = zmq.Context()
         work = self.channels['context'].socket(zmq.PULL)
-        work_recv = work.recv_json
+        work_recv = work.recv
 
         for p in self.channels['receiver'].keys():
             work.connect(self.channels['receiver'][p])
 
-        self.logger.send_multipart(['DEBUG','Worker listening to %i receivers' % len(self.channels['receiver'])])
+        self.logger.send_multipart([
+            'DEBUG',
+            'Worker listening to {} receivers'.format(len(self.channels['receiver']))
+        ])
 
         publisher = self.channels['context'].socket(zmq.PUSH)
         publisher.connect(self.channels['pub'])
@@ -138,20 +162,34 @@ class EventWorker(Process):
         mongo = MongoInserter(self.core, self.channels)
         inserter = mongo.insert_data
 
-        watcher = EventWatch(self.core, self.channels, self.update_lock, self.action_file, self.sig_file)
+        watcher = EventWatch(
+            self.core,
+            self.channels,
+            self.update_lock,
+            self.action_file,
+            self.sig_file
+        )
         
         json_loads = json.loads
         json_dumps = json.dumps
+        m_load = ujson.loads
     
         count = 0
 
         while True:
             try:
-                msg = work_recv()
+                if self.stop.is_set():
+                    self.logger.send_multipart(['DEBUG','Worker received refresh signal'])
+                    sys.exit()
+                    
+                msg = m_load(work_recv())
                 ID = str(msg['_id'])
                 try:
                     if msg['_function'] == 'auth':
-                        self.logger.send_multipart(['DEBUG','Worker received auth from %s' % ID])
+                        self.logger.send_multipart([
+                            'DEBUG',
+                            'Worker received auth from {}'.format(ID)
+                        ])
                         is_auth = auth_check(ID, msg['_cert'])
                         work_send([ID, json.dumps({
                             "_cert": self.PUBCERT,
@@ -166,7 +204,11 @@ class EventWorker(Process):
                         denc_msg = self._decrypt_aes(is_auth, msg['_payload'])
                         try:
                             if denc_msg['_function'] == 'events':
-                                self.logger.send_multipart(['DEBUG','Worker is sending back ack to %s' % ID])
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Worker is sending back ack to {}'.format(ID)
+                                ])
+                                
                                 work_send([ID, json.dumps({
                                     "_message": self._encrypt_rsa(msg['_cert'], json_dumps({
                                        "_function": "events",
@@ -174,23 +216,58 @@ class EventWorker(Process):
                                     })),
                                 })])
 
-                                self.logger.send_multipart(['DEBUG','Worker Recieived events from %s' % ID])
-                                watch_events = inserter(ID, denc_msg['events'], watcher.filter_check)
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Worker Recieived events from {}'.format(ID)
+                                ])
+                                
+                                watch_events = inserter(
+                                    ID,
+                                    denc_msg['events'],
+                                    watcher.filter_check
+                                )
                                 self.logger.close(linger=1000)
                                 self.logger = self.core.get_socket(self.channels)
-                                self.logger.send_multipart(['DEBUG','Worker Recieived watch events from %s' % ID])
+                                
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Worker Recieived watch events from {}'.format(ID)
+                                ])
+                                
                                 watch_alerts = False
+                                
                                 if len(watch_events) > 0:
                                     watch_alerts = list(watcher.watch(watch_events))
-                                self.logger.send_multipart(['DEBUG','Worker has sent back ack to %s' % ID])
+                                    
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Worker has sent back ack to {}'.format(ID)
+                                ])
+                                
                                 if watch_alerts:
-                                    self.logger.send_multipart(['DEBUG','Worker has %i watchlist events from %s' % (len(watch_alerts), ID)])
-                                    watch_events = inserter('receiver', watch_alerts, watcher.filter_check)
+                                    self.logger.send_multipart([
+                                        'DEBUG',
+                                        'Worker has {} watchlist events from {}'.format(
+                                            len(watch_alerts), 
+                                            ID
+                                        )
+                                    ])
+                                    watch_events = inserter(
+                                        'receiver',
+                                        watch_alerts,
+                                        watcher.filter_check
+                                    )
 
 
                             elif denc_msg['_function'] == 'PCAP':
                                 if denc_msg['_action'] == 'request':
-                                    self.logger.send_multipart(['DEBUG','Worker received PCAP reqeust for %s' % str(denc_msg['target'])])
+                                    self.logger.send_multipart([
+                                        'DEBUG',
+                                        'Worker received PCAP reqeust for {}'.format(
+                                            str(denc_msg['target'])
+                                        )
+                                    ])
+                                    
                                     work_send([str(denc_msg['target']), json.dumps({
                                          "mid": denc_msg['target'], 
                                          "_payload": { 
@@ -204,14 +281,23 @@ class EventWorker(Process):
                                     })])
 
                                 elif denc_msg['_action'] == 'reply':
-                                    self.logger.send_multipart(['DEBUG','Worker received PCAP reply from %s' % ID])
+                                    self.logger.send_multipart([
+                                        'DEBUG',
+                                        'Worker received PCAP reply from {}'.format(ID)
+                                    ])
+                                    
                                     work_send([str(denc_msg['console']), json.dumps({
                                          "mid": denc_msg['console'], 
                                          "_payload": self._encrypt_aes_web(json_dumps(denc_msg)),
                                          "request_id": denc_msg['request_id'],
                                          "_function": "PCAP",
                                     })])
-                                    self.logger.send_multipart(['DEBUG','Worker sending PCAP ack to %s' % ID])
+                                    
+                                    self.logger.send_multipart([
+                                        'DEBUG',
+                                        'Worker sending PCAP ack to {}'.format(ID)
+                                    ])
+                                    
                                     work_send([ID, json.dumps({
                                         "_message": self._encrypt_rsa(msg['_cert'], json_dumps({
                                            "_function": "PCAP_ACK",
@@ -220,24 +306,42 @@ class EventWorker(Process):
                                     })])
 
                             elif denc_msg['_function'] == '_RECV_UPDATE':
-                                self.logger.send_multipart(['DEBUG','Worker received watchlist update notification'])
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Worker received watchlist update notification'
+                                ])
+                                
                                 receiver.send("UPDATE_YARA")
 
                             else:
-                                self.logger.send_multipart(['DEBUG','Worker received unrecognized function from %s' % ID])
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Worker received unrecognized function from {}'.format(ID)
+                                ])
+                                
                                 work_send([ID, json.dumps({
                                     "_function": "auth",
                                     "_cert": self.PUBCERT
                                 })])
+                                
                                 continue
                         except TypeError:
-                            self.logger.send_multipart(['ERROR','Worker received unauthorized event from %s' % ID])
+                            self.logger.send_multipart([
+                                'ERROR',
+                                'Worker received unauthorized event from {}'.format(ID)
+                            ])
+                            
                             work_send([ID, json.dumps({
                                 "_function": "auth",
                                 "_cert": self.PUBCERT
                             })])
+                            
                     else:
-                        self.logger.send_multipart(['ERROR','Worker received authorization failure from %s' % ID])
+                        self.logger.send_multipart([
+                            'ERROR',
+                            'Worker received authorization failure from {}'.format(ID)
+                        ])
+                        
                         work_send([ID, json.dumps({
                             "_function": "auth",
                             "_cert": self.PUBCERT
@@ -248,11 +352,21 @@ class EventWorker(Process):
                 #sys.exit()
 
             except ValueError:
-                self.logger.send_multipart(['DEBUG','Worker encountered ValueError exception from %s' % ID])
+                self.logger.send_multipart([
+                    'DEBUG',
+                    'Worker encountered ValueError exception from {}'.format(ID)
+                ])
+                
                 pass
+            
             except KeyError:
-                self.logger.send_multipart(['DEBUG','Worker encountered KeyError exception from %s' % ID])
+                self.logger.send_multipart([
+                    'DEBUG',
+                    'Worker encountered KeyError exception from {}'.format(ID)
+                ])
+                
                 pass
+            
             except KeyboardInterrupt:
                 self.logger.send_multipart(['DEBUG','Shutting down worker'])
                 sys.exit()
@@ -266,13 +380,18 @@ class MongoInserter(object):
         self.alerts = db.alerts
         self.flow = db.flow
         self.dns = db.dns
+        self.http = db.http
         self.certs = db.certs
 
     def insert_data(self, sensor, msg, filter_check):
-        self.logger.send_multipart(['DEBUG','Worker mongo processing events from %s' % sensor])
+        self.logger.send_multipart([
+            'DEBUG',
+            'Worker mongo processing events from {}'.format(sensor)
+        ])
         alert_events = []
         flow_events = []
         dns_events = []
+        http_events = []
         watch_events = []
 
         if len(msg) == 0:
@@ -283,17 +402,27 @@ class MongoInserter(object):
                 try:
                     event = json.loads(event)
                 except ValueError:
-                    self.logger.send_multipart(['DEBUG','Worker received Bad JSON event from %s' % sensor])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker received Bad JSON event from {}'.format(sensor)
+                    ])
                     continue
+                    
                 if isinstance(event, basestring):
                     try:
                         event = json.loads(event)
                     except:
-                        self.logger.send_multipart(['DEBUG','Worker received Bad JSON event from %s' % sensor])
+                        self.logger.send_multipart([
+                            'DEBUG',
+                            'Worker received Bad JSON event from {}'.format(sensor)
+                        ])
                         continue
+                        
             if sensor != 'receiver':
                 event['sensor'] = sensor
+                
             event['uuid'] = str(uuid.uuid4())
+            
             if event['logType'] == 'alert':
                 event['MINERVA_STATUS'] = 'OPEN'
                 event = filter_check(event)
@@ -318,6 +447,7 @@ class MongoInserter(object):
                             "dest_port": event['dest_port'], 
                             "type": "ip"
                         })
+                        
                     except KeyError:
                         watch_events.append( {
                             "sensor": sensor,
@@ -364,7 +494,6 @@ class MongoInserter(object):
                             "type": "ip"
                         })
 
-
             elif event['logType'] == 'dns':
                 timestamp = event['timestamp']
                 try:
@@ -374,6 +503,7 @@ class MongoInserter(object):
                 except:
                     continue
                 dns_events.append(event)
+                
                 dns_watch = {
                     "sensor": sensor, 
                     "uuid": event['uuid'], 
@@ -385,28 +515,85 @@ class MongoInserter(object):
                     "dest_port": event['dest_port'], 
                     "type": "ip"
                 }
+                
                 if event['dns']['type'] == 'answer':
                     if 'rdata' in event['dns']:
                         dns_watch['domain'] = event['dns']['rdata']
+                        
                 watch_events.append(dns_watch)
 
+            elif event['logType'] == 'http':
+                timestamp = event['timestamp']
+                try:
+                    ts = parse(timestamp)
+                    tz = timezone('UTC')
+                    event['timestamp'] = ts.astimezone(tz)
+                except:
+                    continue
+                
+                http_events.append(event)
+                
+                watch_events.append( {
+                    "sensor": sensor, 
+                    "uuid": event['uuid'], 
+                    "_function": "watchlist",
+                    "proto": event['proto'],
+                    "src_ip": event['src_ip'], 
+                    "src_port": event['src_port'], 
+                    "dest_ip": event['dest_ip'], 
+                    "dest_port": event['dest_port'], 
+                    "type": "ip"
+                })            
+                
         while True:
             try:
                 if len(alert_events) > 0:
                     self.alerts.insert_many(alert_events, ordered=False)
-                    self.logger.send_multipart(['DEBUG','Worker mongo inserting %i alert events from %s' % (len(alert_events), sensor)])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker mongo inserting {} alert events from {}'.format(
+                            len(alert_events),
+                            sensor
+                        )
+                    ])
                     alert_events = []
+                    
                 if len(flow_events) > 0:
                     self.flow.insert_many(flow_events, ordered=False)
-                    self.logger.send_multipart(['DEBUG','Worker mongo inserting %i flow events from %s' % (len(flow_events), sensor)])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker mongo inserting {} flow events from {}'.format(
+                            len(flow_events), 
+                            sensor
+                        )
+                    ])
                     flow_events = []
+                    
                 if len(dns_events) > 0:
                     self.dns.insert_many(dns_events, ordered=False)
-                    self.logger.send_multipart(['DEBUG','Worker mongo inserting %i dns events from %s' % (len(dns_events), sensor)])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker mongo inserting {} dns events from {}'.format(
+                            len(dns_events), 
+                            sensor
+                        )
+                    ])
                     dns_events = []
+                    
+                if len(http_events) > 0:
+                    self.http.insert_many(http_events, ordered=False)
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker mongo inserting {} http events from {}'.format(
+                            len(http_events), 
+                            sensor
+                        )
+                    ])
+                    http_events = []
 
-                if len(alert_events) + len(flow_events) + len(dns_events) == 0:
+                if len(alert_events) + len(flow_events) + len(dns_events) + len(http_events) == 0:
                     break
+                    
             except BulkWriteError:
                 continue
         try:
@@ -416,7 +603,6 @@ class MongoInserter(object):
                         "last_event":  datetime.datetime.utcnow()
                     }
                 })
-                #self.logger.send_multipart(['DEBUG','Worker mongo passing on %i events from %s for additional filtering' % (len(watch_events), sensor)])
 
         except Exception as e:
             #pass
@@ -437,24 +623,49 @@ class ClientAuth(object):
     def check(self, mid, cert):
         mid = mid.split('|-_')[0]
         sensor = self.certs.find_one({"SERVER": mid})
-        self.logger.send_multipart(['DEBUG','Worker starting authorization checks for %s' % mid])
+        self.logger.send_multipart([
+            'DEBUG',
+            'Worker starting authorization checks for {}'.format(mid)
+        ])
         try:
             if sensor['CERT'] == cert and sensor['STATUS'] == 'APPROVED':
-                self.logger.send_multipart(['DEBUG','Worker authorization success for %s' % mid])
+                self.logger.send_multipart([
+                    'DEBUG',
+                    'Worker authorization success for {}'.format(mid)
+                ])
                 aes_key = self.keys.find_one({"SERVER": mid})
                 if not aes_key:
-                    self.logger.send_multipart(['DEBUG','Worker generating AES key for %s' % mid])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker generating AES key for {}'.format(mid)
+                    ])
                     aes_key = os.urandom(32).encode('base64')
-                    self.keys.update_one({"SERVER": mid},{"$set": { "KEY": aes_key, "timestamp": datetime.datetime.utcnow() }}, upsert=True)
+                    self.keys.update_one({
+                        "SERVER": mid
+                        },{
+                        "$set": { 
+                            "KEY": aes_key, 
+                            "timestamp": datetime.datetime.utcnow() 
+                        }}, 
+                        upsert=True)
                     return aes_key
                 else:
-                    self.logger.send_multipart(['DEBUG','Worker AES key for %s exists' % mid])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker AES key for {} exists'.format(mid)
+                    ])
                     return aes_key['KEY']
             elif sensor['CERT'] == cert and sensor['STATUS'] != 'APPROVED':
-                self.logger.send_multipart(['DEBUG','Worker authorization failed for %s' % mid])
+                self.logger.send_multipart([
+                    'DEBUG',
+                    'Worker authorization failed for {}'.format(mid)
+                ])
                 return False
             elif sensor['CERT'] != cert:
-                self.logger.send_multipart(['DEBUG','Worker certificate changed for %s' % mid])
+                self.logger.send_multipart([
+                    'DEBUG',
+                    'Worker certificate changed for {}'.format(mid)
+                ])
                 self.certs.update({ "SERVER": mid }, {
                   "$set": {
                     "last_modified":  datetime.datetime.utcnow(),
@@ -466,10 +677,16 @@ class ClientAuth(object):
                 return False
             return False
         except TypeError:
-            self.logger.send_multipart(['DEBUG','Worker authorization failed for %s, checking cert' % mid])
+            self.logger.send_multipart([
+                'DEBUG',
+                'Worker authorization failed for {}, checking cert'.format(mid)
+            ])
             sensor = self.certs.find_one({"CERT": cert})
             if sensor:
-                self.logger.send_multipart(['ERROR','Worker certificate for %s matches existing entry' % mid])
+                self.logger.send_multipart([
+                    'ERROR',
+                    'Worker certificate for {} matches existing entry'.format(mid)
+                ])
                 self.certs.update({ "SERVER": mid }, {
                   "$set": {
                     "last_modified":  datetime.datetime.utcnow(),
@@ -487,7 +704,10 @@ class ClientAuth(object):
                   }
                 })
             else:
-                self.logger.send_multipart(['ERROR','Worker authorization failed for %s' % mid])
+                self.logger.send_multipart([
+                    'ERROR',
+                    'Worker authorization failed for {}'.format(mid)
+                ])
                 self.certs.update({ "SERVER": mid }, {
                   "$set": {
                     "time_created":  datetime.datetime.utcnow(),
@@ -507,7 +727,7 @@ class EventWatch(object):
         db = minerva_core.get_db()
         self.dns = db.dns
         self.alerts = db.alerts
-        #setup YARA settings
+        # setup YARA settings
         self.update_lock = update_lock
         self.action_file = action_file
         self.sig_file = sig_file
@@ -523,7 +743,10 @@ class EventWatch(object):
             self.action = yara.compile(self.sig_file)
             self.update_lock.release()
             self.last_update = int(time.time())
-            self.logger.send_multipart(['DEBUG','Worker completed updating watchlist and rule filters'])
+            self.logger.send_multipart([
+                'DEBUG',
+                'Worker completed updating watchlist and rule filters'
+            ])
         return
 
     def watch(self, events):
@@ -536,7 +759,10 @@ class EventWatch(object):
                     cat, hit = str(a).split('__')
                     alert_type, priority = cat.split('_')
                     match = hit.replace('_','.')
-                    self.logger.send_multipart(['DEBUG','Worker received watchlist hit from %s' % event['sensor']])
+                    self.logger.send_multipart([
+                        'DEBUG',
+                        'Worker received watchlist hit from {}'.format(event['sensor'])
+                    ])
                     yield self.fire_alert(event, match, alert_type, priority)
 
     def filter_check(self, event):
@@ -544,7 +770,10 @@ class EventWatch(object):
             self.update_yara()
         matches = self.action.match(data=json.dumps(event))
         if matches:
-            self.logger.send_multipart(['DEBUG','Worker received rule filter match from %s' % event['sensor']])
+            self.logger.send_multipart([
+                'DEBUG',
+                'Worker received rule filter match from {}'.format(event['sensor'])
+            ])
             for m in matches:
                 rule = str(m).split('__')
                 if rule[0] == 'P':
@@ -580,7 +809,7 @@ class EventWatch(object):
                 "severity" : int(priority),
                 "rev" : 1,
                 "gid" : 999,
-                "signature" : "Minerva Watchlist %s - %s" % (alert_type, match),
+                "signature" : "Minerva Watchlist {} - {}".format(alert_type, match),
                 "signature_id" : 9000000
             },
             "src_ip" : event['src_ip'],
