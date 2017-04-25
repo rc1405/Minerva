@@ -37,7 +37,7 @@ class dns(object):
         results_found = []
 
         for ID in IDs:
-            results = self.alerts.find_one({ "_id": bson.objectid.ObjectId(ID) })
+            orig_alert = self.alerts.find_one({ "_id": bson.objectid.ObjectId(ID) })
             flow_results = []
 
             src_ip = orig_alert['src_ip']
