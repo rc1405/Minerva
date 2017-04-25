@@ -47,6 +47,12 @@ def tailFile(cur_config, minerva_core, fname, channels):
     log_client.send_multipart(['DEBUG', 'Reading log file %s with type %s' % (fname, ftype)])
 
     if ftype == 'suricata-redis-list':
+        try:
+            import redis
+        except ImportError:
+            log_client.send_multipart(['DEBUG', 'Missing redis python module'])
+            sys.exit()
+        r = redis.StrictRedis()
         context = zmq.Context.instance()
         events = context.Socket(zmq.REQ)
         events.connect(channels['events'])
@@ -56,19 +62,19 @@ def tailFile(cur_config, minerva_core, fname, channels):
                 if r.llen(channel) > 0:
                     total_length = r.llen(channel) - 1
                     events = r.lrange(0, total_length)
-                    self.logger.send_multipart(['DEBUG', "Agent log tailer received event for %s" % fname])
+                    log_client.send_multipart(['DEBUG', "Agent log tailer received event for %s" % fname])
                     for event in events:
                         new_event = converter.convert(event)
                         if new_event:
                             events.send_json(new_event)
-                            self.logger.send_multipart(['DEBUG', "Agent log tailer %s sending event to publisher" % fname])
+                            log_client.send_multipart(['DEBUG', "Agent log tailer %s sending event to publisher" % fname])
                             status = events.recv()
                         else:
-                            self.logger.send_multipart(['ERROR', "Agent log tailer unable to parse event for %s" % fname])
+                            log_client.send_multipart(['ERROR', "Agent log tailer unable to parse event for %s" % fname])
                             continue
                     r.ltrim(channel, total_length, -1)
                 else:
-                    sleep(1)
+                    time.sleep(1)
         except:
             sys.exit()
     else:
