@@ -105,7 +105,7 @@ class EventPublisher(Process):
             self.logger.send_multipart(['DEBUG','Publisher RSA Encrypted Message'])
             return enc_payload
         else:
-            self.logger.send_multipart(['ERROR','Publisher Unable to encrypt RSA for %s' % target])
+            self.logger.send_multipart(['ERROR','Publisher Unable to encrypt RSA'])
             return False
 
     def run(self):
