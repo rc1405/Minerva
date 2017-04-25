@@ -609,7 +609,7 @@ class Minerva(object):
                 sig = MinervaSignatures(self.minerva_core)
                 file_count, good_sigs, bad_sigs = sig.process_files(kwargs['signature_file'])
                 if isinstance(file_count, basestring):
-                    return '<script type="text/javascript">window.alert("%s");location="/signatures";</script>' % ret_val
+                    return '<script type="text/javascript">window.alert("%s");location="/signatures";</script>' % file_count
                 else:
                     return '<script type="text/javascript">window.alert("%i Files Checked. %i Signatures Processed.  %i Signatures Failed");location="/signatures";</script>' % (file_count, good_sigs, bad_sigs)
 
