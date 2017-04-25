@@ -53,7 +53,7 @@ class MinervaConfigs():
 
         if db_conf['useAuth']:
             if db_conf['AuthType'] == 'Password':
-                if db_confg['useSSL']:
+                if db_conf['useSSL']:
                     client = pymongo.MongoClient(conn_str,
                                              ssl=True,
                                              ssl_cert_reqs=ssl.CERT_REQUIRED,
