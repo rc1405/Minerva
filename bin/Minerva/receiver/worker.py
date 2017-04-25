@@ -78,7 +78,7 @@ class EventWorker(Process):
         except:
             self.logger.send_multipart([
                 'DEBUG',
-                'Worker RSA decryption failure for {}'.format(target)
+                'Worker RSA decryption failure'
             ])
             return False
         return dmesg
