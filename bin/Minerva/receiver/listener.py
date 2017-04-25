@@ -102,7 +102,7 @@ class EventPublisher(Process):
     def _encrypt_rsa(self, payload):
         if self.WEBKEY:
             enc_payload = self.WEBKEY.public_encrypt(payload, M2Crypto.RSA.pkcs1_padding).encode('base64')
-            self.logger.send_multipart(['DEBUG','Publisher RSA Encrypted Message for %s' % target])
+            self.logger.send_multipart(['DEBUG','Publisher RSA Encrypted Message'])
             return enc_payload
         else:
             self.logger.send_multipart(['ERROR','Publisher Unable to encrypt RSA for %s' % target])
