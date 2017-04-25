@@ -68,7 +68,7 @@ class EventWorker(Process):
             dmesg = json.loads(dmesg)
             self.logger.send_multipart(['DEBUG','Worker RSA decryption success'])
         except:
-            self.logger.send_multipart(['DEBUG','Worker RSA decryption failure' % target])
+            self.logger.send_multipart(['DEBUG','Worker RSA decryption failure'])
             return False
         return dmesg
 
