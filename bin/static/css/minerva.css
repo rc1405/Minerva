@@ -1,0 +1,131 @@
+/*
+    Copyright (C) 2015  Ryan M Cote.
+
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License along
+    with this program; if not, write to the Free Software Foundation, Inc.,
+    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+    Author: Ryan M Cote <minervaconsole@gmail.com>
+*/
+
+body {
+  color: #222;
+  background-color:lightgray;
+  padding-top: 60px;
+}
+
+.navbar-inverse {
+  background-color: #3d4a57;
+  border-color: #333;
+}
+
+
+.navbar-inverse .navbar-nav > li > a,
+.navbar-inverse .navbar-nav > li > ul > li > a,
+.navbar .navbar-inverse .navbar-fixed-top,
+.navbar .navbar-brand,
+.navbar .container-fluid,
+.navbar .navbar-collapse,
+.navbar-inverse .navbar-nav > li > a,
+.navbar > div > .navbar-brand {
+  color: #fbfbfb;
+  background-color: #3d4a57;
+  text-decoration: none;
+}
+
+.minerva-header {
+  width: 100%;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.minerva-footer {
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.minerva-panel {
+  padding-top: 10px;
+  padding-right: 10px;
+  padding-left: 10px;
+  padding-bottom: 10px;
+  border-top: 1px solid #eee;
+  border-right: 1px solid #eee;
+  border-left: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.minerva-search {
+  width: 100%;
+}
+
+.minerva-chart-icons {
+  padding-top: 10px;
+}
+
+.minerva-chart-icons > a {
+  color: #222;
+}
+
+.minerva-alert:hover {
+  background-color: #bacfef;
+}
+
+.minerva-alert {
+  background-color: #eee;
+  padding-bottom: 10px;
+  border-bottom: 1px solid black;
+}
+
+.minerva-alert-low {
+  background-color: #c5f77b;
+}
+.minerva-alert-medium {
+  background-color: #f7d67b;
+}
+.minerva-alert-high {
+  background-color: #f96959;
+}
+.minerva-alert-icons {
+  padding-right: 20px;
+}
+.minerva-alert-icon {
+  padding-left: 4px;
+}
+.loader {
+  border: 16px solid #f3f3f3;
+  border-top: 16px solid #3498db;
+  border-bottom: 16px solid #3498db;
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#EventPager > li,
+#EventPager > li > a,
+#EventPager > li > span,
+#EventPager > li > span > span {
+  height: 34px;
+  width: 34px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 6px;
+  padding-right: 6px;
+  text-align: center;
+}
+
