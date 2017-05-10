@@ -1,26 +1,15 @@
 Webserver:
-  db:
-    url: 127.0.0.1
-    port: 27017
-    useAuth: False
-    AuthType:
-    username: example
-    password:
-    PW_Mechanism:
-    auth_cert: None
-    auth_ca: None
-    SECRET_KEY: "$2b$12$L4MZbMDNsy0hy9X9c6g8aO"
-    SESSION_KEY: "$2b$12$cwxQSC5MpCP/CteDLG/Rre"
   web:
-    hostname: hostname
-    bindIp: 192.168.218.10
+    hostname: minerva03
+    bindIp: 192.168.100.12
     port: 443
-    threads: 4
+    threads: 8
     pcap_timeout: 300
     certs:
       webserver_cert: /var/lib/minerva/webserver/server.pem
       webserver_key: /var/lib/minerva/webserver/private.pem
-    motd: False
+    motd: c29tZSBtZXNzYWdlIGhlcmUgXG4gYmVjYXVzZSBpJ20gY29vbCBcbiBlbmQ=
+
     session_timeout: 60
     password_requirements:
       password_tries: 3
@@ -31,23 +20,37 @@ Webserver:
       digit_count: 2
       special_count: 2
   events:
-    maxResults: 1000
-    max_age: 120
-    flow_max_age: 90
+    maxResults: 4000
+Database:
+  db:
+    url: mongodb://minervaweb01:27019
+    port: 0
+    useSSL: True
+    ssl_certfile: /etc/mongodb/minerva03.pem
+    ssl_ca_certs: /etc/mongodb/RootCA.crt
+    useAuth: True
+    AuthType: X509
+    x509Subject: CN=minerva,OU=Console,O=Minerva,L=OKC,ST=OK,C=US
+    auth_cert: /etc/mongodb/minerva_user.pem
+    SESSION_KEY: "44b72a443e1a4e70bd02fa3bc30823e8"
+  events:
+    max_age: 60
+    flow_max_age: 30
+    dns_max_age: 30
+    temp_filter_age: 24
 Event_Receiver:
   listen_ip:
-    192.168.218.10:
+    192.168.100.12:
          pub_port: 10001
          rec_ports:
              - 10002
-  worker_threads: 4
-  watchlist_update_sec: 300
+  worker_threads: 12
+  watchlist_update_sec: 3600
   certs:
-    server_cert: /var/lib/minerva/receiver/receiver.cert
-    private_key: /var/lib/minerva/receiver/receiver.pem
+    server_cert: /var/lib/minerva/receiver/server.pem
+    private_key: /var/lib/minerva/receiver/private.pem
 Logger:
-  logDir: /var/log/minerva/
+  logDir: /var/log/minerva
   level: DEBUG
-  maxSize: 2048000
+  maxSize: 21474836480
   maxCount: 2
-

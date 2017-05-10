@@ -35,7 +35,12 @@ class sensors(object):
         return sensor
 
     def get_sensors(self):
-        items_found = map(self.map_sensors, self.collection.find({"type": "sensor"} ).sort([("STATUS", pymongo.DESCENDING)]).limit(self.sizeLimit))
+        items_found = map(self.map_sensors, self.collection.find({
+            "type": "sensor"
+        }).sort([(
+            "STATUS", 
+            pymongo.DESCENDING
+        )]).limit(self.sizeLimit))
 
         return items_found
     def update(self, sensors, action):
@@ -44,4 +49,10 @@ class sensors(object):
                 status = 'APPROVED'
             else:
                 status = '_DENIED'
-            self.collection.update({ "_id": bson.objectid.ObjectId(s)}, { "$set" : { "timestamp": time.time(), "STATUS": status }})
+            self.collection.update({ 
+                "_id": bson.objectid.ObjectId(s)
+                },{ 
+                "$set" : { 
+                    "timestamp": time.time(), 
+                    "STATUS": status 
+                }})

@@ -77,17 +77,43 @@ class Watchlist():
             'domain_1': [],
         }
     
-        map(get_ips, list(db.watchlist.aggregate([{ "$match": { "type": "ip_address", "STATUS": "ENABLED" }},{ "$project": { "address": "$criteria", "priority": "$priority" }}])))
-        map(get_domains, list(db.watchlist.aggregate([{ "$match": { "type": "domain", "STATUS": "ENABLED" }}, { "$project": { "domain": "$criteria", "priority": "$priority" }}])))
+        map(get_ips, list(db.watchlist.aggregate([{
+            "$match": { 
+                "type": "ip_address", 
+                "STATUS": "ENABLED" 
+            }},{ 
+            "$project": { 
+                "address": "$criteria", 
+                "priority": "$priority" 
+            }}
+        ])))
+        
+        map(get_domains, list(db.watchlist.aggregate([{ 
+            "$match": { 
+                "type": "domain", 
+                "STATUS": "ENABLED" 
+            }}, { 
+            "$project": { 
+                "domain": "$criteria", 
+                "priority": "$priority" 
+            }}
+        ])))
     
         for k in watches.keys():
             rule_count = 1
             for s in watches[k]:
-                sig_string = "rule %s__%s\n{\n\tstrings:\n\t\t$1 = \"%s\\\"\"\n\tcondition:\n\t\tall of them\n}\n" % (k, s.replace('.','_'), s)
+                sig_string = "rule {}__{}\n{\n\tstrings:\n\t\t$1 = \"{}".format(
+                    k, 
+                    s.replace('.','_'), 
+                    s
+                ) + "\\\"\"\n\tcondition:\n\t\tall of them\n}\n"
                 sig.writelines(sig_string)
                 rule_count += 1
     
-        log_client.send_multipart(['DEBUG','Found %i Watchlist Items' % (rule_count - 1)])
+        log_client.send_multipart([
+            'DEBUG',
+            'Found {} Watchlist Items'.format(rule_count - 1)
+        ])
     
         sig.flush()
         sig.truncate()
@@ -119,10 +145,14 @@ class Watchlist():
                     action_method = 'dec'
                     action_value = abs(item['action_value'])
     
-                rule_type = '%s__%s__%i' % (action_pre, action_method, action_value)
+                rule_type = '{}__{}__{}'.format(
+                    action_pre,
+                    action_method,
+                    action_value
+                )
             else:
                 action_method = item['action_value'][:1].upper()
-                rule_type = '%s__%s' % (action_pre, action_method)
+                rule_type = '{}__{}'.format(action_pre, action_method)
             return rule_type
     
         def get_sids(item):
@@ -130,115 +160,139 @@ class Watchlist():
             rule_type = get_rule_type(item)
     
             filters[rule_type].append([
-                "sid\":(*?\w+)\"%s\"" %  str(item['sig_id']),
-                "rev\":(*?\w+)\"%s\"" % str(item['rev']),
-                "gid\":(*?\w+)\"%s\"" % str(item['gid'])
+                "sid\":(*?\w+)\"{}\"".format(item['sig_id']),
+                "rev\":(*?\w+)\"{}\"".format(item['rev']),
+                "gid\":(*?\w+)\"{}\"".format(item['gid'])
             ])
     
         def get_cat(item):
             rule_type = get_rule_type(item)
     
             filters[rule_type].append([
-                "category\":(*?\w+)\"%s\"" % item['category']
+                "category\":(*?\w+)\"{}\"".format(item['category'])
             ])
     
         def get_addresses(item):
             rule_type = get_rule_type(item)
             filters[rule_type].append([
-                "\"%s\"" % item['ip_address']
+                "\"{}\"".format(item['ip_address'])
             ])
     
         def get_sessions(item):
             rule_type = get_rule_type(item)
            
             filters[rule_type].append([
-                "\"%s\"" % item['src_ip'],
-                "\"%s\"" % item['dest_ip']
+                "\"{}\"".format(item['src_ip']),
+                "\"{}\"".format(item['dest_ip'])
             ])
     
         def get_sigAddress(item):
             rule_type = get_rule_type(item)
             filters[rule_type].append([
-                "sid\":(*?\w+)\"%s\"" %  str(item['sig_id']),
-                "rev\":(*?\w+)\"%s\"" % str(item['rev']),
-                "gid\":(*?\w+)\"%s\"" % str(item['gid']),
-                "\"%s\"" % item['ip_address']
+                "sid\":(*?\w+)\"{}\"".format(item['sig_id']),
+                "rev\":(*?\w+)\"{}\"".format(item['rev']),
+                "gid\":(*?\w+)\"{}\"".format(item['gid']),
+                "\"{}\"".format(item['ip_address'])
             ])
     
         def get_sigSession(item):
             rule_type = get_rule_type(item)
             filters[rule_type].append([
-                "sid\":(*?\w+)\"%s\"" %  str(item['sig_id']),
-                "rev\":(*?\w+)\"%s\"" % str(item['rev']),
-                "gid\":(*?\w+)\"%s\"" % str(item['gid']),
-                "\"%s\"" % item['src_ip'],
-                "\"%s\"" % item['dest_ip']
+                "sid\":(*?\w+)\"{}\"".format(item['sig_id']),
+                "rev\":(*?\w+)\"{}\"".format(item['rev']),
+                "gid\":(*?\w+)\"{}\"".format(item['gid']),
+                "\"{}\"".format(item['src_ip']),
+                "\"{}\"".format(item['dest_ip'])
             ])
     
         watch_filters = db.filters
     
-        map(get_sids, list(watch_filters.aggregate([{ "$match": { "type": "signature" }},
-            { "$project": { 
-                  "sig_id": "$sig_id", 
-                  "rev": "$rev", 
-                  "gid": "$gid", 
-                  "action_type": "$action_type", 
-                  "action_value": "$action_value" 
-            }}])))
+        map(get_sids, list(watch_filters.aggregate([{ 
+            "$match": { 
+                "type": "signature" 
+            }},{
+            "$project": { 
+                "sig_id": "$sig_id", 
+                "rev": "$rev", 
+                "gid": "$gid", 
+                "action_type": "$action_type", 
+                "action_value": "$action_value" 
+            }}
+        ])))
     
-        map(get_cat, list(watch_filters.aggregate([{ "$match": { "type": "categories" }}, 
-            { "$project": { 
-                  "category": "$category", 
-                  "action_type": "$action_type", 
-                  "action_value": "$action_value"  
-            }}])))
+        map(get_cat, list(watch_filters.aggregate([{ 
+            "$match": { 
+                "type": "categories" 
+            }},{ 
+            "$project": { 
+                "category": "$category", 
+                "action_type": "$action_type", 
+                "action_value": "$action_value"  
+            }}
+        ])))
 
-        map(get_addresses, list(watch_filters.aggregate([{ "$match": { "type": "address" }}, 
-            { "$project": { 
-                  "ip_address": "$ip_address", 
-                  "action_type": "$action_type", 
-                  "action_value": "$action_value"
-            }}])))
+        map(get_addresses, list(watch_filters.aggregate([{ 
+            "$match": { 
+                "type": "address" 
+            }},{ 
+            "$project": { 
+                "ip_address": "$ip_address", 
+                "action_type": "$action_type", 
+                "action_value": "$action_value"
+            }}
+        ])))
     
-        map(get_sessions, list(watch_filters.aggregate([{ "$match": { "type": "session" }}, 
-            { "$project": { 
-                  "src_ip": "$src_ip", 
-                  "dest_ip": "$dest_ip", 
-                  "action_type": "$action_type", 
-                  "action_value": "$action_value" 
-            }}])))
+        map(get_sessions, list(watch_filters.aggregate([{ 
+            "$match": { 
+                "type": "session" 
+            }},{ 
+            "$project": { 
+                "src_ip": "$src_ip", 
+                "dest_ip": "$dest_ip", 
+                "action_type": "$action_type", 
+                "action_value": "$action_value" 
+            }}
+        ])))
     
-        map(get_sigAddress, list(watch_filters.aggregate([{ "$match": { "type": "sig_address"}}, 
-            { "$project": { 
-                  "sig_id": "$sig_id", 
-                  "rev": "$rev", 
-                  "gid": "$gid", 
-                  "ip_address": "$ip_address", 
-                  "action_type": "$action_type", 
-                  "action_value": "$action_value" 
-            }}])))
+        map(get_sigAddress, list(watch_filters.aggregate([{ 
+            "$match": { 
+                "type": "sig_address"
+            }},{ 
+            "$project": { 
+                "sig_id": "$sig_id", 
+                "rev": "$rev", 
+                "gid": "$gid", 
+                "ip_address": "$ip_address", 
+                "action_type": "$action_type", 
+                "action_value": "$action_value" 
+            }}
+        ])))
     
-        map(get_sigSession, list(watch_filters.aggregate([{ "$match": { "type": "sig_session"}}, 
-            { "$project": { 
-                  "sig_id": "$sig_id", 
-                  "rev": "$rev", 
-                  "gid": "$gid", 
-                  "src_ip": "$src_ip", 
-                  "dest_ip": "$dest_ip", 
-                  "action_type": "$action_type", 
-                  "action_value": "$action_value" 
-            }}])))
+        map(get_sigSession, list(watch_filters.aggregate([{ 
+            "$match": { 
+                "type": "sig_session"
+            }},{
+            "$project": { 
+                "sig_id": "$sig_id", 
+                "rev": "$rev", 
+                "gid": "$gid", 
+                "src_ip": "$src_ip", 
+                "dest_ip": "$dest_ip", 
+                "action_type": "$action_type", 
+                "action_value": "$action_value" 
+            }}
+        ])))
     
         for k in filters.keys():
             if len(filters[k]) == 0:
                 continue
             conditions = []
-            action.writelines("rule %s\n{\n\tstrings:\n" % k)
+            action.writelines("rule {}\n{\n\tstrings:\n".format(k))
             rule_count = 1
             for s in filters[k]:
                 cur_conditions = []
                 for r in s:
-                    action.writelines("\t\t$%i = %s\n" % (rule_count, r))
+                    action.writelines("\t\t${} = {}\n".format(rule_count, r))
                     cur_conditions.append(rule_count)
                     rule_count += 1
                 conditions.append(cur_conditions)
@@ -255,21 +309,24 @@ class Watchlist():
                         
                     for x in c:
                         if icount == len(c):
-                            condition = condition + "$%i" % x
+                            condition = condition + "${}".format(x)
                         else:
-                            condition = condition + "$%i," % x
+                            condition = condition + "${},".format(x)
                         icount += 1
                     condition = condition + ")\n"
                 else:
                     if ccount == 1:
-                        condition = condition + "\t\t$%i" % c[0]
+                        condition = condition + "\t\t${}".format(c[0])
                     else:
-                        condition = condition + "\t\tor $%i" % c[0]
+                        condition = condition + "\t\tor ${}".format(c[0])
                 ccount += 1
             condition = condition + "\n}\n"
             action.writelines(condition)
     
-        log_client.send_multipart(['DEBUG','Found %i Rule Filters' % (rule_count - 1)])
+        log_client.send_multipart([
+            'DEBUG',
+            'Found {} Rule Filters'.format(rule_count - 1)
+        ])
         action.flush()
         action.truncate()
         time.sleep(1)

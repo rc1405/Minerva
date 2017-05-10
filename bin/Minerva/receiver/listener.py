@@ -38,16 +38,34 @@ class EventReceiver(Process):
     def run(self):
         context = zmq.Context()
         log_client = self.minerva_core.get_socket(self.channels)
-        log_client.send_multipart(['DEBUG','Starting Event Listener %s' % self.pname])
+        log_client.send_multipart([
+            'DEBUG',
+            'Starting Event Listener {}'.format(self.pname)
+        ])
         ip, port = self.pname.split('-')
 
         server = context.socket(zmq.PULL)
-        server.bind('tcp://%s:%s' % (ip, port))
-        log_client.send_multipart(['DEBUG', "Receiver listening for messages on tcp://%s:%s" % (ip, port)])
+        server.bind('tcp://{}:{}'.format(ip, port))
+        log_client.send_multipart([
+            'DEBUG', 
+            "Receiver listening for messages on tcp://{}:{}".format(
+                ip, 
+                port
+            )
+        ])
 
         workers = context.socket(zmq.PUSH)
-        log_client.send_multipart(['DEBUG', "Receiver binded workers to %s" % self.channels['receiver']["%s-%s" % (ip, port)]])
-        workers.bind(self.channels['receiver']["%s-%s" % (ip, port)])
+        log_client.send_multipart([
+            'DEBUG', 
+            "Receiver binded workers to {}".format(
+                self.channels['receiver']["{}-{}".format(
+                    ip, 
+                    port
+                )]
+            )]
+        )
+        
+        workers.bind(self.channels['receiver']["{}-{}".format(ip, port)])
 
         log_client.send_multipart(['INFO', "Receiver listening for events"])
 
@@ -59,7 +77,10 @@ class EventReceiver(Process):
             server.close()
             workers.close()
 
-        log_client.send_multipart(['INFO', "Receiver %s shutting down" % self.pname])
+        log_client.send_multipart([
+            'INFO', 
+            "Receiver {} shutting down".foramt(self.pname)
+        ])
 
 class EventPublisher(Process):
     def __init__(self, minerva_core, channels, cur_config):
@@ -90,22 +111,36 @@ class EventPublisher(Process):
             if aeskey:
                 aeskey = aeskey['KEY'].decode('base64')
             else:
-                self.logger.send_multipart(['ERROR','Publisher Failed to find AES Key for %s' % target])
+                self.logger.send_multipart([
+                    'ERROR',
+                    'Publisher Failed to find AES Key for {}'.format(target)
+                ])
                 return False
         else:
             aeskey = key
         cipher = M2Crypto.EVP.Cipher(alg='aes_256_cbc', key=aeskey, iv=aeskey, op=1)
         enc_payload = cipher.update(payload) + cipher.final()
-        self.logger.send_multipart(['DEBUG','Publisher AES Encrypted Message for %s' % target])
+        self.logger.send_multipart([
+            'DEBUG',
+            'Publisher AES Encrypted Message for {}'.format(target)
+        ])
         return enc_payload.encode('base64')
 
     def _encrypt_rsa(self, payload):
         if self.WEBKEY:
-            enc_payload = self.WEBKEY.public_encrypt(payload, M2Crypto.RSA.pkcs1_padding).encode('base64')
-            self.logger.send_multipart(['DEBUG','Publisher RSA Encrypted Message for %s' % target])
+            enc_payload = self.WEBKEY.public_encrypt(
+                payload,
+                M2Crypto.RSA.pkcs1_padding).encode('base64')
+            self.logger.send_multipart([
+                'DEBUG',
+                'Publisher RSA Encrypted Message for {}'.format(target)
+            ])
             return enc_payload
         else:
-            self.logger.send_multipart(['ERROR','Publisher Unable to encrypt RSA for %s' % target])
+            self.logger.send_multipart([
+                'ERROR',
+                'Publisher Unable to encrypt RSA for {}'.format(target)
+            ])
             return False
 
     def run(self):
@@ -129,12 +164,24 @@ class EventPublisher(Process):
         sender = context.socket(zmq.PUB)
 
         for r in self.config['listen_ip'].keys():
-            self.logger.send_multipart(['DEBUG','Starting Publisher on tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port']))])
-            sender.bind('tcp://%s:%s' % (r, str(self.config['listen_ip'][r]['pub_port'])))
+            self.logger.send_multipart([
+                'DEBUG',
+                'Starting Publisher on tcp://{}:{}'.format(
+                    r, 
+                    str(self.config['listen_ip'][r]['pub_port'])
+                )])
+            
+            sender.bind('tcp://{}:{}'.format(
+                r, 
+                str(self.config['listen_ip'][r]['pub_port'])
+            ))
 
         receiver = context.socket(zmq.PULL)
         receiver.bind(self.channels['pub'])
-        self.logger.send_multipart(['DEBUG','Publisher now listening for events from workers'])
+        self.logger.send_multipart([
+            'DEBUG',
+            'Publisher now listening for events from workers'
+        ])
  
         event_queue = []
 
@@ -147,7 +194,10 @@ class EventPublisher(Process):
                         if msg['_function'] == 'PCAP':
                             try:
                                 if msg['_payload']['action'] == "request":
-                                    self.logger.send_multipart(['DEBUG','Publisher Received PCAP Request for %s' % ID])
+                                    self.logger.send_multipart([
+                                        'DEBUG',
+                                        'Publisher Received PCAP Request for %s'.format(ID)
+                                    ])
                                     payload = {
                                         "_function": "PCAP",
                                         "action": "request",
@@ -162,7 +212,11 @@ class EventPublisher(Process):
                                             "_payload": enc_payload
                                         })])
                                     else:
-                                        self.logger.send_multipart(['DEBUG','Publisher Unable to encrypt request for %s, sending reauth' % ID])
+                                        self.logger.send_multipart([
+                                            'DEBUG',
+                                            'Publisher Unable to encrypt request for {}, sending reauth'.format(
+                                                ID
+                                            )])
                                         event_queue.append([msg['mid'], payload])
                                         sender.send_multipart([ID, json.dumps({
                                             "mid": msg['mid'],
@@ -170,10 +224,12 @@ class EventPublisher(Process):
                                             "_cert": self.PUBCERT
                                         })])
                             except TypeError:
-                                self.logger.send_multipart(['DEBUG','Publisher Received PCAP Reply for %s' % str(msg['mid'])])
+                                self.logger.send_multipart([
+                                    'DEBUG',
+                                    'Publisher Received PCAP Reply for {}'.format(str(msg['mid']))])
                                 sender.send_multipart([str(msg['mid']), json.dumps(msg)])
                         elif msg['_function'] == 'auth':
-                            self.logger.send_multipart(['DEBUG','Sending Auth for %s' % str(ID)])
+                            self.logger.send_multipart(['DEBUG','Sending Auth for {}'.format(ID)])
                             sender.send_multipart([ID, json.dumps(msg)])
                     except KeyError:
                         sender.send_multipart([ID, json.dumps(msg)])
@@ -182,7 +238,10 @@ class EventPublisher(Process):
                     for e in event_queue:
                         enc_payload = self._encrypt_aes(str(e[0]), json.dumps(e[1]))
                         if enc_payload:
-                            self.logger.send_multipart(['DEBUG','Publisher Reauth success, sending message to %s' % str(e[0])])
+                            self.logger.send_multipart([
+                                'DEBUG',
+                                'Publisher Reauth success, sending message to {}'.format(e[0])
+                            ])
                             sender.send_multipart([str(e[0]), json.dumps({
                                 "mid": e[0],
                                 "_payload": enc_payload

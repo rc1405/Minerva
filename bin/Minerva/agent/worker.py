@@ -208,9 +208,24 @@ class PCAPprocessor(object):
 
     def process(self, options):
         if options['request_type'] == 'alert':
-            tmp_file = self.carver.parse_alert(src_ip=options['src_ip'], src_port=options['src_port'], dest_ip=options['dest_ip'], dest_port=options['dest_port'], proto=options['proto'], event_time=options['event_time'])
+            tmp_file = self.carver.parse_alert(
+                src_ip=options['src_ip'], 
+                src_port=options['src_port'], 
+                dest_ip=options['dest_ip'], 
+                dest_port=options['dest_port'], 
+                proto=options['proto'], 
+                event_time=options['event_time']
+            )
         elif options['request_type'] == 'flow':
-            tmp_file = self.carver.parse_flow(src_ip=options['src_ip'], src_port=options['src_port'], dest_ip=options['dest_ip'], dest_port=options['dest_port'], proto=options['proto'], start_time=options['start_time'], end_time=options['end_time'])
+            tmp_file = self.carver.parse_flow(
+                src_ip=options['src_ip'], 
+                src_port=options['src_port'], 
+                dest_ip=options['dest_ip'], 
+                dest_port=options['dest_port'], 
+                proto=options['proto'], 
+                start_time=options['start_time'], 
+                end_time=options['end_time']
+            )
 
         if tmp_file == 'No Packets Found':
             return False

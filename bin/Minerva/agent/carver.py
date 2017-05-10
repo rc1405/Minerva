@@ -32,15 +32,35 @@ class PCAPCarver(object):
 
     def carve_pcap_file(self, options, count, thres_time, pcap_file, out_file, out_pcap):
         protocols = {
-            'TCP': 'tcp and (host %s and port %i) and (host %s and port %i)' % (options['src_ip'], options['src_port'], options['dest_ip'], options['dest_port']),
-            6: 'tcp and (host %s and port %i) and (host %s and port %i)' % (options['src_ip'], options['src_port'], options['dest_ip'], options['dest_port']),
-            'UDP': 'udp and (host %s and port %i) and (host %s and port %i)' % (options['src_ip'], options['src_port'], options['dest_ip'], options['dest_port']),
-            17: 'udp and (host %s and port %i) and (host %s and port %i)' % (options['src_ip'], options['src_port'], options['dest_ip'], options['dest_port']),
-            'ICMP': 'ICMP and host %s and host %s' % (options['src_ip'], options['dest_ip']),
-            1: 'ICMP and host %s and host %s' % (options['src_ip'], options['dest_ip']),
+            'TCP': 'tcp and (host {} and port {}) and (host {} and port {})'.format(
+                options['src_ip'], 
+                options['src_port'], 
+                options['dest_ip'], 
+                options['dest_port']
+            ),
+            6: 'tcp and (host {} and port {}) and (host {} and port {})'.format(
+                options['src_ip'], 
+                options['src_port'], 
+                options['dest_ip'], 
+                options['dest_port']
+            ),
+            'UDP': 'udp and (host {} and port {}) and (host {} and port {})'.format(
+                options['src_ip'], 
+                options['src_port'], 
+                options['dest_ip'], 
+                options['dest_port']
+            ),
+            17: 'udp and (host {} and port {}) and (host {} and port {})'.format(
+                options['src_ip'], 
+                options['src_port'], 
+                options['dest_ip'], 
+                options['dest_port']
+            ),
+            'ICMP': 'icmp and host {} and host {}'.format(options['src_ip'], options['dest_ip']),
+            1: 'icmpP and host {} and host {}'.format(options['src_ip'], options['dest_ip']),
         }
         if not options['proto'] in protocols.keys():
-            raise("Protocol %s not supported" % str(options['proto']))
+            raise("Protocol {} not supported".format(options['proto']))
         event_time = int(options['event_time'])
         max_packets = int(self.config['max_packets'])
         max_size = int(self.config['max_size']) * 1024 * 1024

@@ -44,32 +44,65 @@ def worker(minerva_core, cur_config, channels):
     action_fh, sig_fh = watchlist.update_yara(minerva_core, log_client)
     worker_procs = []
     do_update = False
+    refresh_time = int(time.time())
     try:
         for wp in range(0,int(cur_config['worker_threads'])):
-            log_client.send_multipart(['DEBUG', 'Started Worker #%i' % wp])
-            worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+            log_client.send_multipart(['DEBUG', 'Started Worker #{}'.format(wp)])
+            worker = EventWorker(
+                minerva_core,
+                channels,
+                update_lock,
+                action_fh.name,
+                sig_fh.name
+            )
             worker.start()
             worker_procs.append(worker)
         while True:
+            if (int(time.time()) - refresh_time) > 300: 
+                log_client.send_multipart(['INFO', 'Initiating worker refresh'])
+                for p in worker_procs:
+                    p.refresh()
+                refresh_time = int(time.time())
+                
             for p in worker_procs:
                 if not p.is_alive():
                     worker_procs.remove(p)
-                    worker = EventWorker(minerva_core, channels, update_lock, action_fh.name, sig_fh.name)
+                    worker = EventWorker(
+                        minerva_core,
+                        channels,
+                        update_lock,
+                        action_fh.name,
+                        sig_fh.name
+                    )
                     worker.start()
                     p.join()
                     worker_procs.append(worker)
-                    log_client.send_multipart(['ERROR', 'Worker thread crashed, restarting'])
+                    log_client.send_multipart([
+                        'ERROR',
+                        'Worker thread crashed, restarting'
+                    ])
             if not do_update:
                 if server.poll(1000):
                     server.recv()
                     do_update = True
             else: 
-                log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update started'])
+                log_client.send_multipart([
+                    'DEBUG', 
+                    'Watchlist and Event Filter update started'
+                ])
                 update_lock.acquire()
-                watchlist.update_yara(minerva_core, log_client, action=action_fh, sig=sig_fh)
+                watchlist.update_yara(
+                    minerva_core,
+                    log_client,
+                    action=action_fh,
+                    sig=sig_fh
+                )
                 update_lock.release()
                 do_update = False
-                log_client.send_multipart(['DEBUG', 'Watchlist and Event Filter update finished'])
+                log_client.send_multipart([
+                    'DEBUG',
+                    'Watchlist and Event Filter update finished'
+                ])
             time.sleep(1)
     except Exception as e:
         print('{}: {}'.format(e.__class__.__name__,e))
@@ -86,7 +119,23 @@ def genKey(cur_config, minerva_core):
         os.makedirs(os.path.dirname(cur_config['certs']['server_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['private_key'])):
         os.makedirs(os.path.dirname(cur_config['certs']['private_key']))
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['private_key'], '-out', cur_config['certs']['server_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % platform.node() ]
+    cmd = [ 
+        'openssl',
+        'req',
+        '-x509',
+        '-newkey',
+        'rsa:2048',
+        '-keyout',
+        cur_config['certs']['private_key'],
+        '-out',
+        cur_config['certs']['server_cert'],
+        '-days',
+        '3650',
+        '-nodes',
+        '-batch',
+        '-subj',
+        '/CN={}'.format(platform.node())
+    ]
     subprocess.call(cmd)
 
 def checkCert(cur_config, minerva_core):
@@ -94,17 +143,30 @@ def checkCert(cur_config, minerva_core):
     certdb = db.certs
     results = list(certdb.find({"type": "receiver" }))
     if len(results) == 0:
-        if not os.path.exists(cur_config['certs']['server_cert']) or not os.path.exists(cur_config['certs']['private_key']):
+        if not os.path.exists(
+            cur_config['certs']['server_cert']
+        ) or not os.path.exists(cur_config['certs']['private_key']):
             genKey(cur_config, minerva_core)
+            
         certdb.insert({
             "SERVER": "receiver", 
             "type": "receiver", 
             "cert": open(cur_config['certs']['server_cert'],'r').read(), 
             "key": open(cur_config['certs']['private_key']).read() 
         } )
+        
     for i in cur_config['listen_ip']:
         for p in cur_config['listen_ip'][i]['rec_ports']:
-            certdb.update({"SERVER": "receiver"}, { "$addToSet": { "receivers": "%s-%i-%i" % (i, p, cur_config['listen_ip'][i]['pub_port']) }})
+            certdb.update({
+                "SERVER": "receiver"
+                },{
+                "$addToSet": {
+                    "receivers": "{}-{}-{}".format(
+                        i,
+                        p,
+                        cur_config['listen_ip'][i]['pub_port']
+                    )
+                }})
 
     return
 
@@ -117,18 +179,20 @@ if __name__ == '__main__':
     base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 
     channels = {
-        "worker": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
-        "worker_main": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
-        "pub": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
-        "logger": "ipc://%s/%s" % (base_dir, str(uuid.uuid4())),
+        "worker": "ipc://{}/{}".format(base_dir, uuid.uuid4()),
+        "worker_main": "ipc://{}/{}".format(base_dir, uuid.uuid4()),
+        "pub": "ipc://{}/{}".format(base_dir, uuid.uuid4()),
+        "logger": "ipc://{}/{}".format(base_dir, uuid.uuid4()),
         "receiver": {},
     }
 
 
     for i in cur_config['listen_ip']:
         for p in cur_config['listen_ip'][i]['rec_ports']:
-            name = "%s-%s" % (i,p)
-            channels['receiver']["%s-%s" % (i,p)] = "ipc://%s/%s" % (base_dir, str(uuid.uuid4()))
+            name = "{}-{}".format(i,p)
+            channels['receiver']["{}-{}".format(i,p)] = "ipc://{}/{}".format(
+                base_dir, uuid.uuid4()
+            )
 
     checkCert(cur_config, minerva_core)
 
@@ -145,7 +209,12 @@ if __name__ == '__main__':
 
     time.sleep(2)
 
-    worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
+    worker_main = Process(
+        name='worker_main', 
+        target=worker, 
+        args=(minerva_core, cur_config, channels)
+    )
+    
     worker_main.start()
     log_client.send_multipart(['DEBUG', 'Starting Worker Thread Manager'])
 
@@ -160,7 +229,10 @@ if __name__ == '__main__':
                 pr.start()
 
                 active_processes.append(pr)
-                log_client.send_multipart(['DEBUG', 'Starting Receiver %s' % name])
+                log_client.send_multipart([
+                    'DEBUG',
+                    'Starting Receiver {}'.format(name)
+                ])
         log_client.send_multipart(['INFO', 'Receiver Processes Started'])
         while True:
             for p in active_processes:
@@ -171,28 +243,44 @@ if __name__ == '__main__':
                     p.join()
                     pr.start()
                     active_processes.append(pr)
-                    log_client.send_multipart(['ERROR', 'Receiver %s crashed, restarting' % p.name])
+                    log_client.send_multipart([
+                        'ERROR',
+                        'Receiver {} crashed, restarting'.format(p.name)
+                    ])
             if not pub_listener.is_alive():
                 pub_listener.join()
                 pub_listener = EventPublisher(minerva_core, channels, cur_config)
                 pub_listener.start()
-                log_client.send_multipart(['ERROR', 'Receiver Publishing Process crashed, restarting'])
+                log_client.send_multipart([
+                    'ERROR',
+                    'Receiver Publishing Process crashed, restarting'
+                ])
             if not worker_main.is_alive():
                 worker_main.join()
-                worker_main = Process(name='worker_main', target=worker, args=(minerva_core, cur_config, channels))
+                worker_main = Process(
+                    name='worker_main',
+                    target=worker,
+                    args=(minerva_core, cur_config, channels)
+                )
                 worker_main.start()
-                log_client.send_multipart(['ERROR', 'Worker Thread Manager crashed, restarting'])
+                log_client.send_multipart([
+                    'ERROR',
+                    'Worker Thread Manager crashed, restarting'
+                ])
             if not log_proc.is_alive():
                 log_proc.join()
                 log_proc = core.MinervaLog(config, channels)
                 log_proc.start()
-                log_client.send_multipart(['ERROR', 'Logging Process crashed, restarting'])
+                log_client.send_multipart([
+                    'ERROR',
+                    'Logging Process crashed, restarting'
+                ])
             time.sleep(1)
     except:
         log_client.send_multipart(['INFO', 'Receiver Processes Shutting down'])
         for p in active_processes:
             p.terminate()
-            log_client.send_multipart(['DEBUG', 'Terminating Process %s' % p.name])
+            log_client.send_multipart(['DEBUG', 'Terminating Process {}'.format(p.name)])
         pub_listener.terminate()
         log_client.send_multipart(['DEBUG', 'Terminating Receiver Publishing Process'])
         worker_main.terminate()

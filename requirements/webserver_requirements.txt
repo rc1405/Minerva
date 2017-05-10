@@ -1,8 +1,6 @@
 jinja2
 PyYAML
-pymongo
 python-dateutil
-M2Crypto
 cherrypy
 netaddr
 pytz

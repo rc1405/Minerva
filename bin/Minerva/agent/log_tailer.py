@@ -140,7 +140,11 @@ class TailLog():
                             event_queue.append(event)
                             queue_check = lfile.tell()
                             if len(event_queue) < self.batchsize:
-                                self.logger.send_multipart(['DEBUG', "Agent log tailer %s event queue is full, waiting for receiver" % self.logFile])
+                                self.logger.send_multipart([
+                                    'DEBUG', 
+                                    "Agent log tailer {} event queue is full, waiting for receiver".format(
+                                        self.logFile
+                                    )])
                                 if event_receiver.poll(1):
                                     status = event_receiver.recv()
                                 else:
@@ -149,14 +153,22 @@ class TailLog():
                                 status = event_receiver.recv()
                             if status:
                                 #print('Event queue has %i events' % len(event_queue))
-                                self.logger.send_multipart(['DEBUG', "Agent log tailer %s is clearing queue of %i events" % (self.logFile, len(event_queue))])
+                                self.logger.send_multipart([
+                                    'DEBUG', 
+                                    "Agent log tailer {} is clearing queue of {} events".format(
+                                        self.logFile, 
+                                        len(event_queue)
+                                    )])
                                 for e in event_queue:
                                     event_receiver.send_json(e)
                                     status = event_receiver.recv()
                                 event_wait = False
                                 event_queue = []
                                 self.write_pos(queue_check)
-                                self.logger.send_multipart(['DEBUG', "Agent log tailer %s event queue emptied, writing checkpoint" % self.logFile])
+                                self.logger.send_multipart([
+                                    'DEBUG', 
+                                    "Agent log tailer {} event queue emptied, writing checkpoint".format(self.logFile)
+                                ])
                                 #print('event_queue flushed')
             else:
                 elf.logger.send_multipart(['ERROR', "Agent log tailer cannot open %s, file doesnt exist" % self.logFile])

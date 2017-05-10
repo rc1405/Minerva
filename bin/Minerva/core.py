@@ -60,7 +60,11 @@ class MinervaConfigs():
                                              ssl_ca_certs=ssl_ca_certs)
                 else:
                     client = pymongo.MongoClient(conn_str)
-                client.minerva.authenticate(db_conf['username'], password=db_conf['password'].decode('base64'), mechanism=db_conf['PW_Mechanism'])
+                client.minerva.authenticate(
+                    db_conf['username'], 
+                    password=db_conf['password'].decode('base64'),
+                    mechanism=db_conf['PW_Mechanism']
+                )
             elif db_conf['AuthType'] == 'X509':
                 client = pymongo.MongoClient(conn_str,
                                              ssl=True,
@@ -186,6 +190,7 @@ class MinervaLog(threading.Thread):
             try:
                 if log_queue.poll(500):
                     msg = log_queue.recv_multipart()
+                    print(msg)
                     if msg[0] == 'KILL':
                         log_queue.close()
                         #sys.exit()

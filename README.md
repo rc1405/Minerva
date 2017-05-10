@@ -1,6 +1,6 @@
 # Release Notes:
 
-## Version 2:
+## Version 3:
 * Complete overhaul of receiver and transport.  
     * Eliminated raw sockets and moved to utilizing ZeroMQ
     * Clean up of unneeded transformations and additions
@@ -27,6 +27,7 @@
     * yara-python
     * ZeroMQ
     * pyzmq
+    * ws4py
 * Dependencies Removed
     * numpy
     * redis - Removed from receiver.  Only needed on Agent for Suricata EVE logs in Redis

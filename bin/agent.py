@@ -119,7 +119,23 @@ def genKey(cur_config):
         os.makedirs(os.path.dirname(cur_config['client_cert']))
     if not os.path.exists(os.path.dirname(cur_config['client_private'])):
         os.makedirs(os.path.dirname(cur_config['client_private']))
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['client_private'], '-out', cur_config['client_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['sensor_name'] ]
+    cmd = [ 
+        'openssl',
+        'req',
+        '-x509',
+        '-newkey',
+        'rsa:2048',
+        '-keyout',
+        cur_config['client_private'],
+        '-out',
+        cur_config['client_cert'],
+        '-days',
+        '3650',
+        '-nodes',
+        '-batch',
+        '-subj',
+        '/CN={}'.format(cur_config['sensor_name'])
+    ]
     subprocess.call(cmd)
 
 if __name__ == '__main__':

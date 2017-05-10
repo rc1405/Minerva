@@ -1,3 +1,7 @@
 *.pyc
 bin/setup.log
 .git_old/
+*.ipynb*
+bin/templates/backup.console.jinja
+bin/templates/archive
+bin/orig_webserver.py

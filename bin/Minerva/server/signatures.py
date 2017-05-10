@@ -72,7 +72,20 @@ class MinervaSignatures(object):
                 classtype = ''
             else:
                 classtype = classtype[0]
-            self.signatures.update({"sig_id": sid, "gen_id": gid, "rev": rev}, { "$set": {"sig_id": sid, "gen_id": gid, "rev": rev, "classtype": classtype, "signature": row.strip(), "type": "signature" }}, upsert=True )
+            self.signatures.update({
+                "sig_id": sid, 
+                "gen_id": gid, 
+                "rev": rev
+                },{ 
+                "$set": {
+                    "sig_id": sid, 
+                    "gen_id": gid, 
+                    "rev": rev, 
+                    "classtype": classtype, 
+                    "signature": row.strip(), 
+                    "type": "signature" 
+                }}, 
+                upsert=True )
         return good_sigs, bad_sigs
 
     def unzip_signatures(self, rule_file):

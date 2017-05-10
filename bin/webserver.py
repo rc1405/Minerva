@@ -25,17 +25,321 @@ import subprocess
 import shutil
 import sys
 from tempfile import NamedTemporaryFile
+from ws4py.websocket import WebSocket
+from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
+from ws4py.messaging import TextMessage
 
+import json
 import cherrypy
 from jinja2 import Environment, FileSystemLoader
 
 from Minerva import core
-from Minerva.server import alert_console, alert_flow, sensors, Users, HandleRequests, event_filters, MinervaSignatures, watchlist, dns
-
+#from Minerva.server import alert_console, alert_flow, sensors, Users, HandleRequests, event_filters, MinervaSignatures, watchlist, dns
+from Minerva.server import *
 
 env = Environment(loader=FileSystemLoader(os.path.join(os.path.dirname(sys.argv[0]),'templates')))
 
-class Minerva(object):
+class BroadcastWebSocketHandler(WebSocket):
+    def received_message(self, m):
+        print('broadcast sock handler: ')
+        print(m)
+        cherrypy.engine.publish('websocket-broadcast', m)
+
+
+'''
+class MinervaEventPlugin(WebSocketPlugin):
+    def __init__(self, bus):
+        WebSocketPlugin.__init__(self, bus)
+        self.clients = {}
+
+    def start(self):
+        WebSocketPlugin.start(self)
+        self.bus.subscribe('add-client', self.add_client)
+        self.bus.subscribe('get-client', self.get_client)
+        self.bus.subscribe('del-client', self.del_client)
+
+    def stop(self):
+        WebSocketPlugin.stop(self)
+        self.bus.unsubscribe('add-client', self.add_client)
+        self.bus.unsubscribe('get-client', self.get_client)
+        self.bus.unsubscribe('del-client', self.del_client)
+
+    def add_client(self, name, websocket):
+        self.clients[name] = websocket
+
+    def get_client(self, name):
+        return self.clients[name]
+
+    def del_client(self, name):
+        del self.clients[name]
+'''
+
+class MinervaPlugin(WebSocketPlugin):
+    def __init__(self, bus, core):
+        WebSocketPlugin.__init__(self, bus)
+        self.clients = {}
+        self.Users = Users(core)
+        self.core = core
+
+    def start(self):
+        WebSocketPlugin.start(self)
+        self.bus.subscribe('add-client', self.add_client)
+        self.bus.subscribe('get-client', self.get_client)
+        self.bus.subscribe('del-client', self.del_client)
+        self.bus.subscribe('get-perms', self.get_perms)
+        self.bus.subscribe('get-core', self.get_core)
+        self.bus.subscribe('get-username', self.get_username)
+
+    def stop(self):
+        WebSocketPlugin.stop(self)
+        self.bus.unsubscribe('add-client', self.add_client)
+        self.bus.unsubscribe('get-client', self.get_client)
+        self.bus.unsubscribe('del-client', self.del_client)
+        self.bus.unsubscribe('get-perms', self.get_perms)
+        self.bus.unsubscribe('get-core', self.get_core)
+        self.bus.unsubscribe('get-username', self.get_username)
+
+    def add_client(self, name, websocket):
+        self.clients[name] = websocket
+
+    def get_client(self, name):
+        return self.clients[name]
+
+    def del_client(self, name):
+        del self.clients[name]
+
+    def get_perms(self, session_id):
+        return self.Users.get_permissions(session_id)
+
+    def get_username(self, session_id):
+        return self.Users.get_username(session_id)
+
+    def get_core(self):
+        return self.core
+
+class MinervaWebSocketHandler(WebSocket):
+    def opened(self):
+        cherrypy.engine.publish('add-client', self.session_id, self)
+        #perm_return = cherrypy.engine.publish('get-perms', request['session_id']).pop()
+        #core = cherrypy.engine.publish('get-core').pop()
+        # check permissions
+        # send events
+        #alerts.get_alerts()
+        # send stats
+           
+        
+    def received_message(self, m):
+        print(m)
+        request = json.loads(m.data)
+
+        perm_return = cherrypy.engine.publish('get-perms', request['session_id']).pop()
+        client = cherrypy.engine.publish('get-client', request['session_id']).pop()
+        core = cherrypy.engine.publish('get-core').pop()
+
+        '''
+        if 'PasswordReset' in perm_return:
+
+        elif 'newLogin' in perm_return:
+            #delete socket
+        '''
+
+        if request['action'] == 'form':
+            if request['form'] == 'console':
+                alerts = alert_console(core)
+                results = alerts.get_alerts()
+                client.send(json.dumps({"action": "new_events", "events": results}))
+
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "ip_count",
+                  "data": alerts.get_ip_count()
+                }
+                client.send(json.dumps(results))
+
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "ip_bytes",
+                  "data": alerts.get_ip_volume()
+                }
+                client.send(json.dumps(results))
+
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "dns_count",
+                  "data": alerts.get_dns_count()
+                }
+                client.send(json.dumps(results))
+
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "sensor_vol",
+                  "data": alerts.get_sensor_volume()
+                }
+                client.send(json.dumps(results))
+                
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "http_count",
+                  "data": alerts.get_http_count()
+                }
+                client.send(json.dumps(results))
+
+                #print(json.dumps(alerts.get_ip_count(), indent=1))
+                #print('------------------------------------------------------------------------------------------------------------')
+                #print(json.dumps(alerts.get_ip_volume(), indent=1))
+                #print('------------------------------------------------------------------------------------------------------------')
+                #print(json.dumps(alerts.get_dns_count(), indent=1))
+        elif request['action'] == 'refresh_chart':
+            if request['chart'] == 'ip_count':
+                print('ip count')
+                alerts = alert_console(core)
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "ip_count",
+                  "data": alerts.get_ip_count()
+                }
+                client.send(json.dumps(results))
+                print(json.dumps(results))
+                print('sent refresh back')
+            elif request['chart'] == 'ip_bytes':
+                alerts = alert_console(core)
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "ip_bytes",
+                  "data": alerts.get_ip_volume()
+                }
+                client.send(json.dumps(results))
+            elif request['chart'] == 'dns_count':
+                alerts = alert_console(core)
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "dns_count",
+                  "data": alerts.get_dns_count()
+                }
+                client.send(json.dumps(results))
+                print(json.dumps(results))
+            elif request['chart'] == 'sensor_vol':
+                alerts = alert_console(core)
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "sensor_vol",
+                  "data": alerts.get_sensor_volume()
+                }
+                client.send(json.dumps(results))
+            elif request['chart'] == 'http_count':
+                alerts = alert_console(core)
+                results = {
+                  "action": "refresh_chart",
+                  "chart": "http_count",
+                  "data": alerts.get_http_count()
+                }
+                client.send(json.dumps(results))
+                
+        elif request['action'] == 'investigate':
+
+            if 'console' in perm_return or 'responder' in perm_return:
+                print(request)
+                alert = alert_console(core)
+                #sigs = MinervaSignatures(core)
+
+                #items = flow.get_flow(request['uuids'])
+                results = alert.investigate(request['uuids'])
+                print(results)
+
+                #context_dict = {}
+                #context_dict['items'] = items
+                #context_dict['comments'] = alert.get_comments(request['events'])
+                #context_dict['signatures'] = sigs.get_signature(request['events'])
+
+                client.send(json.dumps({
+                    "action": "investigate",
+                    "events": results
+                }))
+
+
+        elif request['action'] == 'close':
+            cherrypy.engine.publish('websocket-broadcast', m)
+            client.send("custom mesage")
+
+        '''
+            if 'console' in perm_return or 'responder' in perm_return:
+                alerts = alert_console(core)
+                username = cherrypy.engine.publish('get-username', request['session_id']).pop()
+                alerts.close_alert(request['events'], request['comments'], username)
+
+                client.send("something of success")
+
+            else:
+                #some error
+
+        elif request['action'] == 'escalate':
+
+            if 'console' in perm_return:
+
+                username =  cherrypy.engine.publish('get-username', request['session_id']).pop()
+                alerts = alert_console(core)
+                alerts.escalate_alert(request['events'], request['comments'], username)
+
+                #send response
+
+            else:
+                raise cherrypy.HTTPError(403)
+
+        elif request['action'] == 'comment':
+
+            if 'console' in perm_return or 'responder' in perm_return:
+
+                alerts = alert_console(core)
+                username = cherrypy.engine.publish('get-username', request['session_id']).pop()
+                alerts.add_comments(request['events'], request['comments'], username)
+
+                #send back
+
+            else:
+                # some error
+
+        elif request['action'] == 'pcap':
+
+            if 'console' in perm_return or 'responder' in perm_return:
+
+                pcaps = HandleRequests(core)
+
+                #todo, zip up multiple file and return that
+                if request['yype'] == 'flow':
+                    pcap = pcaps.flowPCAP(request['events'])
+
+                else:
+                    pcap = pcaps.alertPCAP(request['events'])
+
+                if isinstance(pcap, basestring):
+                    #send failure
+                    return '<script type="text/javascript">window.alert("%s");window.close();</script>' % pcap
+
+                else:
+                    # tell to download
+                    tmp = NamedTemporaryFile(mode='w+b', suffix='.pcap')
+                    tmp.write(pcap.read())
+                    tmp.flush()
+                    cherrypy.session['pcap_file'] = tmp
+                    return '<script type="text/javascript">location="/download";</script>'
+
+            else:
+                raise cherrypy.HTTPError(404)
+
+
+        else:
+            #some error
+        '''
+
+    def closed(self, code, reason="A client left the room without a proper explanation."):
+        cherrypy.engine.publish('del-client', self.session_id)
+        cherrypy.engine.publish('websocket-broadcast', TextMessage(reason))
+
+
+
+
+
+class Webserver(object):
     def __init__(self, minerva_core):
         self.configs = minerva_core.conf['Webserver']
         self.sizeLimit = self.configs['events']['maxResults']
@@ -81,40 +385,6 @@ class Minerva(object):
         raise cherrypy.HTTPRedirect("/")
     
     '''Start of Minerva Web Pages'''
-    @cherrypy.expose
-    def index(self, **kwargs):
-        user = Users(self.minerva_core)
-        cherrypy.session['prev_page'] = "/"
-        if not 'SESSION_KEY' in cherrypy.session.keys():
-            raise cherrypy.HTTPRedirect('/login')
-
-        perm_return =  user.get_permissions(cherrypy.session.get('SESSION_KEY'))
-
-        if 'PasswordReset' in perm_return:
-            if cherrypy.request.method == 'POST':
-                cherrypy.session['post_request'] = cherrypy.request.json
-
-            raise cherrypy.HTTPRedirect('/profile')
-
-        elif 'console' in perm_return:
-            context_dict = {}
-            alerts = alert_console(self.minerva_core)
-            numFound, items_found = alerts.get_alerts()
-            context_dict['numFound'] = numFound
-            context_dict['items_found'] = items_found
-            context_dict['sizeLimit'] = self.sizeLimit
-            context_dict['form'] = 'console'
-            context_dict['title'] = 'Alert'
-            context_dict['permissions'] = perm_return
-            tmp = env.get_template('console.jinja')
-            return tmp.render(context_dict)
-
-        elif 'newLogin' in perm_return:
-            raise cherrypy.HTTPRedirect('/login')
-
-        else:
-            raise cherrypy.HTTPError(403)
-
 
     @cherrypy.expose
     def responder(self):
@@ -183,7 +453,9 @@ class Minerva(object):
     @cherrypy.expose
     @cherrypy.tools.json_in()
     def investigate(self, **kwargs):
-        if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session):
+        if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 
+                                                 'post_request' in cherrypy.session):
+            
             user = Users(self.minerva_core)
 
             if not 'SESSION_KEY' in cherrypy.session.keys():
@@ -259,7 +531,9 @@ class Minerva(object):
             filters = event_filters(self.minerva_core)
             context_dict = {}
 
-            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()):
+            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and 
+                                                     'post_request' in cherrypy.session.keys()):
+                
                 if 'post_request' in cherrypy.session.keys():
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
@@ -335,7 +609,9 @@ class Minerva(object):
 
         elif 'console' in perm_return or 'responder' in perm_return:
             context_dict = { 'numFound': 0 }
-            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and ('get_request' in cherrypy.session or 'alert_search' in cherrypy.session)):
+            if cherrypy.request.method == 'POST' or (cherrypy.request.method == 'GET' and (
+                'get_request' in cherrypy.session or 'alert_search' in cherrypy.session)):
+                
                 alert = alert_console(self.minerva_core)
 
                 if 'alert_search' in cherrypy.session:
@@ -402,7 +678,10 @@ class Minerva(object):
         elif 'console' in perm_return or 'responder' in perm_return:
             context_dict = {'numFound': 0}
 
-            if (cherrypy.request.method == 'GET' and ('flow_search' in cherrypy.session.keys() or 'post_request' in cherrypy.session.keys())) or cherrypy.request.method == 'POST':
+            if (cherrypy.request.method == 'GET' and (
+                'flow_search' in cherrypy.session.keys() or 
+                'post_request' in cherrypy.session.keys())) or \
+                cherrypy.request.method == 'POST':
 
                 flow = alert_flow(self.minerva_core)
 
@@ -470,7 +749,9 @@ class Minerva(object):
         elif 'console' in perm_return or 'responder' in perm_return:
             context_dict = {'numFound': 0}
 
-            if (cherrypy.request.method == 'GET' and ('dns_search' in cherrypy.session.keys() or 'post_request' in cherrypy.session.keys())) or cherrypy.request.method == 'POST':
+            if (cherrypy.request.method == 'GET' and (
+                'dns_search' in cherrypy.session.keys() or 'post_request' in cherrypy.session.keys())) \
+                or cherrypy.request.method == 'POST':
 
                 dns_records = dns(self.minerva_core)
 
@@ -555,7 +836,9 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/profile')
 
         elif 'sensor_admin' in perm_return:
-            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+            if (cherrypy.request.method == 'GET' and 
+                'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+                
                 if 'post_request' in cherrypy.session.keys():
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
@@ -609,9 +892,12 @@ class Minerva(object):
                 sig = MinervaSignatures(self.minerva_core)
                 file_count, good_sigs, bad_sigs = sig.process_files(kwargs['signature_file'])
                 if isinstance(file_count, basestring):
-                    return '<script type="text/javascript">window.alert("%s");location="/signatures";</script>' % ret_val
+                    return '<script type="text/javascript">window.alert("{}")'.format(ret_val) \
+                           + ';location="/signatures";</script>'
                 else:
-                    return '<script type="text/javascript">window.alert("%i Files Checked. %i Signatures Processed.  %i Signatures Failed");location="/signatures";</script>' % (file_count, good_sigs, bad_sigs)
+                    return '<script type="text/javascript">window.alert("%i Files Checked.'.format(file_count) \
+                           + '{} Signatures Processed.  {} Signatures Failed");'.format(good_sigs, bad_sigs) \
+                           + 'location="/signatures";</script>' 
 
         elif 'newLogin' in perm_return:
             raise cherrypy.HTTPRedirect('/login')
@@ -644,24 +930,60 @@ class Minerva(object):
             retstatus = 'None'
 
             if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+                
+                if 'post_request' in cherrypy.session.keys():
+                    request = cherrypy.session['post_request'] 
+                    del cherrypy.session['post_request']
+                else:
+                    request = cherrypy.request.json
 
-               if 'post_request' in cherrypy.session.keys():
-                   request = cherrypy.session['post_request'] 
-                   del cherrypy.session['post_request']
-               else:
-                   request = cherrypy.request.json
+                if request['updateType'] == 'new_user':
+                    retstatus = users.create_user(
+                        request['username'],
+                        request['password'],
+                        request['console'],
+                        request['responder'],
+                        request['event_filters'],
+                        request['sensor_admin'],
+                        request['user_admin'],
+                        request['server_admin'],
+                        request['enabled']
+                    )
 
-               if request['updateType'] == 'new_user':
-                   retstatus = users.create_user(request['username'], request['password'], request['console'], request['responder'], request['event_filters'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
+                elif request['updateType'] == 'editUser':
+                    retstatus = users.modify_user(
+                        request['username'],
+                        request['password'],
+                        request['console'],
+                        request['responder'],
+                        request['event_filters'],
+                        request['sensor_admin'],
+                        request['user_admin'],
+                        request['server_admin'],
+                        request['enabled']
+                    )
 
-               elif request['updateType'] == 'editUser':
-                   retstatus = users.modify_user(request['username'], request['password'], request['console'], request['responder'], request['event_filters'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
+                elif request['updateType'] == 'updatePerms':
+                    retstatus = users.changePerms(
+                        request['username'],
+                        request['console'],
+                        request['responder'],
+                        request['event_filters'],
+                        request['sensor_admin'],
+                        request['user_admin'],
+                        request['server_admin'],
+                        request['enabled']
+                    )
 
-               elif request['updateType'] == 'updatePerms':
-                   retstatus = users.changePerms(request['username'], request['console'], request['responder'], request['event_filters'], request['sensor_admin'], request['user_admin'], request['server_admin'], request['enabled'])
-
+            
             if retstatus == "Password Check Failed":
-                ret_string = '"New Password does not meet strength Requirements: %s lowercase, %s uppercase, %s numbers, %s special characters"' % ( self.configs['web']['password_requirements']['lower_count'], self.configs['web']['password_requirements']['upper_count'], self.configs['web']['password_requirements']['digit_count'], self.configs['web']['password_requirements']['special_count'] )
+                ret_string = '"New Password does not meet strength Requirements: ' \
+                              + 'lowercase, {} uppercase, {} numbers, {} special characters"'.format(
+                                  self.configs['web']['password_requirements']['lower_count'],
+                                  self.configs['web']['password_requirements']['upper_count'],
+                                  self.configs['web']['password_requirements']['digit_count'],
+                                  self.configs['web']['password_requirements']['special_count']
+                              )
                 return ret_string
 
             elif retstatus != "None":
@@ -707,7 +1029,9 @@ class Minerva(object):
             raise cherrypy.HTTPRedirect('/profile')
 
         elif 'server_admin' in perm_return:
-            if (cherrypy.request.method == 'GET' and 'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+            if (cherrypy.request.method == 'GET' and 
+                'post_request' in cherrypy.session.keys()) or cherrypy.request.method == 'POST':
+                
                 if 'post_reqeust' in cherrypy.session.keys():
                     request = cherrypy.session['post_request']
                     del cherrypy.session['post_request']
@@ -760,16 +1084,26 @@ class Minerva(object):
             ret_status = user.changePW(cherrypy.session['SESSION_KEY'], request['currentPW'], request['newPassword'])
 
             if ret_status == 'success':
-                return '<script type="text/javascript">window.alert("Password Successfully Changed");location="/profile";</script>'
+                return '<script type="text/javascript">window.alert("Password Successfully Changed");location="/profile";' \
+                       + '</script>'
 
             elif ret_status == 'badOldPass':
-                return '<script type="text/javascript">window.alert("Current Password is incorrect");location="/profile";</script>'
+                return '<script type="text/javascript">window.alert("Current Password is incorrect");location="/profile";' \
+                       + '</script>'
 
             elif ret_status == 'newLogin':
-                return '<script type="text/javascript">window.alert("Session Expired, Please log in with Previous Password");location="/login";</script>'
+                return '<script type="text/javascript">window.alert("Session Expired, Please log in with Previous' \
+                       + 'Password");location="/login";</script>'
 
             elif ret_status == "Password Check Failed":
-                ret_string = '<script type="text/javascript">window.alert("New Password does not meet strength Requirements: %s lowercase, %s uppercase, %s numbers, %s special characters");location="/profile";</script>' % ( self.configs['web']['password_requirements']['lower_count'], self.configs['web']['password_requirements']['upper_count'], self.configs['web']['password_requirements']['digit_count'], self.configs['web']['password_requirements']['special_count'] )
+                ret_string = '<script type="text/javascript">window.alert("New Password does not meet strength' \
+                              + 'Requirements: {} lowercase, {} uppercase, {} numbers, {} special characters");' \
+                              + 'location="/profile";</script>'.format(
+                                  self.configs['web']['password_requirements']['lower_count'],
+                                  self.configs['web']['password_requirements']['upper_count'],
+                                  self.configs['web']['password_requirements']['digit_count'],
+                                  self.configs['web']['password_requirements']['special_count'] 
+                              )
 
                 return ret_string
 
@@ -1164,6 +1498,66 @@ class Minerva(object):
         else:
             raise cherrypy.HTTPError(403)
     
+    # NEW STUFF HERE
+    @cherrypy.expose
+    def ws(self):
+        user = Users(self.minerva_core)
+
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            cherrypy.session['prev_page'] = '/get_pcap'
+            cherrypy.session['post_request'] = cherrypy.request.json
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return = user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/profile')
+
+        elif 'newLogin' in perm_return:
+            raise cherrypy.HTTPError(403)
+
+        else:
+            cherrypy.request.ws_handler.session_id = cherrypy.session['SESSION_KEY']
+            cherrypy.log("Handler created: {}".format(repr(cherrypy.request.ws_handler)))
+
+
+    @cherrypy.expose
+    def index(self, **kwargs):
+        user = Users(self.minerva_core)
+        cherrypy.session['prev_page'] = "/"
+        if not 'SESSION_KEY' in cherrypy.session.keys():
+            raise cherrypy.HTTPRedirect('/login')
+
+        perm_return =  user.get_permissions(cherrypy.session.get('SESSION_KEY'))
+
+        if 'PasswordReset' in perm_return:
+            if cherrypy.request.method == 'POST':
+                cherrypy.session['post_request'] = cherrypy.request.json
+
+            raise cherrypy.HTTPRedirect('/profile')
+
+        elif 'console' in perm_return:
+            context_dict = {}
+            alerts = alert_console(self.minerva_core)
+            context_dict['results'] = []
+            context_dict['sizeLimit'] = self.sizeLimit
+            context_dict['form'] = 'console'
+            context_dict['title'] = 'Alert'
+            context_dict['permissions'] = perm_return
+            context_dict['session_id'] = cherrypy.session.get('SESSION_KEY')
+            tmp = env.get_template('console.jinja')
+            return tmp.render(context_dict)
+
+        elif 'newLogin' in perm_return:
+            raise cherrypy.HTTPRedirect('/login')
+
+        else:
+            raise cherrypy.HTTPError(403)
+
+
 
 '''Startup functions'''
 def genKey(cur_config, minerva_core):
@@ -1171,7 +1565,23 @@ def genKey(cur_config, minerva_core):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_cert']))
     if not os.path.exists(os.path.dirname(cur_config['certs']['webserver_key'])):
         os.makedirs(os.path.dirname(cur_config['certs']['webserver_key']))
-    cmd = [ 'openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-keyout', cur_config['certs']['webserver_key'], '-out', cur_config['certs']['webserver_cert'], '-days', '3650', '-nodes', '-batch', '-subj', '/CN=%s' % cur_config['hostname']]
+    cmd = [ 
+        'openssl', 
+        'req', 
+        '-x509', 
+        '-newkey', 
+        'rsa:2048', 
+        '-keyout', 
+        cur_config['certs']['webserver_key'], 
+        '-out', 
+        cur_config['certs']['webserver_cert'], 
+        '-days', 
+        '3650', 
+        '-nodes', 
+        '-batch', 
+        '-subj', 
+        '/CN={}'.format(cur_config['hostname'])
+    ]
     subprocess.call(cmd)
 
 def checkCert(cur_config, minerva_core):
@@ -1238,7 +1648,18 @@ if __name__ == '__main__':
                             'request.error_response': handleError,
                           })
     base_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+
+    #TODO
+    MinervaPlugin(cherrypy.engine, minerva_core).subscribe()
+    #MinervaEventPlugin(cherrypy.engine).subscribe()
+    cherrypy.tools.websocket = WebSocketTool()
+
+
     config = {
+        '/ws' : {
+            'tools.websocket.on': True,
+            'tools.websocket.handler_cls': MinervaWebSocketHandler, #TODO
+        },
         '/css': { 
             'tools.staticdir.on': True,
             'tools.staticdir.dir': os.path.join(base_dir,'static','css'),
@@ -1260,4 +1681,4 @@ if __name__ == '__main__':
             'tools.staticdir.dir': os.path.join(base_dir,'static','fonts'),
         },
     }
-    cherrypy.quickstart(Minerva(minerva_core), config = config)
+    cherrypy.quickstart(Webserver(minerva_core), config = config)

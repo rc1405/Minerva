@@ -72,10 +72,25 @@ class Users(object):
             hashed = hashlib.sha512(str(password) + str(user_results[0]['SALT'])).hexdigest()
             if 'PASSWORD' in user_results[0]:
                 if user_results[0]['PASSWORD'] == hashed:
-                    session_hash = hashlib.sha512('%s-%s-%s' % ( str(time.time()), str(username), self.session_salt)).hexdigest()
-                    self.sessions.insert({ "session_id": session_hash, "last_accessed": datetime.datetime.utcnow(), "USERNAME": username})
+                    session_hash = hashlib.sha512('{}-{}-{}'.format(
+                        time.time(),
+                        username, 
+                        self.session_salt
+                    )).hexdigest()
+                    self.sessions.insert({ 
+                        "session_id": session_hash, 
+                        "last_accessed": datetime.datetime.utcnow(), 
+                        "USERNAME": username
+                    })
                     session['SESSION_KEY'] = session_hash
-                    self.users.update ({ "USERNAME": username }, { "$set": { "pass_failed": 0, "last_login": datetime.datetime.utcnow()}})
+                    self.users.update ({ 
+                        "USERNAME": username 
+                        }, { 
+                        "$set": { 
+                            "pass_failed": 0,
+                            "last_login": datetime.datetime.utcnow()
+                        }
+                    })
 
                     return True
 
@@ -212,21 +227,72 @@ class Users(object):
 
 
     def disableUser(self, username, password):
-        self.users.update({"USERNAME": username}, { "$set": { "date_modified": datetime.datetime.utcnow(), "ENABLED": False}})
+        self.users.update({
+            "USERNAME": username
+            },{ 
+            "$set": { 
+                "date_modified": datetime.datetime.utcnow(), 
+                "ENABLED": False
+            }})
 
         return
 
 
     def changePerms(self, username, console, responder, event_filters, sensor_admin, user_admin, server_admin, enabled):
-        self.users.update({"USERNAME": username}, {"$set": { "console": console, "responder": responder, "event_filters": event_filters, "sensor_admin": sensor_admin, "user_admin": user_admin, "server_admin": server_admin, "ENABLED": enabled, "date_modified": datetime.datetime.utcnow() }})
+        self.users.update({
+            "USERNAME": username
+            },{
+            "$set": { 
+                "console": console, 
+                "responder": responder, 
+                "event_filters": event_filters, 
+                "sensor_admin": sensor_admin, 
+                "user_admin": user_admin, 
+                "server_admin": server_admin, 
+                "ENABLED": enabled, 
+                "date_modified": datetime.datetime.utcnow() 
+            }})
 
         return 'Success'
 
 
     def getAllUsers(self):
-        active_users = list(self.users.aggregate([{"$match": { "ENABLED": "true"}}, { "$project": { "ID": "$_id", "USERNAME": "$USERNAME", "console": "$console", "responder": "$responder", "event_filters": "$event_filters", "sensor_admin": "$sensor_admin", "user_admin": "$user_admin", "server_admin": "$server_admin", "date_created": "$date_created", "date_modified": "$date_modified", "last_login": "$last_login", "ENABLED": "$ENABLED" }}]))
+        active_users = list(self.users.aggregate([{
+            "$match": { 
+                "ENABLED": "true"
+            }}, { 
+            "$project": { 
+                "ID": "$_id", 
+                "USERNAME": "$USERNAME", 
+                "console": "$console", 
+                "responder": "$responder", 
+                "event_filters": "$event_filters", 
+                "sensor_admin": "$sensor_admin",
+                "user_admin": "$user_admin", 
+                "server_admin": "$server_admin", 
+                "date_created": "$date_created", 
+                "date_modified": "$date_modified", 
+                "last_login": "$last_login", 
+                "ENABLED": "$ENABLED" 
+            }}]))
 
-        disabled_users = list(self.users.aggregate([{"$match": { "ENABLED": "false"}}, { "$project": { "ID": "$_id", "USERNAME": "$USERNAME", "responder": "$responder", "event_filters": "$event_filters", "sensor_admin": "$sensor_admin", "user_admin": "$user_admin", "server_admin": "$server_admin", "date_created": "$date_created", "date_modified": "$date_modified", "last_login": "$last_login", "ENABLED": "$ENABLED" }}]))
+        disabled_users = list(self.users.aggregate([{
+            "$match": { 
+                "ENABLED": "false"
+            }}, { 
+            "$project": { 
+                "ID": "$_id", 
+                "USERNAME": "$USERNAME", 
+                "responder": "$responder", 
+                "event_filters": "$event_filters", 
+                "sensor_admin": "$sensor_admin", 
+                "user_admin": "$user_admin", 
+                "server_admin": "$server_admin", 
+                "date_created": "$date_created", 
+                "date_modified": "$date_modified", 
+                "last_login": "$last_login", 
+                "ENABLED": "$ENABLED" 
+            }}]))
 
         users = active_users + disabled_users
 
@@ -243,13 +309,22 @@ class Users(object):
 
         if len(user_results) > 0:        
             username = user_results[0]['USERNAME']
-            results = self.users.find({"USERNAME": username})
+            results = self.users.find_one({"USERNAME": username})
             old_salt = results['SALT']
             oldhash = hashlib.sha512(str(current_pw) + old_salt).hexdigest()
 
-            if oldhash == results[0]['PASSWORD']:
+            if oldhash == results['PASSWORD']:
                 user_salt = uuid.uuid4().hex
-                self.users.update({"USERNAME": username}, { "$set": { "PASSWORD": newhash, "pass_failed": 0, "PASSWORD_CHANGED": datetime.datetime.utcnow(), "SALT": user_salt }})
+                newhash = hashlib.sha512(str(new_pw) + user_salt).hexdigest()
+                self.users.update({
+                    "USERNAME": username
+                    },{ 
+                    "$set": { 
+                        "PASSWORD": newhash, 
+                        "pass_failed": 0, 
+                        "PASSWORD_CHANGED": datetime.datetime.utcnow(), 
+                        "SALT": user_salt 
+                    }})
 
                 return "success"
 

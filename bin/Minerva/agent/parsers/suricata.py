@@ -54,6 +54,9 @@ class ConvertEve():
     
             elif new_entry['event_type'] == 'dns':
                 new_entry['logType'] = 'dns'
+                
+            elif new_entry['event_type'] == 'http':
+                new_entry['logType'] = 'http'
     
             else:
                 return False
